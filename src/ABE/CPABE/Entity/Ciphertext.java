@@ -3,7 +3,7 @@ package ABE.CPABE.Entity;
 import it.unisa.dia.gas.jpbc.Element;
 
 /**
- * 密文
+ * 密文，用户的所有属性封装在TreePolicy中
  */
 public class Ciphertext {
     /*
@@ -14,5 +14,5 @@ public class Ciphertext {
      */
     public Element cs; // G_T,`C=M*e(g,g)^as
     public Element c; // G_1 ,C=h^s
-    public TreePolicy p;
+    public TreePolicy treePolicy;//访问树
 }

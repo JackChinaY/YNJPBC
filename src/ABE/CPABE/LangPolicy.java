@@ -1,6 +1,7 @@
 package ABE.CPABE;
 
 import ABE.CPABE.Entity.*;
+import com.sun.istack.internal.NotNull;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
@@ -88,13 +89,14 @@ public class LangPolicy {
         pr_byte = SerializeUtils.serializeSK(sk);
         FileOperation.byte2File(pr_byte, skfile);
         System.out.println("用户私钥 D=(g^r*g^a)^(1/b) " + sk.d);
-        System.out.println("用户属性个数 " + sk.comps.size());
+        System.out.println("用户属性个数:" + sk.comps.size());
+        System.out.println("用户属性:" + attr_str);
     }
 
     /**
      * 生成私钥 具体计算私钥
      */
-    public static SK keygen(PK pk, MK mk, String[] attrs) throws NoSuchAlgorithmException {
+    private static SK keygen(PK pk, MK mk, String[] attrs) throws NoSuchAlgorithmException {
         SK sk = new SK();
         Element g_r, r, b;//g_r表示g^r，r表示Zr的随机值，b表示MK中的b
         //计算私钥SK
@@ -116,14 +118,14 @@ public class LangPolicy {
             SKComp comp = new SKComp();
             Element h_rj;//哈希函数 H(j)^rj
             Element rj;//Zr中的随机值 rj
-//            //赋值
+            //赋值
             comp.attr = attrs[i];
             comp.d = pairing.getG2().newElement();
             comp.dj = pairing.getG1().newElement();
             h_rj = pairing.getG2().newElement();
             rj = pairing.getZr().newRandomElement();
             //将单个属性attr哈希到G_1群上
-            elementFromString(h_rj, comp.attr);
+            h_rj = elementFromString(pk, comp.attr);
             rj.setToRandom();
             //计算H(j)^rj
             h_rj.powZn(rj);
@@ -142,7 +144,7 @@ public class LangPolicy {
      * 将一个字符串按分隔符分开，返回字符串类型的数组。
      * 如将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
      */
-    public static String[] parseAttribute(String str) {
+    private static String[] parseAttribute(String str) {
         ArrayList<String> str_arr = new ArrayList<String>();
         //构造一个用来解析str的StringTokenizer对象。java默认的分隔符是“空格”、“制表符(‘\t’)”、“换行符(‘\n’)”、“回车符(‘\r’)”
         StringTokenizer st = new StringTokenizer(str);//此处按空格划分每个属性
@@ -181,173 +183,6 @@ public class LangPolicy {
         }
     }
 
-    /**
-     * 将字符串表示的策略转换成TreePolicy类实体
-     */
-    public static TreePolicy parsePolicyPostfix(String s) throws Exception {
-        String[] attrAll;//属性集合
-        String attr;//临时单个属性变量
-        ArrayList<TreePolicy> treePolicys = new ArrayList<TreePolicy>();
-        TreePolicy root;
-        //将字符串按空格分割成一个个元素，如"sn:student2 cn:student2 uid:student2 2of3"，分给后得到{"sn:student2","cn:student2","uid:student2","2of3"}
-        attrAll = s.split(" ");
-        //分离属性和门限
-//        int toks_cnt = attrAll.length;
-        for (int index = 0; index < attrAll.length; index++) {
-            int i, k, n;
-            //临时变量
-            attr = attrAll[index];
-            //处理属性
-            if (!attr.contains("of")) {
-                treePolicys.add(baseNode(1, attr));
-            }
-            //处理门限 2of3
-            else {
-                TreePolicy treePolicy;
-                // 剥离 k of n
-                String[] k_n = attr.split("of");
-                k = Integer.parseInt(k_n[0]);//必要属性个数，2of3，如2
-                n = Integer.parseInt(k_n[1]);//属性个数，2of3，如3
-                //对门限值特殊情况的报错
-                if (k < 1) {
-                    System.out.println("error parsing " + s + ": trivially satisfied operator " + attr);
-                    return null;
-                } else if (k > n) {
-                    System.out.println("error parsing " + s + ": unsatisfiable operator " + attr);
-                    return null;
-                } else if (n == 1) {
-                    System.out.println("error parsing " + s + ": indentity operator " + attr);
-                    return null;
-                } else if (n > treePolicys.size()) {
-                    System.out.println("error parsing " + s + ": stack underflow at " + attr);
-                    return null;
-                }
-
-                //构造门限节点 pop n things and fill in children
-                treePolicy = baseNode(k, null);
-                treePolicy.children = new TreePolicy[n];
-
-                for (i = n - 1; i >= 0; i--)
-                    treePolicy.children[i] = treePolicys.remove(treePolicys.size() - 1);
-
-                /* push result */
-                treePolicys.add(treePolicy);
-            }
-        }
-        //对策略树特殊情况的报错
-        if (treePolicys.size() > 1) {
-            System.out.println("error parsing " + s
-                    + ": extra node left on the stack");
-            return null;
-        } else if (treePolicys.size() < 1) {
-            System.out.println("error parsing " + s + ": empty policy");
-            return null;
-        }
-
-        root = treePolicys.get(0);
-        return root;
-    }
-
-    /**
-     * 构造一个策略树的节点
-     */
-    public static TreePolicy baseNode(int k, String s) {
-        TreePolicy p = new TreePolicy();
-        p.k = k;
-        if (!(s == null))
-            p.attr = s;
-        else
-            p.attr = null;
-        p.q = null;
-
-        return p;
-    }
-
-    /**
-     * 填充策略树
-     */
-    public static void fillPolicy(TreePolicy p, PK pub, Element e) throws NoSuchAlgorithmException {
-        int i;
-        Element r, t, h;
-        Pairing pairing = pub.pairing;
-        r = pairing.getZr().newElement();
-        t = pairing.getZr().newElement();
-        h = pairing.getG2().newElement();
-
-        p.q = randPoly(p.k - 1, e);
-
-        if (p.children == null || p.children.length == 0) {
-            p.c = pairing.getG1().newElement();
-            p.cp = pairing.getG2().newElement();
-
-            elementFromString(h, p.attr);
-            p.c = pub.g.duplicate();
-            ;
-            p.c.powZn(p.q.coef[0]);
-            p.cp = h.duplicate();
-            p.cp.powZn(p.q.coef[0]);
-        } else {
-            for (i = 0; i < p.children.length; i++) {
-                r.set(i + 1);
-                evalPoly(t, p.q, r);
-                fillPolicy(p.children[i], pub, t);
-            }
-        }
-    }
-
-    /**
-     * 随机策略
-     */
-    public static Polynomial randPoly(int deg, Element zeroVal) {
-        int i;
-        Polynomial q = new Polynomial();
-        q.deg = deg;
-        q.coef = new Element[deg + 1];
-
-        for (i = 0; i < deg + 1; i++)
-            q.coef[i] = zeroVal.duplicate();
-
-        q.coef[0].set(zeroVal);
-
-        for (i = 1; i < deg + 1; i++)
-            q.coef[i].setToRandom();
-
-        return q;
-    }
-
-    /**
-     * 将单个属性attr哈希到G_1群上
-     */
-    public static void elementFromString(Element h, String s) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
-        byte[] digest = md.digest(s.getBytes());
-        h.setFromHash(digest, 0, digest.length);
-    }
-
-    /**
-     * 评价策略树
-     */
-    public static void evalPoly(Element r, Polynomial q, Element x) {
-        int i;
-        Element s, t;
-
-        s = r.duplicate();
-        t = r.duplicate();
-
-        r.setToZero();
-        t.setToOne();
-
-        for (i = 0; i < q.deg + 1; i++) {
-            /* r += q->coef[i] * t */
-            s = q.coef[i].duplicate();
-            s.mul(t);
-            r.add(s);
-
-            /* t *= x */
-            t.mul(x);
-        }
-    }
-
     /**---------------------------encrypt加密阶段用到的函数---------------------------**/
     /**
      * 加密 文件的读取和保存工作
@@ -375,13 +210,13 @@ public class LangPolicy {
         keyCph = encrypt(pk, policy);
         cph = keyCph.cph;
         m = keyCph.key;
-        System.out.println("AES加密文件的种子：" + m.toString());
-
+        //加密错误
         if (cph == null) {
             System.err.println("加密过程中出现错误！");
             System.exit(0);
         }
-
+        //加密成功
+        System.out.println("AES加密文件的种子：" + m.toString());
         //从本地读取明文文件
         messageBuf = FileOperation.file2byte(inputfile);
         //先将明文使用AES方法进行加密
@@ -395,34 +230,25 @@ public class LangPolicy {
 
     /**
      * 加密密文和key 具体计算密文
-     * Pick a random group element and encrypt it under the specified access
-     * policy. The resulting ciphertext is returned and the Element given as an
-     * argument (which need not be initialized) is set to the random group
-     * element.
+     * Pick a random group element and encrypt it under the specified access policy. The resulting ciphertext is returned and the Element given as an argument (which need not be initialized) is set to the random group element.
      * <p>
-     * After using this function, it is normal to extract the random data in m
-     * using the pbc functions element_length_in_bytes and element_to_bytes and
-     * use it as a key for hybrid encryption.
+     * After using this function, it is normal to extract the random data in m using the pbc functions element_length_in_bytes and element_to_bytes and use it as a key for hybrid encryption.
      * <p>
-     * The policy is specified as a simple string which encodes a postorder
-     * traversal of threshold tree defining the access policy. As an example,
+     * The policy is specified as a simple string which encodes a postorder traversal of threshold tree defining the access policy. As an example,
      * <p>
      * "foo bar fim 2of3 baf 1of2"
      * <p>
-     * specifies a policy with two threshold gates and four leaves. It is not
-     * possible to specify an attribute with whitespace in it (although "_" is
-     * allowed).
+     * specifies a policy with two threshold gates and four leaves. It is not possible to specify an attribute with whitespace in it (although "_" is allowed).
      * <p>
      * Numerical attributes and any other fancy stuff are not supported.
      * <p>
-     * Returns null if an error occured, in which case a description can be
-     * retrieved by calling bswabe_error().
+     * Returns null if an error occured, in which case a description can be retrieved by calling bswabe_error().
      */
     public static CiphertextAndKey encrypt(PK pk, String policy) throws Exception {
-        CiphertextAndKey keyCph = new CiphertextAndKey();
-        Ciphertext cph = new Ciphertext();
+        CiphertextAndKey keyCph = new CiphertextAndKey();//密文和AES种子
+        Ciphertext cph = new Ciphertext();//密文
         Element s;//表示Zr的随机值
-        Element m;//表示Zr的随机值
+        Element m;//表示Zr的随机值，AES种子
 
         //计算Ciphertext实体
         Pairing pairing = pk.pairing;
@@ -430,7 +256,7 @@ public class LangPolicy {
         m = pairing.getGT().newRandomElement();
         cph.cs = pairing.getGT().newElement();
         cph.c = pairing.getG1().newElement();
-        cph.p = parsePolicyPostfix(policy);//将字符串表示的策略转换成TreePolicy类实体
+        cph.treePolicy = parseTreePolicy(policy);//将字符串表示的策略转换成TreePolicy类实体
 
         //计算cph.cs=`C=M*e(g,g)^as
         cph.cs = pk.e_g_ga.duplicate();//pk.e_g_ga=e(g,g)^a
@@ -439,8 +265,8 @@ public class LangPolicy {
         //计算cph.c=C=h^s
         cph.c = pk.h.duplicate();
         cph.c.powZn(s); // num_exps++
-        //填充策略树
-        fillPolicy(cph.p, pk, s);
+        //向策略树中添加多项式
+        addPolynomialToTreePolicy(cph.treePolicy, pk, s);
 
         keyCph.cph = cph;
         keyCph.key = m;
@@ -448,6 +274,192 @@ public class LangPolicy {
         return keyCph;
     }
 
+    /**
+     * 将字符串表示的策略转换成TreePolicy类实体
+     */
+    private static TreePolicy parseTreePolicy(String policy) {
+        String[] attrAll;//属性集合
+        String attr;//临时单个属性变量
+        ArrayList<TreePolicy> treePolicys = new ArrayList<TreePolicy>();
+        TreePolicy root;
+        //将字符串按空格分割成一个个元素，如"sn:student2 cn:student2 uid:student2 2of3"，分给后得到{"sn:student2","cn:student2","uid:student2","2of3"}
+        attrAll = policy.split(" ");
+        //输出必要属性
+        System.out.println("密文中访问树的属性个数：" + (attrAll.length - 1));
+        System.out.print("属性：");
+        for (int i = 0; i < attrAll.length - 1; i++) {
+            System.out.print(attrAll[i] + "  ");
+        }
+        System.out.println();
+        System.out.println("门限规则：" + attrAll[attrAll.length - 1]);
+
+        //分离属性和门限
+//        int toks_cnt = attrAll.length;
+        for (int index = 0; index < attrAll.length; index++) {
+            int i, k, n;
+            //临时变量
+            attr = attrAll[index];
+            //处理属性
+            if (!attr.contains("of")) {
+                treePolicys.add(createOneNode(1, attr));
+            }
+            //处理门限 2of3
+            else {
+                TreePolicy treePolicy;
+                // 剥离 k of n
+                String[] k_n = attr.split("of");
+                k = Integer.parseInt(k_n[0]);//必要属性个数，2of3，如2
+                n = Integer.parseInt(k_n[1]);//属性个数，2of3，如3
+                //对门限值特殊情况的报错
+                if (k < 1) {
+                    System.err.println("属性转换错误： parsing " + policy + ": trivially satisfied operator " + attr);
+                    return null;
+                } else if (k > n) {
+                    System.err.println("属性转换错误：parsing " + policy + ": unsatisfiable operator " + attr);
+                    return null;
+                } else if (n == 1) {
+                    System.err.println("属性转换错误： parsing " + policy + ": indentity operator " + attr);
+                    return null;
+                } else if (n > treePolicys.size()) {
+                    System.err.println("属性转换错误： parsing " + policy + ": stack underflow at " + attr);
+                    return null;
+                }
+                //构造门限节点 pop n things and fill in children
+                treePolicy = createOneNode(k, null);
+                treePolicy.children = new TreePolicy[n];
+                //依次将属性各节点插入到门限节点下
+                for (i = n - 1; i >= 0; i--) treePolicy.children[i] = treePolicys.remove(treePolicys.size() - 1);
+                //使得门限节点为根节点
+                treePolicys.add(treePolicy);
+            }
+        }
+        //对策略树特殊情况的报错
+        if (treePolicys.size() > 1) {
+            System.err.println("error parsing " + policy + ": extra node left on the stack");
+            return null;
+        } else if (treePolicys.size() < 1) {
+            System.err.println("error parsing " + policy + ": empty policy");
+            return null;
+        }
+
+        root = treePolicys.get(0);
+        return root;
+    }
+
+    /**
+     * 构造一个策略树的节点
+     *
+     * @param k 门限值  k of n
+     * @param s 属性
+     */
+    private static TreePolicy createOneNode(int k, String s) {
+        TreePolicy p = new TreePolicy();
+        p.k = k;
+        if (!(s == null))
+            p.attr = s;
+        else
+            p.attr = null;
+        p.q = null;
+
+        return p;
+    }
+
+    /**
+     * 向策略树中添加多项式
+     *
+     * @param randomValue 表示Zr上的随机值，已有值，即根节点的随机值s，qR(0)=s
+     */
+    private static void addPolynomialToTreePolicy(TreePolicy treePolicy, PK pk, Element randomValue) throws NoSuchAlgorithmException {
+        int i;
+        Element nodeNum, temp, hash;//nodeNum:节点顺序值, temp:中间临时变量, hash:Hash函数，负责哈希属性值
+        Pairing pairing = pk.pairing;
+        nodeNum = pairing.getZr().newElement();
+        temp = pairing.getZr().newElement();
+        hash = pairing.getG2().newElement();
+        //产生一个k-1阶的随机多项式，k表示门限值
+        treePolicy.q = randomPolynomial(treePolicy.k - 1, randomValue);
+        //如果访问树没有叶节点，处理叶子节点
+        if (treePolicy.children == null || treePolicy.children.length == 0) {
+            treePolicy.c = pairing.getG1().newElement();
+            treePolicy.cp = pairing.getG2().newElement();
+            //将单个属性attr哈希到G_1或G_2群上
+            hash = elementFromString(pk, treePolicy.attr);
+            //计算Cy=g^(qy(0))
+            treePolicy.c = pk.g.duplicate();
+            treePolicy.c.powZn(treePolicy.q.coef[0]);
+            //计算Cy`=H(att(y))^(qy(0))
+            treePolicy.cp = hash.duplicate();
+            treePolicy.cp.powZn(treePolicy.q.coef[0]);
+        }
+        //如果访问树有叶节点
+        else {
+            for (i = 0; i < treePolicy.children.length; i++) {
+                nodeNum.set(i + 1);
+                evalPolynomial(temp, treePolicy.q, nodeNum);//计算多项式，t是Zr的值，未赋值，空值；p.q是节点的多项式；r是Zr的值，赋值子节点的顺序值，如1/2/3
+                addPolynomialToTreePolicy(treePolicy.children[i], pk, temp);//递归
+            }
+        }
+    }
+
+    /**
+     * 对于每个节点产生随机多项式
+     *
+     * @param deg         多项式的阶 deg=k-1,k为门限值; coef系数是k个，比deg多一个，coef系数中，第一个是都是相同的，都是根节点的随机值qR(0)=s,其他系数都是随机值
+     * @param randomValue Zr的随机值 s qR(0)=s
+     */
+    private static Polynomial randomPolynomial(int deg, Element randomValue) {
+        Polynomial polynomial = new Polynomial();
+        polynomial.deg = deg;//阶
+        polynomial.coef = new Element[deg + 1];//系数
+        //初始化
+        for (int i = 0; i < deg + 1; i++)
+            polynomial.coef[i] = randomValue.duplicate();
+        //第一个元素赋值s
+        polynomial.coef[0].set(randomValue);
+        //剩余元素赋值随机值
+        for (int i = 1; i < deg + 1; i++)
+            polynomial.coef[i].setToRandom();
+        return polynomial;
+    }
+
+    /**
+     * 计算多项式
+     *
+     * @param temp       temp是Zr的值，未赋值，空值
+     * @param polynomial 节点的多项式
+     * @param nodeNum    是Zr的值，值为子节点的顺序值，如1/2/3
+     */
+    private static void evalPolynomial(Element temp, Polynomial polynomial, Element nodeNum) {
+        Element s, t;//是Zr的值
+
+        s = temp.duplicate();
+        t = temp.duplicate();
+
+        temp.setToZero();//0
+        t.setToOne();//1
+        //循环多项式中的系数
+        for (int i = 0; i < polynomial.deg + 1; i++) {
+            // temp += q->coef[i] * t
+            s = polynomial.coef[i].duplicate();
+            s.mul(t);
+            temp.add(s);
+
+            //t *= nodeNum
+            t.mul(nodeNum);
+        }
+    }
+
+    /**
+     * 将单个属性attr哈希到G_1或G_2群上
+     */
+    private static Element elementFromString(PK pk, String attr) throws NoSuchAlgorithmException {
+        Pairing pairing = pk.pairing;
+        Element hash = pairing.getG2().newElement();
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        byte[] digest = md.digest(attr.getBytes());
+        hash.setFromHash(digest, 0, digest.length);
+        return hash;
+    }
     /**---------------------------decrypt解密阶段用到的函数---------------------------**/
     /**
      * 解密 文件的读取和保存工作
@@ -471,21 +483,22 @@ public class LangPolicy {
         pk_byte = FileOperation.file2byte(pkfile);
         pk = SerializeUtils.unserializePK(pk_byte);
 
-        //读取本地保存的密文
+        //读取本地的CT密文文件
         tmp = FileOperation.readCiphertextFile(encfile);
         aesBuf = tmp[0];
         cphBuf = tmp[1];
         cph = SerializeUtils.unserializeCiphertext(pk, cphBuf);
 
-        //从本地获取SK文件
+        //读取本地的SK文件
         sk_byte = FileOperation.file2byte(skfile);
         sk = SerializeUtils.unserializeSK(pk, sk_byte);
-        //检测SK是否满足密文中的访问策略
-        ElementBoolean beb = decrypt(pk, sk, cph);
 
-        if (beb.b) {
-            System.out.println("解密后计算出AES种子：" + beb.e.toString());
-            plt = AESCoder.decrypt(beb.e.toBytes(), aesBuf);
+        //检测SK是否满足密文中的访问策略
+        ElementBoolean elementBoolean = decrypt(pk, sk, cph);
+
+        if (elementBoolean.b) {
+            System.out.println("解密后计算出AES种子：" + elementBoolean.e.toString());
+            plt = AESCoder.decrypt(elementBoolean.e.toBytes(), aesBuf);
             FileOperation.byte2File(plt, decfile);
             System.out.println("文件解密成功，解密后的文件已保存到本地！ ");
         } else {
@@ -495,215 +508,218 @@ public class LangPolicy {
 
     /**
      * 解密 具体计算密文
-     * Decrypt the specified ciphertext using the given private key, filling in
-     * the provided element m (which need not be initialized) with the result.
+     * Decrypt the specified ciphertext using the given private key, filling in the provided element m (which need not be initialized) with the result.
      * <p>
-     * Returns true if decryption succeeded, false if this key does not satisfy
-     * the policy of the ciphertext (in which case m is unaltered).
+     * Returns true if decryption succeeded, false if this key does not satisfy the policy of the ciphertext (in which case m is unaltered).
      */
-    public static ElementBoolean decrypt(PK pk, SK sk, Ciphertext cph) {
+    private static ElementBoolean decrypt(PK pk, SK sk, Ciphertext ciphertext) {
         Element t;
         Element m;
-        ElementBoolean beb = new ElementBoolean();
+        ElementBoolean elementBoolean = new ElementBoolean();
 
         m = pk.pairing.getGT().newElement();
         t = pk.pairing.getGT().newElement();
 
-        //检测SK是否满足密文中的访问策略
-        checkSatisfy(cph.p, sk);
+        //检查私钥SK中的属性是否满足密文中的访问策略树的门限要求
+        ciphertext.treePolicy = checkSKAttributesSatisfy(ciphertext.treePolicy, sk);
         //不满足的情况
-        if (!cph.p.satisfiable) {
+        if (!ciphertext.treePolicy.satisfiable) {
 //            System.err.println("解密失败，秘钥中的属性不满足密文中的访问策略！");
-            beb.e = null;
-            beb.b = false;
-            return beb;
+            elementBoolean.e = null;
+            elementBoolean.b = false;
+            return elementBoolean;
         }
         //满足的情况
-        pickSatisfyMinLeaves(cph.p, sk);
+        else {
+            ciphertext.treePolicy = pickSatisfyMinLeaves(ciphertext.treePolicy, sk);
+            decryptNode(t, ciphertext.treePolicy, sk, pk);
+            //cph.cs=`C=M*e(g,g)^as
+            m = ciphertext.cs.duplicate();
+            m.mul(t); // num_muls++ ，此时t=e(g,g)^rs
+            //cph.c=C=h^s , sk.d=D=(g^r*g^a)^(1/b)
+            t = pk.pairing.pairing(ciphertext.c, sk.d);//此时t=e(h^s,(g^r*g^a)^(1/b))
+            t.invert();//求倒数，此时t=1/(e(h^s,(g^r*g^a)^(1/b)))
+            m.mul(t); // num_muls++
 
-        decFlatten(t, cph.p, sk, pk);
-        //计算cph.cs=`C=M*e(g,g)^as
-        m = cph.cs.duplicate();
-        m.mul(t); // num_muls++ ，此时t=e(g,g)^rs
-        //cph.c=C=h^s , sk.d=D=(g^r*g^a)^(1/b)
-        t = pk.pairing.pairing(cph.c, sk.d);//此时t=e(h^s,(g^r*g^a)^(1/b))
-        t.invert();//求倒数，此时t=1/(e(h^s,(g^r*g^a)^(1/b)))
-        m.mul(t); // num_muls++
-
-        beb.e = m;//m=M
-        beb.b = true;
-
-        return beb;
+            elementBoolean.e = m;//m=M
+            elementBoolean.b = true;
+            return elementBoolean;
+        }
     }
 
     /**
-     * 检测SK是否满足密文中的访问策略
+     * 检查私钥SK中的属性是否满足密文中的访问策略树的门限要求
      */
-    public static void checkSatisfy(TreePolicy p, SK sk) {
-        int i, l;
-        String prvAttr;
+    private static TreePolicy checkSKAttributesSatisfy(TreePolicy treePolicy, SK sk) {
+        String skAttr;
 
-        p.satisfiable = false;
-        if (p.children == null || p.children.length == 0) {
-            for (i = 0; i < sk.comps.size(); i++) {
-                prvAttr = sk.comps.get(i).attr;
-                // System.out.println("prvAtt:" + prvAttr);
-                // System.out.println("p.attr" + p.attr);
-                if (prvAttr.compareTo(p.attr) == 0) {
-                    // System.out.println("=staisfy=");
-                    p.satisfiable = true;
-                    p.attri = i;
+        treePolicy.satisfiable = false;
+        //比对叶子节点
+        if (treePolicy.children == null || treePolicy.children.length == 0) {
+            System.out.println("此轮比对访问树中的属性：" + treePolicy.attr);
+            for (int i = 0; i < sk.comps.size(); i++) {
+                skAttr = sk.comps.get(i).attr;
+//                System.out.println("用户SK中的属性：" + skAttr);
+                //比对字符串，如果相对返回0
+                if (skAttr.compareTo(treePolicy.attr) == 0) {
+                    System.out.println("用户私钥SK中的存在属性：" + skAttr + "可满足访问树！");
+                    treePolicy.satisfiable = true;//如果该叶节点满足，就将叶节点可满足性置为true，并且标出该叶子节点是真正参与了运算
+                    treePolicy.attri = i;
                     break;
                 }
             }
-        } else {
-            for (i = 0; i < p.children.length; i++)
-                checkSatisfy(p.children[i], sk);
-
-            l = 0;
-            for (i = 0; i < p.children.length; i++)
-                if (p.children[i].satisfiable)
-                    l++;
-
-            if (l >= p.k)
-                p.satisfiable = true;
         }
+        //比对非叶子节点
+        else {
+            //递归比对叶子节点
+            for (int i = 0; i < treePolicy.children.length; i++)
+                checkSKAttributesSatisfy(treePolicy.children[i], sk);
+            //统计一共有多少个满足条件的叶子节点
+            int l = 0;
+            for (int i = 0; i < treePolicy.children.length; i++)
+                if (treePolicy.children[i].satisfiable)
+                    l++;
+            //如果满足条件的叶子节点的数量大于整个访问树的门限值，则根节点可满足性置为true
+            if (l >= treePolicy.k)
+                treePolicy.satisfiable = true;
+            System.out.print("用户满足条件的属性个数：" + l);
+            System.out.println("访问树的门限值：" + treePolicy.k);
+        }
+        return treePolicy;
     }
 
     /**
-     * 选择满足条件的最小的叶子
+     * 标出访问树中哪些叶子节点是真正参与了属性配对，便于接下来计算多项式算出AES的种子
      */
-    public static void pickSatisfyMinLeaves(TreePolicy p, SK sk) {
-        int i, k, l, c_i;
-        int len;
+    private static TreePolicy pickSatisfyMinLeaves(TreePolicy treePolicy, SK sk) {
         ArrayList<Integer> c = new ArrayList<Integer>();
-
-        if (p.children == null || p.children.length == 0)
-            p.min_leaves = 1;
+        //处理叶子节点
+        if (treePolicy.children == null || treePolicy.children.length == 0)
+            treePolicy.min_leaves = 1;//真正参与了运算的叶子节点，就将其min_leaves = 1
+            //处理非叶子节点
         else {
-            len = p.children.length;
-            for (i = 0; i < len; i++)
-                if (p.children[i].satisfiable)
-                    pickSatisfyMinLeaves(p.children[i], sk);
-
-            for (i = 0; i < len; i++)
-                c.add(new Integer(i));
-
-            Collections.sort(c, new IntegerComparator(p));
-
-            p.satl = new ArrayList<Integer>();
-            p.min_leaves = 0;
-            l = 0;
-
-            for (i = 0; i < len && l < p.k; i++) {
-                c_i = c.get(i).intValue(); /* c[i] */
-                if (p.children[c_i].satisfiable) {
-                    l++;
-                    p.min_leaves += p.children[c_i].min_leaves;
-                    k = c_i + 1;
-                    p.satl.add(new Integer(k));
+            int len = treePolicy.children.length;
+            //递归操作所有叶子节点，标出哪些叶子节点是真正参与了运算
+            for (int i = 0; i < len; i++)
+                if (treePolicy.children[i].satisfiable)
+                    pickSatisfyMinLeaves(treePolicy.children[i], sk);
+            //创建len个集合
+            for (int i = 0; i < len; i++)
+                c.add(i);
+            //将所有节点标上序号
+            Collections.sort(c, new IntegerComparator(treePolicy));
+            treePolicy.satl = new ArrayList<Integer>();
+            treePolicy.min_leaves = 0;
+            //处理根节点，保存哪些属性将会参与到解密
+            for (int i = 0; i < len && i < treePolicy.k; i++) {
+                int c_i = c.get(i); /* c[i] */
+                if (treePolicy.children[c_i].satisfiable) {
+                    treePolicy.min_leaves += treePolicy.children[c_i].min_leaves;//设置根节点可解密的最小的属性个数
+                    treePolicy.satl.add(c_i + 1);//将参与解密的属性的序号保存起来
                 }
             }
         }
+        return treePolicy;
     }
 
     /**
-     * 排序用
+     * 给访问树中各个元素表示序号排序用
      */
     public static class IntegerComparator implements Comparator<Integer> {
         TreePolicy policy;
 
-        public IntegerComparator(TreePolicy p) {
-            this.policy = p;
+        public IntegerComparator(TreePolicy treePolicy) {
+            this.policy = treePolicy;
         }
 
         @Override
-        public int compare(Integer o1, Integer o2) {
+        public int compare(Integer obj1, Integer obj2) {
             int k, l;
-
-            k = policy.children[o1.intValue()].min_leaves;
-            l = policy.children[o2.intValue()].min_leaves;
+            k = policy.children[obj1.intValue()].min_leaves;
+            l = policy.children[obj2.intValue()].min_leaves;
 
             return k < l ? -1 : k == l ? 0 : 1;
         }
     }
 
     /**
-     * 解密根节点
+     * 解密节点
      */
-    public static void decFlatten(Element r, TreePolicy p, SK prv, PK pub) {
-        Element one;
-        one = pub.pairing.getZr().newElement();
-        one.setToOne();
-        r.setToOne();
-
-        decNodeFlatten(r, one, p, prv, pub);
+    private static void decryptNode(Element elementGT_1, TreePolicy treePolicy, SK sk, PK pk) {
+        Element elementZr_1;
+        elementZr_1 = pk.pairing.getZr().newElement();
+        elementZr_1.setToOne();
+        elementGT_1.setToOne();//GT类型，1
+        decryptLeafNodeAndNoLeafNode(elementGT_1, elementZr_1, treePolicy, sk, pk);
     }
 
     /**
-     * 解密非叶子节点
+     * 解密叶子节点和非叶子节点
      */
-    public static void decNodeFlatten(Element r, Element exp, TreePolicy p, SK prv, PK pub) {
-        if (p.children == null || p.children.length == 0)
-            decLeafFlatten(r, exp, p, prv, pub);
+    private static void decryptLeafNodeAndNoLeafNode(Element elementGT_1, Element elementZr_1, TreePolicy treePolicy, SK sk, PK pk) {
+        if (treePolicy.children == null || treePolicy.children.length == 0)
+            decryptLeafNode(elementGT_1, elementZr_1, treePolicy, sk, pk);
         else
-            decInternalFlatten(r, exp, p, prv, pub);
+            decryptNoLeafNode(elementGT_1, elementZr_1, treePolicy, sk, pk);
     }
 
     /**
      * 解密叶子节点
      */
-    public static void decLeafFlatten(Element r, Element exp, TreePolicy p, SK prv, PK pub) {
-        SKComp c;
+    private static void decryptLeafNode(Element elementGT_1, Element elementZr_1, TreePolicy treePolicy, SK sk, PK pk) {
+        SKComp skComp;
         Element s, t;
 
-        c = prv.comps.get(p.attri);
+        skComp = sk.comps.get(treePolicy.attri);
 
-        s = pub.pairing.getGT().newElement();
-        t = pub.pairing.getGT().newElement();
+        s = pk.pairing.getGT().newElement();
+        t = pk.pairing.getGT().newElement();
 
-        s = pub.pairing.pairing(p.c, c.d); /* num_pairings++; */
-        t = pub.pairing.pairing(p.cp, c.dj); /* num_pairings++; */
+        s = pk.pairing.pairing(treePolicy.c, skComp.d); //计算e(Di,Cx)  num_pairings++;
+        t = pk.pairing.pairing(treePolicy.cp, skComp.dj); //计算e(Di`,Cx`)  num_pairings++;
         t.invert();
         s.mul(t); /* num_muls++; */
-        s.powZn(exp); /* num_exps++; */
+        s.powZn(elementZr_1); /* num_exps++; */
 
-        r.mul(s); /* num_muls++; */
+        elementGT_1.mul(s); /* num_muls++; */
     }
 
     /**
-     * 解密内部节点
+     * 解密非叶子节点
      */
-    public static void decInternalFlatten(Element r, Element exp, TreePolicy p, SK prv, PK pub) {
+    private static void decryptNoLeafNode(Element elementGT_1, Element elementZr_1, TreePolicy treePolicy, SK sk, PK pk) {
         int i;
         Element t, expnew;
 
-        t = pub.pairing.getZr().newElement();
-        expnew = pub.pairing.getZr().newElement();
+        t = pk.pairing.getZr().newElement();
+        expnew = pk.pairing.getZr().newElement();
 
-        for (i = 0; i < p.satl.size(); i++) {
-            lagrangeCoef(t, p.satl, (p.satl.get(i)).intValue());
-            expnew = exp.duplicate();
+        for (i = 0; i < treePolicy.satl.size(); i++) {
+            lagrangeCoef(t, treePolicy.satl, (treePolicy.satl.get(i)));
+            expnew = elementZr_1.duplicate();
             expnew.mul(t);
-            decNodeFlatten(r, expnew, p.children[p.satl.get(i) - 1], prv, pub);
+            decryptLeafNodeAndNoLeafNode(elementGT_1, expnew, treePolicy.children[treePolicy.satl.get(i) - 1], sk, pk);
         }
     }
 
-    public static void lagrangeCoef(Element r, ArrayList<Integer> s, int i) {
+    /**
+     * 求解拉格朗日插值法
+     */
+    private static void lagrangeCoef(Element elementGT_1, ArrayList<Integer> s, int i) {
         int j, k;
         Element t;
-        t = r.duplicate();
+        t = elementGT_1.duplicate();
 
-        r.setToOne();
+        elementGT_1.setToOne();
         for (k = 0; k < s.size(); k++) {
             j = s.get(k).intValue();
             if (j == i)
                 continue;
             t.set(-j);
-            r.mul(t); /* num_muls++; */
+            elementGT_1.mul(t); /* num_muls++; */
             t.set(i - j);
             t.invert();
-            r.mul(t); /* num_muls++; */
+            elementGT_1.mul(t); /* num_muls++; */
         }
     }
 
@@ -736,5 +752,4 @@ public class LangPolicy {
         }
         return stringBuilder.toString();
     }
-
 }

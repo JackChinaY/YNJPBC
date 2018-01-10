@@ -5,7 +5,7 @@ import it.unisa.dia.gas.jpbc.Element;
 import java.util.ArrayList;
 
 /**
- * 用户私钥SK
+ * 用户私钥SK，用户的所有属性封装在集合中
  */
 public class SK {
 

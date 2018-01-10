@@ -69,7 +69,7 @@ public class SerializeUtils {
         ArrayList<Byte> arrlist = new ArrayList<Byte>();
         serializeElement(arrlist, cph.cs);
         serializeElement(arrlist, cph.c);
-        serializePolicy(arrlist, cph.p);
+        serializePolicy(arrlist, cph.treePolicy);
 
         return Byte_arr2byte_arr(arrlist);
     }
@@ -77,7 +77,7 @@ public class SerializeUtils {
     /**
      * 序列化策略
      */
-    public static void serializePolicy(ArrayList<Byte> arrlist, TreePolicy p) {
+    private static void serializePolicy(ArrayList<Byte> arrlist, TreePolicy p) {
         serializeUint32(arrlist, p.k);
 
         if (p.children == null || p.children.length == 0) {
@@ -98,7 +98,7 @@ public class SerializeUtils {
      * @param arrlist 总的字节数组
      * @param e       要写入的元素元素
      */
-    public static void serializeElement(ArrayList<Byte> arrlist, Element e) {
+    private static void serializeElement(ArrayList<Byte> arrlist, Element e) {
         byte[] arr_e = e.toBytes();
         serializeUint32(arrlist, arr_e.length);
         byteArrListAppend(arrlist, arr_e);
@@ -110,7 +110,7 @@ public class SerializeUtils {
      * @param arrlist 总的字节数组
      * @param s       要写入的元素
      */
-    public static void serializeString(ArrayList<Byte> arrlist, String s) {
+    private static void serializeString(ArrayList<Byte> arrlist, String s) {
         byte[] b = s.getBytes();
         serializeUint32(arrlist, b.length);
         byteArrListAppend(arrlist, b);
@@ -121,7 +121,7 @@ public class SerializeUtils {
      * 向字节数组中首先写入元素的长度
      * potential problem: 元素长度必须小于 2^31
      */
-    public static void serializeUint32(ArrayList<Byte> arrlist, int k) {
+    private static void serializeUint32(ArrayList<Byte> arrlist, int k) {
         byte b;
         for (int i = 3; i >= 0; i--) {
             b = (byte) ((k & (0x000000ff << (i * 8))) >> (i * 8));
@@ -141,7 +141,7 @@ public class SerializeUtils {
     /**
      * 将Byte字节数组以byte字节数组的形式返回
      */
-    public static byte[] Byte_arr2byte_arr(ArrayList<Byte> B) {
+    private static byte[] Byte_arr2byte_arr(ArrayList<Byte> B) {
         int len = B.size();
         byte[] b = new byte[len];
 
@@ -215,7 +215,7 @@ public class SerializeUtils {
         offset = SerializeUtils.unserializeElement(cphBuf, offset, cph.c);
 
         offset_arr[0] = offset;
-        cph.p = SerializeUtils.unserializePolicy(pub, cphBuf, offset_arr);
+        cph.treePolicy = SerializeUtils.unserializeTreePolicy(pub, cphBuf, offset_arr);
         offset = offset_arr[0];
 
         return cph;
@@ -224,12 +224,12 @@ public class SerializeUtils {
     /**
      * 反序列化访问树T
      *
-     * @param pub
+     * @param pk
      * @param arr
      * @param offset
      * @return
      */
-    public static TreePolicy unserializePolicy(PK pub, byte[] arr, int[] offset) {
+    private static TreePolicy unserializeTreePolicy(PK pk, byte[] arr, int[] offset) {
         int i;
         int n;
         TreePolicy p = new TreePolicy();
@@ -247,15 +247,15 @@ public class SerializeUtils {
             offset[0] = unserializeString(arr, offset[0], sb);
             p.attr = sb.substring(0);
 
-            p.c = pub.pairing.getG1().newElement();
-            p.cp = pub.pairing.getG1().newElement();
+            p.c = pk.pairing.getG1().newElement();
+            p.cp = pk.pairing.getG1().newElement();
 
             offset[0] = unserializeElement(arr, offset[0], p.c);
             offset[0] = unserializeElement(arr, offset[0], p.cp);
         } else {
             p.children = new TreePolicy[n];
             for (i = 0; i < n; i++)
-                p.children[i] = unserializePolicy(pub, arr, offset);
+                p.children[i] = unserializeTreePolicy(pk, arr, offset);
         }
 
         return p;
@@ -265,12 +265,12 @@ public class SerializeUtils {
     /**
      * 反序列化私钥SK
      */
-    public static SK unserializeSK(PK pub, byte[] b) {
+    public static SK unserializeSK(PK pk, byte[] b) {
         SK prv = new SK();
         int i, offset, len;
         offset = 0;
 
-        prv.d = pub.pairing.getG2().newElement();
+        prv.d = pk.pairing.getG2().newElement();
         offset = unserializeElement(b, offset, prv.d);
 
         prv.comps = new ArrayList<SKComp>();
@@ -284,8 +284,8 @@ public class SerializeUtils {
             offset = unserializeString(b, offset, sb);
             c.attr = sb.substring(0);
 
-            c.d = pub.pairing.getG2().newElement();
-            c.dj = pub.pairing.getG2().newElement();
+            c.d = pk.pairing.getG2().newElement();
+            c.dj = pk.pairing.getG2().newElement();
 
             offset = unserializeElement(b, offset, c.d);
             offset = unserializeElement(b, offset, c.dj);
@@ -304,7 +304,7 @@ public class SerializeUtils {
      * @param e      要反序列化的结果元素
      * @return 下一个元素的起始位置
      */
-    public static int unserializeElement(byte[] arr, int offset, Element e) {
+    private static int unserializeElement(byte[] arr, int offset, Element e) {
         int len;//将要读取的元素的长度
         byte[] e_byte;//为将要读取的元素申请临时空间
 
@@ -329,7 +329,7 @@ public class SerializeUtils {
      * <p>
      * String str = sb.substring(0);
      */
-    public static int unserializeString(byte[] arr, int offset, StringBuffer sb) {
+    private static int unserializeString(byte[] arr, int offset, StringBuffer sb) {
         int i;
         int len;
         byte[] str_byte;
@@ -354,7 +354,7 @@ public class SerializeUtils {
      * @param offset 偏移量
      *               Usage:You have to do offset+=4 after call this method
      */
-    public static int unserializeUint32(byte[] arr, int offset) {
+    private static int unserializeUint32(byte[] arr, int offset) {
         int r = 0;
         for (int i = 3; i >= 0; i--)
             r |= (byte2int(arr[offset++])) << (i * 8);
@@ -364,7 +364,7 @@ public class SerializeUtils {
     /**
      * 字节转int类型，java中byte范围-128 ~ 127，闭区间
      */
-    public static int byte2int(byte b) {
+    private static int byte2int(byte b) {
         if (b >= 0)
             return b;
         return (256 + b);
