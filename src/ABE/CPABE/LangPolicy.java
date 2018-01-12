@@ -564,7 +564,7 @@ public class LangPolicy {
                 if (skAttr.compareTo(treePolicy.attr) == 0) {
                     System.out.println("用户私钥SK中的存在属性：" + skAttr + "可满足访问树！");
                     treePolicy.satisfiable = true;//如果该叶节点满足，就将叶节点可满足性置为true，并且标出该叶子节点是真正参与了运算
-                    treePolicy.attri = i;
+                    treePolicy.decryptAttributeValue = i;
                     break;
                 }
             }
@@ -608,14 +608,14 @@ public class LangPolicy {
                 c.add(i);
             //将所有节点标上序号
             Collections.sort(c, new IntegerComparator(treePolicy));
-            treePolicy.satl = new ArrayList<Integer>();
+            treePolicy.minAttrsList = new ArrayList<Integer>();
             treePolicy.min_leaves = 0;
             //处理根节点，保存哪些属性将会参与到解密
             for (int i = 0; i < len && i < treePolicy.k; i++) {
                 int c_i = c.get(i); /* c[i] */
                 if (treePolicy.children[c_i].satisfiable) {
                     treePolicy.min_leaves += treePolicy.children[c_i].min_leaves;//设置根节点可解密的最小的属性个数
-                    treePolicy.satl.add(c_i + 1);//将参与解密的属性的序号保存起来
+                    treePolicy.minAttrsList.add(c_i + 1);//将参与解密的属性的序号保存起来
                 }
             }
         }
@@ -670,7 +670,7 @@ public class LangPolicy {
         SKComp skComp;
         Element s, t;
 
-        skComp = sk.comps.get(treePolicy.attri);
+        skComp = sk.comps.get(treePolicy.decryptAttributeValue);
 
         s = pk.pairing.getGT().newElement();
         t = pk.pairing.getGT().newElement();
@@ -689,37 +689,43 @@ public class LangPolicy {
      */
     private static void decryptNoLeafNode(Element elementGT_1, Element elementZr_1, TreePolicy treePolicy, SK sk, PK pk) {
         int i;
-        Element t, expnew;
+        Element elementZr, expnew;
 
-        t = pk.pairing.getZr().newElement();
+        elementZr = pk.pairing.getZr().newElement();
         expnew = pk.pairing.getZr().newElement();
-
-        for (i = 0; i < treePolicy.satl.size(); i++) {
-            lagrangeCoef(t, treePolicy.satl, (treePolicy.satl.get(i)));
+        //用于解密的最小范围的属性的循环
+        for (i = 0; i < treePolicy.minAttrsList.size(); i++) {
+            lagrangeCoef(elementZr, treePolicy.minAttrsList, treePolicy.minAttrsList.get(i));
             expnew = elementZr_1.duplicate();
-            expnew.mul(t);
-            decryptLeafNodeAndNoLeafNode(elementGT_1, expnew, treePolicy.children[treePolicy.satl.get(i) - 1], sk, pk);
+            expnew.mul(elementZr);
+            decryptLeafNodeAndNoLeafNode(elementGT_1, expnew, treePolicy.children[treePolicy.minAttrsList.get(i) - 1], sk, pk);
         }
     }
 
     /**
-     * 求解拉格朗日插值法
+     * 求解拉格朗日插系数 求(x-j)/(i-j)
      */
-    private static void lagrangeCoef(Element elementGT_1, ArrayList<Integer> s, int i) {
+    private static void lagrangeCoef(Element elementZr_1, ArrayList<Integer> minAttrsList, int minAttrID) {
         int j, k;
-        Element t;
-        t = elementGT_1.duplicate();
+        Element elementZr_temp;
+        elementZr_temp = elementZr_1.duplicate();
 
-        elementGT_1.setToOne();
-        for (k = 0; k < s.size(); k++) {
-            j = s.get(k).intValue();
-            if (j == i)
+        elementZr_1.setToOne();
+        //求循环乘
+        for (k = 0; k < minAttrsList.size(); k++) {
+            j = minAttrsList.get(k);
+            //i==j时，跳过
+            if (j == minAttrID)
                 continue;
-            t.set(-j);
-            elementGT_1.mul(t); /* num_muls++; */
-            t.set(i - j);
-            t.invert();
-            elementGT_1.mul(t); /* num_muls++; */
+            //求(x-j)
+            elementZr_temp.set(-j);
+            elementZr_1.mul(elementZr_temp); // num_muls++
+            //求(i-j)
+            elementZr_temp.set(minAttrID - j);
+            //求1/(i-j)
+            elementZr_temp.invert();
+            //求(x-j)/(i-j)
+            elementZr_1.mul(elementZr_temp); //num_muls++
         }
     }
 

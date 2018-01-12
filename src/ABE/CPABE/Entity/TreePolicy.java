@@ -20,9 +20,9 @@ public class TreePolicy {
     public Polynomial q;//多项式
 
     //在解密过程中使用
-    public boolean satisfiable;//
+    public boolean satisfiable;//如果为真，该叶子节点是真正参与了配对
     public int min_leaves;//对于根节点来说，min_leaves是可解密的最小的属性个数，等于上面的k，对于非根节点来说，min_leaves==1说明参与了真正的秘钥解密
-    public int attri;
-    public ArrayList<Integer> satl;//只用于根节点，保存了可解密的最小的属性群的序号
+    public int decryptAttributeValue;//对于非根节点来说，是解密的属性
+    public ArrayList<Integer> minAttrsList;//只用于根节点，保存了可解密的最小的属性群的序号
 //    public ArrayList<Integer> satl = new ArrayList<Integer>();
 }

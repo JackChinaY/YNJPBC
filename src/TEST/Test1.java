@@ -39,7 +39,9 @@ public class Test1 {
 //            System.out.println("指数群Zr:" + Zr.newRandomElement());
 //        }
         //将变量Ppub，Qu，Su，V初始化为G1中的元素，G1是加法群
-        G1 = pairing.getG1();
+        GT = pairing.getGT();
+
+//        G1 = pairing.getG1();
 //        PK = G1.newElement();
 //        Zr = pairing.getZr();
 //        PK = Zr.newElement();
