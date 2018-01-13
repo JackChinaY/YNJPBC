@@ -37,7 +37,7 @@ public class CPABE implements Ident {
             + "sn:student2 cn:student2 uid:student2 userPassword:student2 "
             + "ou:idp o:computer mail:student2@sdu.edu.cn title:student";
     //访问树中的解密策略
-    private String policy = "sn:student2 cn:student2 uid:student2 3of3";
+    private String policy = "sn:student2 cn:student2 uid:student2 2of3";
 
     public CPABE() {
     }
