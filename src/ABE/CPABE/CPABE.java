@@ -34,7 +34,7 @@ public class CPABE implements Ident {
     private String Message_Decrypt_File = "Message_Decrypt.pdf";//解密后的明文
     //学生的属性
     private String student_attr = "objectClass:inetOrgPerson objectClass:organizationalPerson "
-            + "sn:student2 cn:student2 uid:student2 userPassword:student2 "
+            + "sn:student2 cn:student3 uid:student2 userPassword:student2 "
             + "ou:idp o:computer mail:student2@sdu.edu.cn title:student";
     //访问树中的解密策略
     private String policy = "sn:student2 cn:student2 uid:student2 2of3";

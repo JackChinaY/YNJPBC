@@ -1,4 +1,4 @@
-package CPABE.cpabe.policy;
+package ABE.CPABE_shanda.cpabe.policy;
 
 import java.util.ArrayList;
 import java.util.Collections;

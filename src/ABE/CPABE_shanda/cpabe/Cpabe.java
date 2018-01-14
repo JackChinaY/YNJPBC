@@ -1,7 +1,7 @@
-package CPABE.cpabe;
+package ABE.CPABE_shanda.cpabe;
 
-import CPABE.bswabe.*;
-import CPABE.cpabe.policy.LangPolicy;
+import ABE.CPABE_shanda.bswabe.*;
+import ABE.CPABE_shanda.cpabe.policy.LangPolicy;
 import it.unisa.dia.gas.jpbc.Element;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package CPABE.bswabe;
+package ABE.CPABE_shanda.bswabe;
 
 import java.util.ArrayList;
 

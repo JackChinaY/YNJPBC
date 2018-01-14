@@ -60,7 +60,7 @@ public class AESCoder {
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         // 初始化为解密模式的密码器
         cipher.init(Cipher.DECRYPT_MODE, skeySpec);
-        // 加密
+        // 解密
         byte[] decrypted = cipher.doFinal(ciphertext);
         return decrypted;
     }

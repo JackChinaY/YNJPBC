@@ -1,4 +1,4 @@
-package CPABE.cpabe;
+package ABE.CPABE_shanda.cpabe;
 import java.security.SecureRandom;
 
 import javax.crypto.Cipher;

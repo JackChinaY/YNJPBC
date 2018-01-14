@@ -1,4 +1,4 @@
-package CPABE.cpabe;
+package ABE.CPABE_shanda.cpabe;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

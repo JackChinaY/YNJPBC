@@ -1,7 +1,7 @@
-package ABE.CPABE.Entity;
+package CSC_CPABE.CPA_CPABE.Entity;
 
-import ABE.CPABE.Entity.Ciphertext;
 import it.unisa.dia.gas.jpbc.Element;
+
 /**
  * 密文和AES种子
  */

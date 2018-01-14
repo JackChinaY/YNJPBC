@@ -14,7 +14,8 @@ import java.util.*;
  * 主函数调用的全部方法，各个过程具体执行的方法
  */
 public class LangPolicy {
-    /**---------------------------keygen生成私钥阶段用到的函数---------------------------**/
+    //region /**---------------------------setup初始化阶段用到的函数---------------------------**/
+    /**---------------------------setup初始化阶段用到的函数---------------------------**/
     /**
      * setup初始化 输出PK、MK
      *
@@ -56,6 +57,9 @@ public class LangPolicy {
         System.out.println("系统主密钥 " + mk.toString());
         System.out.println("系统完整公钥 " + pk.toString());
     }
+    //endregion
+
+    //region /**---------------------------keygen生成私钥阶段用到的函数---------------------------**/
     /**---------------------------keygen生成私钥阶段用到的函数---------------------------**/
     /**
      * 生成私钥 文件的读取和保存工作 输入PK、MK、ATTR(用户属性)，输出SK
@@ -139,7 +143,7 @@ public class LangPolicy {
 
     /**
      * 将一个字符串按分隔符分开，返回字符串类型的数组。
-     * 如将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
+     * 如：将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
      */
     private static String[] parseAttribute(String str) {
         ArrayList<String> str_arr = new ArrayList<String>();
@@ -148,19 +152,28 @@ public class LangPolicy {
         String token;
         String res[];
         int len;
-
+        //将各个属性添加到数组中
         while (st.hasMoreTokens()) {
             token = st.nextToken();
             if (token.contains(":")) {
                 str_arr.add(token);
             } else {
-                System.out.println("Some error happens in the input attribute");
+                System.out.println("用户的属性输入有误！");
                 System.exit(0);
             }
         }
-
-        Collections.sort(str_arr, new SortByAlphabetic());
-
+//        System.out.println("排序前：" + str_arr);
+//        for (String s : str_arr) {
+//            System.out.print(s + "  ");
+//        }
+//        System.out.println("");
+//        Collections.sort(str_arr, new SortByAlphabetic());//按字母顺序进行排序
+//        System.out.println("排序后：");
+//        for (String s : str_arr) {
+//            System.out.print(s + "  ");
+//        }
+//        System.out.println("");
+        //将集合赋值到数组中
         len = str_arr.size();
         res = new String[len];
         for (int i = 0; i < len; i++)
@@ -179,7 +192,9 @@ public class LangPolicy {
             return 0;
         }
     }
+    //endregion
 
+    // region /**---------------------------encrypt加密阶段用到的函数---------------------------**/
     /**---------------------------encrypt加密阶段用到的函数---------------------------**/
     /**
      * 加密 文件的读取和保存工作
@@ -245,7 +260,7 @@ public class LangPolicy {
         CiphertextAndKey keyCph = new CiphertextAndKey();//密文和AES种子
         Ciphertext cph = new Ciphertext();//密文
         Element s;//表示Zr的随机值
-        Element m;//表示Zr的随机值，AES种子
+        Element m;//表示GT的随机值，AES种子
 
         //计算Ciphertext实体
         Pairing pairing = pk.pairing;
@@ -469,6 +484,9 @@ public class LangPolicy {
         hash.setFromHash(digest, 0, digest.length);
         return hash;
     }
+    //endregion
+
+    //region /**---------------------------decrypt解密阶段用到的函数---------------------------**/
     /**---------------------------decrypt解密阶段用到的函数---------------------------**/
     /**
      * 解密 文件的读取和保存工作
@@ -557,7 +575,8 @@ public class LangPolicy {
     }
 
     /**
-     * 检查私钥SK中的属性是否满足密文中的访问策略树的门限要求
+     * 检查私钥SK中的属性是否满足密文中的访问策略树的门限要求，
+     * 如果该叶节点满足，就将叶节点可满足性置为true
      */
     private static TreePolicy checkSKAttributesSatisfy(TreePolicy treePolicy, SK sk) {
         String skAttr;
@@ -569,7 +588,7 @@ public class LangPolicy {
             for (int i = 0; i < sk.comps.size(); i++) {
                 skAttr = sk.comps.get(i).attr;
 //                System.out.println("用户SK中的属性：" + skAttr);
-                //比对字符串，如果相对返回0
+                //比对字符串，如果相等返回0
                 if (skAttr.compareTo(treePolicy.attr) == 0) {
                     System.out.println("，结果：该用户满足！");
                     treePolicy.satisfiable = true;//如果该叶节点满足，就将叶节点可满足性置为true，并且标出该叶子节点是真正参与了运算
@@ -581,13 +600,15 @@ public class LangPolicy {
         //比对非叶子节点
         else {
             //递归比对叶子节点
-            for (int i = 0; i < treePolicy.children.length; i++)
+            for (int i = 0; i < treePolicy.children.length; i++) {
                 checkSKAttributesSatisfy(treePolicy.children[i], sk);
+            }
             //统计一共有多少个满足条件的叶子节点
             int l = 0;
-            for (int i = 0; i < treePolicy.children.length; i++)
+            for (int i = 0; i < treePolicy.children.length; i++) {
                 if (treePolicy.children[i].satisfiable)
                     l++;
+            }
             //如果满足条件的叶子节点的数量大于整个访问树的门限值，则根节点可满足性置为true
             if (l >= treePolicy.k)
                 treePolicy.satisfiable = true;
@@ -606,7 +627,7 @@ public class LangPolicy {
         if (treePolicy.children == null || treePolicy.children.length == 0) {
             treePolicy.min_leaves = 1;//真正参与了运算的叶子节点，就将其min_leaves = 1
         }
-        //处理非叶子节点
+        //处理非叶子节点，即处理根节点
         else {
             int len = treePolicy.children.length;
             //递归操作所有叶子节点，标出哪些叶子节点是真正参与了运算
@@ -615,24 +636,27 @@ public class LangPolicy {
                     pickSatisfyMinLeaves(treePolicy.children[i], sk);
                 }
             }
-            //创建len个集合，数量为所有叶子节点数
+            //创建根节点下所有叶子节点数个集合，数量为所有叶子节点数
             for (int i = 0; i < len; i++) {
                 leafNodesList.add(i);
             }
-            //将所有节点标上序号
-            Collections.sort(leafNodesList, new IntegerComparator(treePolicy));
-            System.out.println("输出排序");
+            //将所有叶子节点标上序号
+//            Collections.sort(leafNodesList, new IntegerComparator(treePolicy));
+//            System.out.println("输出排序");
 //            for (int x:leafNodesList) {
 //                System.out.println(x);
 //            }
             treePolicy.minAttrsList = new ArrayList<Integer>();
             treePolicy.min_leaves = 0;//根节点的最小叶子数先置0
             //处理根节点中的叶子节点，保存哪些属性将会参与到解密
-            for (int i = 0; i < len && i < treePolicy.k; i++) {
+//            for (int i = 0; i < len && i < treePolicy.k; i++) {
+            for (int i = 0; i < len; i++) {
                 int c_i = leafNodesList.get(i); // c[i]
+                //向最小属性集合中添加的叶子节点序号，序号从1开始
                 if (treePolicy.children[c_i].satisfiable) {
                     treePolicy.min_leaves += treePolicy.children[c_i].min_leaves;//累加计算得到根节点可解密的最小的属性个数
-                    treePolicy.minAttrsList.add(c_i + 1);//将参与解密的属性的序号保存起来
+                    treePolicy.minAttrsList.add(c_i + 1);//将参与解密的属性的序号保存起来，加1的目的是：for循环是从0开始的，但叶节点的顺序是从1开始的，minAttrsList集合中保存着叶节点的顺序，所以加1
+                    System.out.println("向最小属性集合中添加的叶子节点序号：" + (c_i + 1));
                 }
             }
         }
@@ -689,7 +713,7 @@ public class LangPolicy {
     }
 
     /**
-     * 解密非叶子节点，比如根节点
+     * 解密非叶子节点，从根节点开始
      */
     private static void decryptNoLeafNode(Element elementGT_1, TreePolicy treePolicy, SK sk, PK pk) {
         Element elementZrCoef = pk.pairing.getZr().newElement();
@@ -707,30 +731,31 @@ public class LangPolicy {
      */
     private static void decryptLeafNode(Element elementGT_1, Element elementZrCoef, TreePolicy treePolicy, SK sk, PK pk) {
         SKComp skComp;
-        Element s, t;
+        Element up, down;//临时中间计算变量 GT类型 up是分子 down是分母
 
         skComp = sk.comps.get(treePolicy.decryptAttributeValue);
 
-        s = pk.pairing.getGT().newElement();
-        t = pk.pairing.getGT().newElement();
+        up = pk.pairing.getGT().newElement();
+        down = pk.pairing.getGT().newElement();
 
-        s = pk.pairing.pairing(treePolicy.c, skComp.d); //计算e(Di,Cx)  num_pairings++;
-        t = pk.pairing.pairing(treePolicy.cp, skComp.dj); //计算e(Di`,Cx`)  num_pairings++;
-        t.invert();//此时t=1/e(Di`,Cx`)
-        s.mul(t); //此时s=e(Di,Cx)/e(Di`,Cx`)=Fz   num_muls++
-        s.powZn(elementZrCoef); //此时s=(e(Di,Cx)/e(Di`,Cx`))^(拉格朗日系数，即deta i,Sx`(0) )  num_exps++
+        up = pk.pairing.pairing(treePolicy.c, skComp.d); //计算e(Di,Cx)  num_pairings++;
+        down = pk.pairing.pairing(treePolicy.cp, skComp.dj); //计算e(Di`,Cx`)  num_pairings++;
+        down.invert();//此时down=1/e(Di`,Cx`)
+        up.mul(down); //此时up=e(Di,Cx)/e(Di`,Cx`)=Fz   num_muls++
+        up.powZn(elementZrCoef); //此时up=(e(Di,Cx)/e(Di`,Cx`))^(拉格朗日系数，即deta i,Sx`(0) )  num_exps++
 
-        elementGT_1.mul(s); //此时elementGT_1=e(Di,Cx)/e(Di`,Cx`)  num_muls++
+        elementGT_1.mul(up); //此时elementGT_1=e(Di,Cx)/e(Di`,Cx`)  num_muls++
     }
 
 
     /**
-     * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)
+     * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)，即x=0,i=minAttrID,j=minAttrsList.get(k)
      */
     private static Element lagrangeCoef(Element elementZr_1, ArrayList<Integer> minAttrsList, int minAttrID) {
         int j, k;
         Element elementZr_temp = elementZr_1.duplicate();
-
+        System.out.println("待解密叶子总数：" + minAttrsList.size());
+        System.out.println("此时解密叶子节点序号：" + minAttrID);
         elementZr_1.setToOne();
         //求循环乘
         for (k = 0; k < minAttrsList.size(); k++) {
@@ -750,6 +775,7 @@ public class LangPolicy {
         }
         return elementZr_1;
     }
+    //endregion
 
     /**
      * 测试用
