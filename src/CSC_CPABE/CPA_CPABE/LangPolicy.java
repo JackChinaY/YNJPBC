@@ -1,9 +1,6 @@
 package CSC_CPABE.CPA_CPABE;
 
 import ABE.CPABE.AESCoder;
-//import ABE.CPABE.Entity.*;
-import ABE.CPABE.FileOperation;
-import ABE.CPABE.SerializeUtils;
 import CSC_CPABE.CPA_CPABE.Entity.*;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
@@ -12,7 +9,6 @@ import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.StringTokenizer;
 
 /**
@@ -23,9 +19,10 @@ public class LangPolicy {
     /**---------------------------setup初始化阶段用到的函数---------------------------**/
     /**
      * setup初始化 输出PK、MK
+     *
+     * @param attributes_U 属性全集
      */
     public static void setup(MK mk, PK pk, String attributes_U) {
-        byte[] pk_byte, mk_byte;
         //给系统公钥赋值
         //仅对于双线性映射，要使用PBC包装并获得性能，必须设置配对工厂的使用PBC（可能）属性
         PairingFactory.getInstance().setUsePBCWhenPossible(true);
@@ -35,13 +32,16 @@ public class LangPolicy {
         //产生1个Zr的随机值 主密钥
         mk.x = pairing.getZr().newRandomElement().getImmutable();//随机值
         //给系统公钥赋值
+        //公钥中的g
         pk.g = pairing.getG1().newRandomElement().getImmutable();//生成G1的生成元g
+        //公钥中的g2
         pk.g2 = pairing.getG1().newRandomElement().getImmutable();
+        //公钥中的Z
         Element g1 = pk.g.powZn(mk.x).getImmutable();
         pk.Z = pairing.pairing(g1, pk.g2).getImmutable();
-        //将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
-        String[] attr_arr = parseAttribute(attributes_U);
-        pk.hList = new Element[attr_arr.length * 2];
+        //将一个字符串解析成字符数组
+        ArrayList<String> arrayList = parseString2ArrayList(attributes_U);
+        pk.hList = new Element[arrayList.size() * 2];
         for (int i = 0; i < pk.hList.length; i++) {
             pk.hList[i] = pairing.getG1().newRandomElement().getImmutable();
         }
@@ -54,34 +54,49 @@ public class LangPolicy {
     }
 
     /**
-     * 将一个字符串按分隔符分开，返回字符串类型的数组。
-     * 如：将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
+     * 将一个字符串解析成字符数组
+     * 将一个字符串按分隔符分开，返回字符串类型的数组，如：将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
      */
-    private static String[] parseAttribute(String str) {
-        ArrayList<String> str_arr = new ArrayList<String>();
+    private static ArrayList<String> parseString2ArrayList(String string) {
+        ArrayList<String> arrayList = new ArrayList<String>();
         //构造一个用来解析str的StringTokenizer对象。java默认的分隔符是“空格”、“制表符(‘\t’)”、“换行符(‘\n’)”、“回车符(‘\r’)”
-        StringTokenizer st = new StringTokenizer(str);//此处按空格划分每个属性
+        StringTokenizer stringTokenizer = new StringTokenizer(string);//此处按空格划分每个属性
         String token;
-        String res[];
         int len;
         //将各个属性添加到数组中
-        while (st.hasMoreTokens()) {
-            token = st.nextToken();
-            if (token.contains(":")) {
-                str_arr.add(token);
-            } else {
-                System.out.println("用户的属性输入有误！");
-                System.exit(0);
-            }
+        while (stringTokenizer.hasMoreTokens()) {
+            token = stringTokenizer.nextToken();
+//            if (token.contains(":")) {
+            arrayList.add(token);
+//            } else {
+//                System.out.println("用户的属性输入有误！");
+//                System.exit(0);
+//            }
         }
-        System.out.println("属性集合中元素个数：" + str_arr.size());
-        System.out.println("属性集合：" + str_arr);
-        //将集合赋值到数组中
-        len = str_arr.size();
-        res = new String[len];
-        for (int i = 0; i < len; i++)
-            res[i] = str_arr.get(i);
-        return res;
+        System.out.print("属性集合中元素个数：" + arrayList.size());
+        System.out.println("，元素为：" + arrayList);
+        return arrayList;
+    }
+
+    /**
+     * 求两个集合的并集，并且去重复，在attrList1后追加attrList2
+     */
+    private static ArrayList<String> unionArrayList(ArrayList<String> attrList1, ArrayList<String> attrList2) {
+        ArrayList<String> list1 = attrList1;
+        ArrayList<String> list2 = attrList2;
+        list2.removeAll(list1);//去重复
+        list1.addAll(list2);//并集
+        return list1;
+    }
+
+    /**
+     * 求两个集合的交集
+     */
+    private static ArrayList<String> intersectionArrayList(ArrayList<String> attrList1, ArrayList<String> attrList2) {
+        ArrayList<String> list1 = attrList1;
+        ArrayList<String> list2 = attrList2;
+        list1.retainAll(list2);//并集
+        return list1;
     }
 
     /**
@@ -102,29 +117,42 @@ public class LangPolicy {
     /**
      * 生成私钥 文件的读取和保存工作 输入PK、MK、ATTR(用户属性)，输出SK
      *
-     * @param mk              PK
-     * @param pk              SK
-     * @param attributes_user 用户的属性
+     * @param mk            PK
+     * @param pk            SK
+     * @param attributes_U  属性全集
+     * @param attributes_Us 属性
+     * @param attributes_A  用户的属性
      */
-    public static SK keygen(MK mk, PK pk, String attributes_U, String attributes_user) throws NoSuchAlgorithmException {
-        //将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
-        String[] attr_arr = parseAttribute(attributes_U);
+    public static SK keygen(MK mk, PK pk, String attributes_U, String attributes_Us, String attributes_A) throws NoSuchAlgorithmException {
+        //将一个字符串解析成字符数组
+        ArrayList<String> arrayList_U = parseString2ArrayList(attributes_U);
         //构造一个多项式
-        Polynomial polynomial = createRandomPolynomial(attr_arr.length - 1, mk.x);
+        Polynomial polynomial = createRandomPolynomial(arrayList_U.size() - 1, mk.x);
         Pairing pairing = pk.pairing;
         Element Zr_temp = pairing.getZr().newElement();
         Element nodeID = pairing.getZr().newElement();
         Element Zr_r = pairing.getZr().newElement();
         Element G1_temp1 = pairing.getG1().newElement();
         Element G1_temp2 = pairing.getG1().newElement();
-        //将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
-        String[] attrList = parseAttribute(attributes_user);
+        //将一个字符串解析成字符数组
+        ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
+        ArrayList<String> arrayList_Us = parseString2ArrayList(attributes_Us);
+        //求Us和A的并集
+        ArrayList<String> arrayList_AAndUs = unionArrayList(arrayList_A, arrayList_Us);
+        System.out.println("A和U`的并集:" + arrayList_AAndUs);
+        //产生私钥
         SK sk = new SK();
+        //给小钥匙赋值属性
         sk.comps = new ArrayList<SKComp>();
-        for (int i = 0; i < attrList.length; i++) {
+        System.out.println("私钥中共有" + arrayList_AAndUs.size() + "个小钥匙！");
+        //产生私钥中每把小钥匙
+        for (int i = 0; i < arrayList_AAndUs.size(); i++) {
             SKComp comp = new SKComp();
+            comp.attr = arrayList_AAndUs.get(i);
             //计算ai=(g2^q(i))*((h0*hi)^ri)
-            nodeID.set(i);//i的值
+//            System.out.println(arrayList_AAndUs.get(i));
+//            System.out.println(Integer.getInteger(arrayList_AAndUs.get(i)));
+            nodeID.set(Integer.parseInt(arrayList_AAndUs.get(i)));//i的值，i是属性
             Zr_temp = computePolynomial(Zr_temp, polynomial, nodeID);//q(i)
             G1_temp1.powZn(Zr_temp);//g2^q(i)
             G1_temp2 = pk.hList[0].mul(pk.hList[i]).getImmutable();//h0*hi
@@ -133,17 +161,17 @@ public class LangPolicy {
             comp.a = G1_temp1.mul(G1_temp2);//ai=(g2^q(i))*((h0*hi)^ri)
             //计算b=g^ri
             comp.b = pk.g.powZn(Zr_r).getImmutable();//b=g^ri
-            //计算h.1-----h.2L-1
-            comp.hList = new Element[2 * attr_arr.length - 1];//2L-1个
-            for (int j = 0; j < 2 * attr_arr.length - 1; j++) {
-                comp.hList[0] = pk.hList[i + 1].powZn(Zr_r).getImmutable();
+            //计算Ci,1-----Ci,2L-1
+            comp.hList = new Element[2 * arrayList_U.size() - 1];//2L-1个
+            for (int j = 0; j < comp.hList.length; j++) {
+                comp.hList[j] = pk.hList[i + 1].powZn(Zr_r).getImmutable();
             }
             sk.comps.add(comp);
-            System.out.println("一个属性私钥添加成功！");
+            System.out.println("第" + (i + 1) + "个小钥匙生成成功！");
         }
 
 //        System.out.println("用户私钥 D=(g^r*g^a)^(1/b) " + sk.d);
-        System.out.println("用户私钥中属性个数:" + sk.comps.size());
+//        System.out.println("用户私钥中属性个数:" + sk.comps.size());
 //        System.out.println("用户属性:" + attr_str);
         return sk;
     }
@@ -213,96 +241,269 @@ public class LangPolicy {
     /**
      * 加密 文件的读取和保存工作
      *
-     * @param mk              PK
-     * @param pk              SK
-     * @param attributes_user 用户的属性
-     *                        //     * @param encfile   加密后密文的本地保存的路径和文件名，密文分两个部分，前半部分是用了AES方法加密的文件，后半部分是访问策略（访问树）
+     * @param mk                        PK
+     * @param pk                        SK
+     * @param attributes_U              属性全集
+     * @param policy_S                  门限属性
+     * @param threshold                 门限
+     * @param messageFilePathAndName    明文
+     * @param ciphertextFilePathAndName 密文
      */
-    public static void encrypt(MK mk, PK pk, String attributes_U, String attributes_user) throws Exception {
+    public static Ciphertext encrypt(MK mk, PK pk, String attributes_U, String attributes_OMG, String policy_S, int threshold, String messageFilePathAndName, String ciphertextFilePathAndName) throws Exception {
         Pairing pairing = pk.pairing;
-        Element M = pairing.getGT().newRandomElement();//表示GT的随机值，AES种子
+        //表示GT的随机值，AES种子
+        Element M = pairing.getGT().newRandomElement();
         //计算Z^s
         Element Zr_s = pairing.getZr().newRandomElement();
         Element GT_temp = pk.Z.powZn(Zr_s).getImmutable();
         //密文实体
         Ciphertext ciphertext = new Ciphertext();
         //计算C0=M*Z^s
-        ciphertext.C0 = M.mul(GT_temp);
+        ciphertext.C0 = M.mul(GT_temp).getImmutable();
         //计算C1=g^s
         ciphertext.C1 = pk.g.powZn(Zr_s).getImmutable();
-        for (int i = 0; i < ; i++) {
-            
+        //计算C2
+        //将一个字符串解析成字符数组
+        ArrayList<String> arrayList_U = parseString2ArrayList(attributes_U);
+        ArrayList<String> attrList_OMG = parseString2ArrayList(attributes_OMG);
+        ArrayList<String> attrList_S = parseString2ArrayList(policy_S);
+        //求S和OMG的并集
+        ArrayList<String> list = unionArrayList(attrList_S, attrList_OMG);
+        System.out.println("S和OMG的并集:" + list);
+        Element G1_temp1 = pairing.getG1().newElement();
+        G1_temp1.setToOne();
+        //循环乘hj
+        Element G1_temp2 = pairing.getG1().newElement();
+        for (int i = 0; i < list.size(); i++) {
+            G1_temp1.mul(pk.hList[Integer.parseInt(list.get(i))]);
         }
-
-        byte[] pk_byte;//PK
-        PK pk = new PK();
-        //密文实体，包含访问树
-        Ciphertext cph;
-        CiphertextAndKey keyCph;
-        byte[] messageBuf;//明文的字节数组
-        byte[] ciphertextBuf;//密文的字节数组
-        byte[] aesBuf;//密文的字节数组
-        Element m;//表示Zr的随机值
-
-        //读取本地的PK文件
-        pk_byte = FileOperation.file2byte(pkfile);
-        pk = SerializeUtils.unserializePK(pk_byte);
-        //计算Ciphertext实体
-        keyCph = encrypt(pk, policy);
-        cph = keyCph.cph;
-        m = keyCph.key;
-        //加密错误
-        if (cph == null) {
-            System.err.println("加密过程中出现错误！");
-            System.exit(0);
-        }
+        //G1_temp1=h0*(循环乘hj)
+        G1_temp1.mul(pk.hList[0]);
+        //计算C2=(h0*(循环乘hj))^s
+        ciphertext.C2 = G1_temp1.powZn(Zr_s);
         //加密成功
-        System.out.println("AES加密文件的种子：" + m.toString());
+        System.out.println("AES加密文件的种子：" + M);
         //从本地读取明文文件
-        messageBuf = FileOperation.file2byte(inputfile);
+        byte[] messageBuf = FileOperation.file2byte(messageFilePathAndName);
+        ;//明文的字节数组
         //先将明文使用AES方法进行加密
-        aesBuf = AESCoder.encrypt(m.toBytes(), messageBuf);
-        //序列化密文
-        ciphertextBuf = SerializeUtils.serializeCiphertext(cph);
+        byte[] aesBuf = AESCoder.encrypt(M.toBytes(), messageBuf);
         // 将密文保存到本地
-        FileOperation.Ciphertext2File(encfile, ciphertextBuf, aesBuf);
+        FileOperation.Ciphertext2File(ciphertextFilePathAndName, aesBuf);
         System.out.println("密文成功生成，已保存到本地！");
+        return ciphertext;
     }
     //endregion
 
+    // region /**---------------------------decrypt解密阶段用到的函数---------------------------**/
+    /**---------------------------decrypt解密阶段用到的函数---------------------------**/
     /**
-     * 加密密文和key 具体计算密文
+     * 解密 文件的读取和保存工作
+     *
+     * @param pk                        SK
+     * @param attributes_A              用户属性
+     * @param policy_S                  门限属性
+     * @param threshold                 门限
+     * @param ciphertextFilePathAndName 密文
+     * @param ciphertextFilePathAndName 解密后的明文
      */
-    public static CiphertextAndKey encrypt(PK pk, String policy) throws Exception {
-        CiphertextAndKey keyCph = new CiphertextAndKey();//密文和AES种子
-        Ciphertext cph = new Ciphertext();//密文
-        Element s;//表示Zr的随机值
-        Element m;//表示GT的随机值，AES种子
-
-        //计算Ciphertext实体
+    public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String attributes_OMG, String policy_S, int threshold, String ciphertextFilePathAndName, String decryptFilePathAndName) throws Exception {
         Pairing pairing = pk.pairing;
-        s = pairing.getZr().newRandomElement();
-        m = pairing.getGT().newRandomElement();
-        cph.cs = pairing.getGT().newElement();
-        cph.c = pairing.getG1().newElement();
-        cph.treePolicy = parseTreePolicy(policy);//将字符串表示的策略转换成TreePolicy类实体
+        //解密用的D1和D2
+        Element D1;
+        Element D2 = pairing.getGT().newElement();
+        D2.setToOne();
+        //将一个字符串解析成字符数组
+        ArrayList<String> attrList_A = parseString2ArrayList(attributes_A);
+        ArrayList<String> attrList_OMG = parseString2ArrayList(attributes_OMG);
+        ArrayList<String> attrList_S = parseString2ArrayList(policy_S);
+        //求S和OMG的并集
+        ArrayList<String> arrayList_AAndS = intersectionArrayList(attrList_A, attrList_S);
+        System.out.println("A和S的并集:" + arrayList_AAndS);
+        ArrayList<String> arrayList_As = new ArrayList<String>();
+        if (arrayList_AAndS.size() < threshold) {
+            System.err.println("解密失败，秘钥中的属性不满足密文中的访问策略！");
+        } else {
+            //求集合A`，共t个
+            for (int i = 0; i < threshold; i++) {
+                arrayList_As.add(arrayList_AAndS.get(i));
+            }
+            //求A`和OMG的并集
+            ArrayList<String> arrayList_AsAndOMG = unionArrayList(arrayList_As, attrList_OMG);
+            System.out.println("A`和OMG的并集:" + arrayList_AsAndOMG);
+            //求S和OMG的并集
+            ArrayList<String> arrayList_SAndOMG = unionArrayList(attrList_S, attrList_OMG);
+            System.out.println("S和OMG的并集:" + arrayList_SAndOMG);
+            //接下来求D1
+            Element G1_temp1 = pairing.getG1().newElement();
+            //临时变量，便于求拉格朗日系数
+            Element Zr_temp1 = pairing.getZr().newElement();
+            G1_temp1.setToOne();
+            //最外层连乘，处理i
+            for (int i = 0, j = 0; i < arrayList_AsAndOMG.size(); j++) {
+                if (arrayList_AsAndOMG.get(i).equals(sk.comps.get(j).attr)) {
+                    //最内层连乘，处理j
+                    for (int k = 0; k < arrayList_SAndOMG.size(); k++) {
+                        if (!arrayList_SAndOMG.get(k).equals(arrayList_AsAndOMG.get(i))) {
+                            int temp1 = Integer.parseInt(arrayList_SAndOMG.get(k)) - 1;
+                            System.out.println("temp1：" + temp1);
+                            Element temp2 = sk.comps.get(j).hList[temp1];
+                            System.out.println("temp2：" + temp2);
+                            G1_temp1.mul(temp2);
+//                            G1_temp1.mul(sk.comps.get(j).hList[Integer.parseInt(arrayList_SAndOMG.get(k)) - 1]);
+                        }
+                    }
+                    //乘上ai
+                    G1_temp1.mul(sk.comps.get(j).a);
+                    //求拉格朗日系数 deta(0) (x-j)/(i-j)
+                    Zr_temp1 = lagrangeCoef(Zr_temp1, arrayList_AsAndOMG, sk.comps.get(j).attr);
+                    //乘上拉格朗日系数
+                    G1_temp1.powZn(Zr_temp1);
+                    i++;
+                } else {
+                }
+            }
+            D1 = G1_temp1.getImmutable();
+            //接下来求D2
+            G1_temp1.setToOne();
+            Zr_temp1.setToOne();
+            //最外层连乘，处理i
+            for (int i = 0, j = 0; i < arrayList_AsAndOMG.size(); j++) {
+                if (arrayList_AsAndOMG.get(i).equals(sk.comps.get(j).attr)) {
+                    //乘上bi
+                    G1_temp1.mul(sk.comps.get(j).b);
+                    //求拉格朗日系数 deta(0) (x-j)/(i-j)
+                    Zr_temp1 = lagrangeCoef(Zr_temp1, arrayList_AsAndOMG, sk.comps.get(j).attr);
+                    //乘上拉格朗日系数
+                    G1_temp1.powZn(Zr_temp1);
+                    i++;
+                } else {
+                }
+            }
+            D2 = G1_temp1.getImmutable();
+            //计算M
+            Element e_C2_D2 = pairing.pairing(ciphertext.C2, D2).getImmutable();
+            Element e_C1_D1 = pairing.pairing(ciphertext.C1, D1).getImmutable();
+            e_C1_D1.invert();
+            e_C2_D2.mul(e_C1_D1);
+            //AES种子
+            Element M = ciphertext.C0.mul(e_C2_D2).getImmutable();
+            System.out.println("解密后计算出AES种子：" + M);
+        }
 
-        //计算cph.cs=`C=M*e(g,g)^as
-        cph.cs = pk.e_g_ga.duplicate();//pk.e_g_ga=e(g,g)^a
-        cph.cs.powZn(s); // num_exps++
-        cph.cs.mul(m); // num_muls++
-        //计算cph.c=C=h^s
-        cph.c = pk.h.duplicate();
-        cph.c.powZn(s); // num_exps++
-        //向策略树中添加多项式
-        addPolynomialToTreePolicy(cph.treePolicy, pk, s);
 
-        keyCph.cph = cph;
-        keyCph.key = m;
-
-        return keyCph;
+//        byte[] aesBuf, cphBuf;//AES文件，密文文件
+//        byte[] plt;//明文
+//        byte[] sk_byte;//私钥
+//        byte[] pk_byte;//公钥
+//        byte[][] tmp;//用于临时储存AES文件，密文文件
+//        Ciphertext cph;//密文策略
+//        SK sk;
+//        PK pk;
+//
+//        //读取本地的PK文件
+//        pk_byte = FileOperation.file2byte(pkfile);
+//        pk = SerializeUtils.unserializePK(pk_byte);
+//
+//        //读取本地的CT密文文件
+//        tmp = FileOperation.readCiphertextFile(encfile);
+//        aesBuf = tmp[0];
+//        cphBuf = tmp[1];
+//        cph = SerializeUtils.unserializeCiphertext(pk, cphBuf);
+//
+//        //读取本地的SK文件
+//        sk_byte = FileOperation.file2byte(skfile);
+//        sk = SerializeUtils.unserializeSK(pk, sk_byte);
+//
+//        //检测SK是否满足密文中的访问策略
+//        ElementBoolean elementBoolean = decrypt(pk, sk, cph);
+//
+//        if (elementBoolean.flag) {
+//            System.out.println("解密后计算出AES种子：" + elementBoolean.seed.toString());
+//            plt = AESCoder.decrypt(elementBoolean.seed.toBytes(), aesBuf);
+//            FileOperation.byte2File(plt, decfile);
+//            System.out.println("文件解密成功，解密后的文件已保存到本地！ ");
+//        } else {
+//            System.err.println("解密失败，秘钥中的属性不满足密文中的访问策略！");
+//        }
     }
 
+    /**
+     * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)，即x=0,i=minAttrID,j=minAttrsList.get(k)
+     */
+    private static Element lagrangeCoef(Element elementZr_1, ArrayList<String> attrsList, String currentAttr) {
+        String j;
+        Element elementZr_temp = elementZr_1.duplicate();
+        System.out.println("待解密叶子总数：" + attrsList.size());
+        System.out.println("此时解密叶子节点序号：" + currentAttr);
+        elementZr_1.setToOne();
+        //求循环乘
+        for (int k = 0; k < attrsList.size(); k++) {
+            j = attrsList.get(k);
+            //i==j时，跳过
+            if (j == currentAttr)
+                continue;
+            //求(x-j)
+            elementZr_temp.set(-Integer.parseInt(j));//x-j=0-j
+            elementZr_1.mul(elementZr_temp); // num_muls++
+            //求(i-j) TODO
+            System.out.println(Integer.parseInt(currentAttr) - Integer.parseInt(j));
+            elementZr_temp.set(Integer.parseInt(currentAttr) - Integer.parseInt(j));
+            //求1/(i-j)
+            elementZr_temp.invert();
+            //求(x-j)/(i-j)
+            elementZr_1.mul(elementZr_temp); //num_muls++
+        }
+        return elementZr_1;
+    }
+
+    //endregion
+
+
+//    /**
+//     * 求两个集合的并集，并且去重复
+//     */
+//    public static ArrayList<String> unionList(String[] attrList1, String[] attrList2) throws Exception {
+//        ArrayList<String> list1 = new ArrayList<String>();
+//        ArrayList<String> list2 = new ArrayList<String>();
+//        Arrays.asList(attrList1);//String[]转ArrayList
+//        Arrays.asList(attrList2);
+//        list2.removeAll(list1);//去重复
+//        list1.addAll(list2);//并集
+//        return list1;
+//    }
+
+
+//    /**
+//     * 将一个字符串按分隔符分开，返回字符串类型的数组。
+//     * 如：将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
+//     */
+//    private static String[] parseAttribute(String str) {
+//        ArrayList<String> str_arr = new ArrayList<String>();
+//        //构造一个用来解析str的StringTokenizer对象。java默认的分隔符是“空格”、“制表符(‘\t’)”、“换行符(‘\n’)”、“回车符(‘\r’)”
+//        StringTokenizer st = new StringTokenizer(str);//此处按空格划分每个属性
+//        String token;
+//        String res[];
+//        int len;
+//        //将各个属性添加到数组中
+//        while (st.hasMoreTokens()) {
+//            token = st.nextToken();
+//            if (token.contains(":")) {
+//                str_arr.add(token);
+//            } else {
+//                System.out.println("用户的属性输入有误！");
+//                System.exit(0);
+//            }
+//        }
+//        System.out.println("属性集合中元素个数：" + str_arr.size());
+//        System.out.println("属性集合：" + str_arr);
+//        //将集合赋值到数组中
+//        len = str_arr.size();
+//        res = new String[len];
+//        for (int i = 0; i < len; i++)
+//            res[i] = str_arr.get(i);
+//        return res;
+//    }
 //    /**
 //     * 将字符串表示的策略转换成TreePolicy类实体，此时对于访问树中各个节点，叶子节点含门限值k、和属性attr，非叶子节点只包含门限值k
 //     */
@@ -696,34 +897,7 @@ public class LangPolicy {
 //    }
 //
 //
-//    /**
-//     * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)，即x=0,i=minAttrID,j=minAttrsList.get(k)
-//     */
-//    private static Element lagrangeCoef(Element elementZr_1, ArrayList<Integer> minAttrsList, int minAttrID) {
-//        int j, k;
-//        Element elementZr_temp = elementZr_1.duplicate();
-//        System.out.println("待解密叶子总数：" + minAttrsList.size());
-//        System.out.println("此时解密叶子节点序号：" + minAttrID);
-//        elementZr_1.setToOne();
-//        //求循环乘
-//        for (k = 0; k < minAttrsList.size(); k++) {
-//            j = minAttrsList.get(k);
-//            //i==j时，跳过
-//            if (j == minAttrID)
-//                continue;
-//            //求(x-j)
-//            elementZr_temp.set(-j);//x-j=0-j
-//            elementZr_1.mul(elementZr_temp); // num_muls++
-//            //求(i-j)
-//            elementZr_temp.set(minAttrID - j);
-//            //求1/(i-j)
-//            elementZr_temp.invert();
-//            //求(x-j)/(i-j)
-//            elementZr_1.mul(elementZr_temp); //num_muls++
-//        }
-//        return elementZr_1;
-//    }
-//
+
 //    /**
 //     * 测试用
 //     */

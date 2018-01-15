@@ -1,5 +1,6 @@
 package CSC_CPABE.CPA_CPABE;
 
+import CSC_CPABE.CPA_CPABE.Entity.Ciphertext;
 import CSC_CPABE.CPA_CPABE.Entity.MK;
 import CSC_CPABE.CPA_CPABE.Entity.PK;
 import CSC_CPABE.CPA_CPABE.Entity.SK;
@@ -15,21 +16,41 @@ public class CPA_CPABE implements Ident {
     private String PK_File = "public_key";//系统公钥
     private String MK_File = "master_key";//系统主密钥
     private String SK_File = "private_key";//用户私钥
-    private String Message_Original_File = "Message_Original.pdf";//明文
+    private String Message_Original_File = "Message_Original.txt";//明文
     private String Message_Ciphertext_File = "Message_Ciphertext";//密文
-    private String Message_Decrypt_File = "Message_Decrypt.pdf";//解密后的明文
-    //属性全集U
-    private String attributes_U = "university:jkd college:jsj major:major1 userPassword:student2 title:student";
-    //属性全集U`
-    private String attributes_Us = "university:jkd college:jsj major:major1";
-    //学生的属性
-    private String attributes_user = "university:jkd college:jsj major:major1";
-    //访问树中的解密策略
-    private String policy = "sn:student2 cn:student2 uid:student2 2of3";
+    private String Message_Decrypt_File = "Message_Decrypt.txt";//解密后的明文
+    //    //属性全集U，共L个元素
+//    private String attributes_U = "university:jkd college:jsj major:major1 type:student2 title:student";
+//    //用户的属性
+//    private String attributes_user = "university:jkd college:jsj major:major1 title:student";
+//    //属性全集U`，共L-1个元素，是U的子集
+//    private String attributes_Us = "university:jkd college:jsj major:major1 title:student";
+//    //属性集OMG，共L-t个元素，是U`的子集
+//    private String attributes_OMG = "university:jkd college:jsj major:major1";
+//    //访问树中的解密策略 S
+//    private String policy_S = "university:jkd college:jsj major:major1";
+
+    //属性全集U，共L个元素
+    private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
+//    private String attributes_U = "1 2 3 4 5 6";
+    //用户的属性
+    private String attributes_A = "1 2 3 4 5";
+//    private String attributes_A = "1 2 3";
+    //属性全集U`，共L-1个元素，是U的子集
+    private String attributes_Us = "11 12 13 14 15 16 17 18 19";
+//    private String attributes_Us = "11 12 13 14 15";
+    //属性集OMG，共L-t个元素，是U`的子集
+    private String attributes_OMG = "11 12 13 14 15 16 17";
+//    private String attributes_OMG = "11 12 13";
+    //访问树中的解密策略 S
+    private String attributes_S = "1 2 3 4 5 6";
+    //门限t
+    private int threshold = 3;
 
     private MK mk = new MK();
     private PK pk = new PK();
     private SK sk = new SK();
+    private Ciphertext ciphertext = new Ciphertext();
 
     /**
      * Setup 初始化接口， 生成公共参数 PK 和主密钥 MK，并分别存储到 pub_key 和 master_key 对应的文件路径中去。
@@ -48,7 +69,7 @@ public class CPA_CPABE implements Ident {
     public void keygen() {
         System.out.println("-----------------keygen密钥生成阶段--------------------");
         try {
-            sk = LangPolicy.keygen(mk, pk, attributes_U, attributes_user);
+            sk = LangPolicy.keygen(mk, pk, attributes_U, attributes_Us, attributes_A);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
@@ -63,7 +84,7 @@ public class CPA_CPABE implements Ident {
     public void encrypt() {
         System.out.println("-------------------encrypt加密阶段----------------------");
         try {
-            LangPolicy.encrypt(mk, pk, attributes_U, policy);
+            ciphertext = LangPolicy.encrypt(mk, pk, attributes_U, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -76,11 +97,11 @@ public class CPA_CPABE implements Ident {
     @Override
     public void decrypt() {
         System.out.println("-------------------decrypt解密阶段----------------------");
-//        try {
-//            LangPolicy.decrypt(fileBasePath + PK_File, fileBasePath + SK_File, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -92,7 +113,7 @@ public class CPA_CPABE implements Ident {
         Ident identProxy = (Ident) Proxy.newProxyInstance(CPA_CPABE.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
         identProxy.setup();
         identProxy.keygen();
-//        identProxy.encrypt();
-//        identProxy.decrypt();
+        identProxy.encrypt();
+        identProxy.decrypt();
     }
 }
