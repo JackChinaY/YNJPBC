@@ -32,21 +32,21 @@ public class LangPolicy {
         //椭圆类型是Type A，生成 对称-质数阶-双线性群,即G1==G2，返回代数结构,代数结构包含：群、环、场（groups, rings and fields）
         Pairing pairing = PairingFactory.getPairing("a.properties");
         pk.pairing = pairing;
-        pk.g = pairing.getG1().newRandomElement().getImmutable();//生成G1的生成元g
+        pk.g = pairing.getG1().newRandomElement();//生成G1的生成元g
 //        pk.f = pairing.getG1().newRandomElement().getImmutable();
 //        pk.h = pairing.getG1().newRandomElement().getImmutable();
 //        pk.gp = pairing.getG2().newRandomElement().getImmutable();
-        pk.e_g_ga = pairing.getGT().newRandomElement().getImmutable();
+        pk.e_g_ga = pairing.getGT().newRandomElement();
         //产生两个Zr的随机值
         Element a, b;
-        a = pairing.getZr().newRandomElement().getImmutable();//随机值a
-        b = pairing.getZr().newRandomElement().getImmutable();//随机值b
+        a = pairing.getZr().newRandomElement();//随机值a
+        b = pairing.getZr().newRandomElement();//随机值b
         //给主密钥赋值
-        mk.b = b.getImmutable();//随机值
-        mk.ga = pk.g.powZn(a).getImmutable();
+        mk.b = b.duplicate();//随机值
+        mk.ga = pk.g.duplicate().powZn(a);
         //给系统公钥赋值
-        pk.h = pk.g.powZn(b).getImmutable();
-        pk.e_g_ga = pairing.pairing(pk.g, mk.ga);
+        pk.h = pk.g.duplicate().powZn(b);
+        pk.e_g_ga = pairing.pairing(pk.g, mk.ga).duplicate();
         //将系统公钥PK保存到本地文件
         pk_byte = SerializeUtils.serializePK(pk);
         FileOperation.byte2File(pk_byte, pkfile);
@@ -564,7 +564,7 @@ public class LangPolicy {
             m = ciphertext.cs.duplicate();
             m.mul(t); //此时t=e(g,g)^rs,m=M*e(g,g)^as*e(g,g)^rs   num_muls++
             //cph.c=C=h^s , sk.d=D=(g^r*g^a)^(1/b)
-            t = pk.pairing.pairing(ciphertext.c, sk.d);//此时t=e(h^s,(g^r*g^a)^(1/b))
+            t = pk.pairing.pairing(ciphertext.c, sk.d).duplicate();//此时t=e(h^s,(g^r*g^a)^(1/b))
             t.invert();//求倒数，此时t=1/(e(h^s,(g^r*g^a)^(1/b)))
             m.mul(t); //此时m=(M*e(g,g)^as*e(g,g)^rs)/(e(h^s,(g^r*g^a)^(1/b)))=M   num_muls++
 
