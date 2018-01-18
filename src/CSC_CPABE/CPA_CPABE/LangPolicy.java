@@ -329,7 +329,7 @@ public class LangPolicy {
      * @param policy_S                  门限属性
      * @param threshold                 门限
      * @param ciphertextFilePathAndName 密文
-     * @param ciphertextFilePathAndName 解密后的明文
+     * @param decryptFilePathAndName 解密后的明文
      */
     public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String attributes_OMG, String policy_S, int threshold, String ciphertextFilePathAndName, String decryptFilePathAndName) throws Exception {
         Pairing pairing = pk.pairing;

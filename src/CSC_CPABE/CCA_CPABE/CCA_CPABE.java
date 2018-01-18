@@ -8,10 +8,10 @@ import CSC_CPABE.CCA_CPABE.Entity.SK;
 import java.lang.reflect.Proxy;
 
 /**
- * 定长密文CP-ABE之CPA_CPABE(选择明文攻击安全的CPABE)
+ * 定长密文CP-ABE之CCA_CPABE(选择密文攻击安全的CPABE)
  */
-public class CPA_CPABE implements Ident {
-    private String fileBasePath = "E:/ABE/CPACPABE/";//文件保存的基础路径
+public class CCA_CPABE implements Ident {
+    private String fileBasePath = "E:/ABE/CCACPABE/";//文件保存的基础路径
     private String PK_File = "public_key";//系统公钥
     private String MK_File = "master_key";//系统主密钥
     private String SK_File = "private_key";//用户私钥
@@ -107,9 +107,9 @@ public class CPA_CPABE implements Ident {
      * 主函数
      */
     public static void main(String[] args) {
-        CPA_CPABE ident = new CPA_CPABE();
+        CCA_CPABE ident = new CCA_CPABE();
         // 动态代理，统计各个方法耗时
-        Ident identProxy = (Ident) Proxy.newProxyInstance(CPA_CPABE.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
+        Ident identProxy = (Ident) Proxy.newProxyInstance(CCA_CPABE.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
         identProxy.setup();
         identProxy.keygen();
         identProxy.encrypt();

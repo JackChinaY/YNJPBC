@@ -12,13 +12,20 @@ public class PK {
     public Element g2;//G1 g2
     public Element Z;//GT的,Z=e(g1,g2)
     public Element[] hList;//G1
+    public Element d1;//kexi1,G1类型
+    public Element d2;//kexi2,G1类型
+    public Element d3;//kexi3,G1类型
+
 
     @Override
     public String toString() {
         return "PK{" +
                 "g=" + g +
-                "g2=" + g2 +
+                ",g2=" + g2 +
                 ", Z=" + Z +
+                ", d1=" + d1 +
+                ", d2=" + d2 +
+                ", d3=" + d3 +
                 '}';
     }
 }

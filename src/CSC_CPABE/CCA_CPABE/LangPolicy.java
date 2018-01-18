@@ -46,6 +46,10 @@ public class LangPolicy {
         for (int i = 0; i < pk.hList.length; i++) {
             pk.hList[i] = pairing.getG1().newRandomElement();
         }
+        //公钥中的kexi 1-3
+        pk.d1 = pairing.getG1().newRandomElement();
+        pk.d2 = pairing.getG1().newRandomElement();
+        pk.d3 = pairing.getG1().newRandomElement();
         System.out.println("系统主密钥 " + mk.toString());
         System.out.println("系统公钥 " + pk.toString());
         System.out.println("系统公钥中2L个G的随机值如下，共" + pk.hList.length + "个");
@@ -103,13 +107,57 @@ public class LangPolicy {
     /**
      * 将单个属性attr哈希到G_1或G_2群上
      */
-    private static Element elementFromString(PK pk, String attr) throws NoSuchAlgorithmException {
+    private static Element Hash4G1(PK pk, String attr) throws NoSuchAlgorithmException {
         Pairing pairing = pk.pairing;
         Element hash = pairing.getG1().newElement();
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         byte[] digest = md.digest(attr.getBytes());
         hash.setFromHash(digest, 0, digest.length);
         return hash;
+    }
+
+    /**
+     * 将单个属性attr哈希到Zr群上,最后返回一个Zr类型的Element元素
+     */
+    private static Element Hash4Zr(PK pk, String attr) throws NoSuchAlgorithmException {
+        Pairing pairing = pk.pairing;
+        Element hash = pairing.getZr().newElement();
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        byte[] digest = md.digest(attr.getBytes());
+        hash.setFromHash(digest, 0, digest.length);
+        return hash;
+    }
+
+    /**
+     * 将单个属性attr哈希到Zr群上,最后返回一个Zr类型的Element元素
+     */
+    private static Element Hash4Zr(PK pk, byte[] array) throws NoSuchAlgorithmException {
+        Pairing pairing = pk.pairing;
+        Element hash = pairing.getZr().newElement();
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        byte[] digest = md.digest(array);
+        hash.setFromHash(digest, 0, digest.length);
+        return hash;
+    }
+
+    /**
+     * 将多个Element元素整合到一个byte数组中
+     */
+    private static byte[] Element2ByteArray(Element... args) {
+        //先求最终拼接的数组总长度
+        int lengthAll = 0;
+        for (Element element : args) {
+            lengthAll += element.toBytes().length;
+        }
+        //开辟一个数组
+        byte[] array = new byte[lengthAll];
+        //开始拼接，elementByteLength是每个元素的字节长度
+        int elementByteLength = 0;
+        for (Element element : args) {
+            System.arraycopy(element.toBytes(), 0, array, elementByteLength, element.toBytes().length);
+            elementByteLength += element.toBytes().length;
+        }
+        return array;
     }
     //endregion
 
@@ -277,6 +325,7 @@ public class LangPolicy {
 //        System.out.println(ciphertext.C0);
         //计算C1=g^s
         ciphertext.C1 = pk.g.duplicate().powZn(Zr_s);
+        /**-----------------------------------接下来求C2-------------------------------**/
         //计算C2
         //将一个字符串解析成字符数组
 //        ArrayList<String> arrayList_U = parseString2ArrayList(attributes_U);
@@ -296,8 +345,35 @@ public class LangPolicy {
         G1_temp1.mul(pk.hList[0]);
         //计算C2=(h0*(循环乘hj))^s
         ciphertext.C2 = G1_temp1.powZn(Zr_s).duplicate();
+        /**-----------------------------------接下来求C2-------------------------------**/
+        //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
+        G1_temp1.setToOne();
+        //将C0C1C2转换成字节数组
+        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.C2);
+        //求哈希值
+        Element c = Hash4Zr(pk, byteArray);
+        //G1D1=d1^c
+        Element G1D1 = pk.d1.duplicate().powZn(c);
+        //Zr的随机值r
+        Element Zr_r = pairing.getZr().newRandomElement();
+        //赋值r
+        ciphertext.r = Zr_r.duplicate();
+        //G1_temp1=1*d1^c
+        G1_temp1.mul(G1D1);
+        //G1D2=d2^r
+        Element G1D2 = pk.d2.duplicate().powZn(Zr_r);//G1D2=d2^r
+        //G1_temp1=1 * d1^c * d2^r
+        G1_temp1.mul(G1D2);
+        //G1_temp1=1 * d1^c * d2^r * d3
+        G1_temp1.mul(pk.d3.duplicate());
+        //G1_temp1=( 1 * d1^c * d2^r * d3 )^s
+        G1_temp1.powZn(Zr_s);
+        //C3=( 1 * d1^c * d2^r * d3 )^s
+        ciphertext.C3 = G1_temp1.duplicate();
+
         //加密成功
         System.out.println("AES加密文件的种子：" + M);
+        /**-----------------------------------接下来开始对明文加密-------------------------------**/
         //从本地读取明文文件
         byte[] messageBuf = FileOperation.file2byte(messageFilePathAndName);
         //明文的字节数组
@@ -329,7 +405,7 @@ public class LangPolicy {
      * @param policy_S                  门限属性
      * @param threshold                 门限
      * @param ciphertextFilePathAndName 密文
-     * @param ciphertextFilePathAndName 解密后的明文
+     * @param decryptFilePathAndName 解密后的明文
      */
     public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String attributes_OMG, String policy_S, int threshold, String ciphertextFilePathAndName, String decryptFilePathAndName) throws Exception {
         Pairing pairing = pk.pairing;
@@ -344,6 +420,55 @@ public class LangPolicy {
         //求S和OMG的并集
         ArrayList<String> arrayList_AAndS = intersectionArrayList(attrList_A, attrList_S);
         System.out.println("集合A和S并集的大小:" + arrayList_AAndS.size() + "个，即：" + arrayList_AAndS);
+        /**-----------------------------------接下来验证两个参数，第一个参数e(g,C2)-------------------------------**/
+        //求S和OMG的并集
+        ArrayList<String> attrList_SAndOMG = unionArrayList(attrList_S, attrList_OMG);
+        System.out.println("集合S和OMG并集的大小:" + attrList_SAndOMG.size() + "个，即：" + attrList_SAndOMG);
+        Element G1_temp3 = pairing.getG1().newElement();
+        G1_temp3.setToOne();
+        //循环乘hj
+        for (int i = 0; i < attrList_SAndOMG.size(); i++) {
+            G1_temp3.mul(pk.hList[Integer.parseInt(attrList_SAndOMG.get(i))]);
+        }
+        //G1_temp1=h0*(循环乘hj)
+        G1_temp3.mul(pk.hList[0]);
+        Element e_g_C2_1 = pairing.pairing(pk.g, ciphertext.C2).duplicate();
+        Element e_g_C2_2 = pairing.pairing(ciphertext.C1, G1_temp3).duplicate();
+        if (e_g_C2_1.isEqual(e_g_C2_2)) {
+            System.out.println("第一个条件满足！");
+        } else {
+            System.err.println("第一个条件不满足，程序退出！");
+            System.exit(0);
+        }
+        /**-----------------------------------接下来验证第二个参数e(g,C3)-------------------------------**/
+        Element G1_temp4 = pairing.getG1().newElement();
+        G1_temp4.setToOne();
+        //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
+        //将C0C1C2转换成字节数组
+        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.C2);
+        //求哈希值
+        Element c = Hash4Zr(pk, byteArray);
+        //G1D1=d1^c
+        Element G1D1 = pk.d1.duplicate().powZn(c);
+        //G1_temp4=1*d1^c
+        G1_temp4.mul(G1D1);
+        //G1D2=d2^r
+        Element G1D2 = pk.d2.duplicate().powZn(ciphertext.r);//G1D2=d2^r
+        //G1_temp4=1 * d1^c * d2^r
+        G1_temp4.mul(G1D2);
+        //G1_temp4=1 * d1^c * d2^r * d3
+        G1_temp4.mul(pk.d3.duplicate());
+        //G1_temp1=( 1 * d1^c * d2^r * d3 )^s
+        Element e_g_C3_1 = pairing.pairing(pk.g, ciphertext.C3).duplicate();
+        Element e_g_C3_2 = pairing.pairing(ciphertext.C1, G1_temp4).duplicate();
+        if (e_g_C3_1.isEqual(e_g_C3_2)) {
+            System.out.println("第二个条件满足！");
+        } else {
+            System.err.println("第二个条件不满足，程序退出！");
+            System.exit(0);
+        }
+//        System.exit(0);
+        /**-----------------------------------接下来求D1和D2-------------------------------**/
         ArrayList<String> arrayList_As = new ArrayList<String>();
         //检测SK是否满足密文中的访问策略
         if (arrayList_AAndS.size() < threshold) {
@@ -395,7 +520,7 @@ public class LangPolicy {
                 }
             }
             D1 = G1_temp2.duplicate();
-            /**-----------------------------------接下来求D1-------------------------------**/
+            /**-----------------------------------接下来求D2-------------------------------**/
             //接下来求D2
             G1_temp1.setToOne();
             G1_temp2.setToOne();
@@ -479,7 +604,7 @@ public class LangPolicy {
         Pairing pairing = PairingFactory.getPairing("a.properties");
         Element g = pairing.getG1().newRandomElement();
         System.out.println("g:" + g);
-        Element q ;
+        Element q;
         q = g.duplicate();
         System.out.println("q:" + q);
         Element v = pairing.getG1().newRandomElement();
@@ -589,22 +714,4 @@ public class LangPolicy {
 
 
     }
-//
-//    /**
-//     * 将字节数组byte[]转成16进制字符串
-//     */
-//    public static String bytesToHexString(byte[] src) {
-//        StringBuilder stringBuilder = new StringBuilder("");
-//        if (src == null || src.length <= 0) {
-//            return null;
-//        }
-//        for (int i = 0; i < src.length; i++) {
-//            String hex = Integer.toHexString(src[i] & 0xFF).toUpperCase();
-//            if (hex.length() == 1) {
-//                hex = '0' + hex;
-//            }
-//            stringBuilder.append(hex + " ");
-//        }
-//        return stringBuilder.toString();
-//    }
 }
