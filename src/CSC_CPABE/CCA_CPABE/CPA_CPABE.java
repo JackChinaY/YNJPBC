@@ -1,12 +1,11 @@
-package CSC_CPABE.CPA_CPABE;
+package CSC_CPABE.CCA_CPABE;
 
-import CSC_CPABE.CPA_CPABE.Entity.Ciphertext;
-import CSC_CPABE.CPA_CPABE.Entity.MK;
-import CSC_CPABE.CPA_CPABE.Entity.PK;
-import CSC_CPABE.CPA_CPABE.Entity.SK;
+import CSC_CPABE.CCA_CPABE.Entity.Ciphertext;
+import CSC_CPABE.CCA_CPABE.Entity.MK;
+import CSC_CPABE.CCA_CPABE.Entity.PK;
+import CSC_CPABE.CCA_CPABE.Entity.SK;
 
 import java.lang.reflect.Proxy;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * 定长密文CP-ABE之CPA_CPABE(选择明文攻击安全的CPABE)

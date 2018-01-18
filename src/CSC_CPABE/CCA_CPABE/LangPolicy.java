@@ -1,6 +1,6 @@
-package CSC_CPABE.CPA_CPABE;
+package CSC_CPABE.CCA_CPABE;
 
-import CSC_CPABE.CPA_CPABE.Entity.*;
+import CSC_CPABE.CCA_CPABE.Entity.*;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
