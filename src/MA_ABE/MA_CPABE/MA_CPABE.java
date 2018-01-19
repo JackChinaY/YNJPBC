@@ -1,17 +1,17 @@
-package CSC_CPABE.CCA_CPABE;
+package MA_ABE.MA_CPABE;
 
-import CSC_CPABE.CCA_CPABE.Entity.Ciphertext;
-import CSC_CPABE.CCA_CPABE.Entity.MK;
-import CSC_CPABE.CCA_CPABE.Entity.PK;
-import CSC_CPABE.CCA_CPABE.Entity.SK;
+import MA_ABE.MA_CPABE.Entity.Ciphertext;
+import MA_ABE.MA_CPABE.Entity.MK;
+import MA_ABE.MA_CPABE.Entity.PK;
+import MA_ABE.MA_CPABE.Entity.SK;
 
 import java.lang.reflect.Proxy;
 
 /**
  * 定长密文CP-ABE之CCA_CPABE(选择密文攻击安全的CPABE)
  */
-public class CCA_CPABE implements Ident {
-    private String fileBasePath = "E:/ABE/CCACPABE/";//文件保存的基础路径
+public class MA_CPABE implements Ident {
+    private String fileBasePath = "E:/ABE/MACPABE/";//文件保存的基础路径
     private String PK_File = "public_key";//系统公钥
     private String MK_File = "master_key";//系统主密钥
     private String SK_File = "private_key";//用户私钥
@@ -107,9 +107,9 @@ public class CCA_CPABE implements Ident {
      * 主函数
      */
     public static void main(String[] args) {
-        CCA_CPABE ident = new CCA_CPABE();
+        MA_CPABE ident = new MA_CPABE();
         // 动态代理，统计各个方法耗时
-        Ident identProxy = (Ident) Proxy.newProxyInstance(CCA_CPABE.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
+        Ident identProxy = (Ident) Proxy.newProxyInstance(MA_CPABE.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
         identProxy.setup();
         identProxy.keygen();
         identProxy.encrypt();
