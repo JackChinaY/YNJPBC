@@ -25,8 +25,8 @@ public class PK {
     @Override
     public String toString() {
         return "PK{" +
-                "pairing=" + pairing +
-                ", g=" + g +
+//                "pairing=" + pairing +
+                " g=" + g +
                 ", y0=" + y0 +
                 ", K=" + K +
                 ", tk=" + tk +

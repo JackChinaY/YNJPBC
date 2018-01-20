@@ -38,19 +38,25 @@ public class Test3 {
     }
 
     public static void main(String[] args) {
+        long begin = System.currentTimeMillis();
+        long end = System.currentTimeMillis();
+
+        String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9", "10"}};
+
 //        byte[] a = FileOperation.file2byte("E:\\ABE\\CPABE\\public_key");
-//        System.out.println(Arrays.toString(a));
+        System.out.println(Arrays.deepToString(attributes_C));
 //        System.out.println(bytesToHexString(a));
 //        byte[] b = {0x00, 0x00, 0x00, -128};
 //        System.out.println(getFloat(b,0));
-        String a = "1234567";
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
+//        String a = "1234567";
+//        MessageDigest md = null;
+//        try {
+//            md = MessageDigest.getInstance("SHA-1");
+//        } catch (NoSuchAlgorithmException e) {
+//            e.printStackTrace();
+//        }
 //        String b = md.digest(a.getBytes());
 //        System.out.println(b);
+        System.out.println("耗时:" + (end - begin) + "ms");
     }
 }
