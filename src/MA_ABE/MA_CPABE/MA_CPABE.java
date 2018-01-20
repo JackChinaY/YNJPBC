@@ -1,11 +1,9 @@
 package MA_ABE.MA_CPABE;
 
-import MA_ABE.MA_CPABE.Entity.Ciphertext;
-import MA_ABE.MA_CPABE.Entity.MK;
-import MA_ABE.MA_CPABE.Entity.PK;
-import MA_ABE.MA_CPABE.Entity.SK;
+import MA_ABE.MA_CPABE.Entity.*;
 
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 
 /**
  * 定长密文CP-ABE之CCA_CPABE(选择密文攻击安全的CPABE)
@@ -31,21 +29,24 @@ public class MA_CPABE implements Ident {
 
     //属性全集U，共L个元素
     private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
-//    private String attributes_U = "1 2 3 4 5 6";
+    //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
     private String attributes_A = "1 2 3 4 5";
-//    private String attributes_A = "1 2 7";
+    //    private String attributes_A = "1 2 7";
     //属性全集U`，共L-1个元素，是U的子集
     private String attributes_Us = "11 12 13 14 15 16 17 18 19";
-//    private String attributes_Us = "11 12 13 14 15";
+    //    private String attributes_Us = "11 12 13 14 15";
     //属性集OMG，共L-t个元素，是U`的子集
     private String attributes_OMG = "11 12 13 14 15 16 17";
-//    private String attributes_OMG = "11 12 13";
+    //    private String attributes_OMG = "11 12 13";
     //访问树中的解密策略 S
     private String attributes_S = "1 2 3 4 5 6";
     //门限t
     private int threshold = 3;
+    //属性中心AA的个数
+    private int K = 3;
 
+    public ArrayList<AAK> aak = new ArrayList<AAK>();//AAK类型，所有属性中心
     private MK mk = new MK();
     private PK pk = new PK();
     private SK sk = new SK();
@@ -57,7 +58,7 @@ public class MA_CPABE implements Ident {
     @Override
     public void setup() {
         System.out.println("----------------setup系统初始化阶段-------------------");
-        LangPolicy.setup(mk, pk, attributes_U);
+        LangPolicy.setup(K, pk, attributes_U,aak);
     }
 
     /**
@@ -67,11 +68,11 @@ public class MA_CPABE implements Ident {
     @Override
     public void keygen() {
         System.out.println("-----------------keygen密钥生成阶段--------------------");
-        try {
-            sk = LangPolicy.keygen(mk, pk, attributes_U, attributes_Us, attributes_A);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            sk = LangPolicy.keygen(mk, pk, attributes_U, attributes_Us, attributes_A);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     /**
@@ -82,11 +83,11 @@ public class MA_CPABE implements Ident {
     @Override
     public void encrypt() {
         System.out.println("-------------------encrypt加密阶段----------------------");
-        try {
-            ciphertext = LangPolicy.encrypt(mk, pk, attributes_U, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            ciphertext = LangPolicy.encrypt(mk, pk, attributes_U, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
 
@@ -96,11 +97,11 @@ public class MA_CPABE implements Ident {
     @Override
     public void decrypt() {
         System.out.println("-------------------decrypt解密阶段----------------------");
-        try {
-            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     /**
@@ -111,8 +112,8 @@ public class MA_CPABE implements Ident {
         // 动态代理，统计各个方法耗时
         Ident identProxy = (Ident) Proxy.newProxyInstance(MA_CPABE.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
         identProxy.setup();
-        identProxy.keygen();
-        identProxy.encrypt();
-        identProxy.decrypt();
+//        identProxy.keygen();
+//        identProxy.encrypt();
+//        identProxy.decrypt();
     }
 }
