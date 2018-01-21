@@ -115,6 +115,20 @@ public class LangPolicy {
     }
 
     /**
+     * 将一个二维字符串数组的指定行的数据解析成字符串集合
+     *
+     * @param array 二维数组
+     * @param index 指定行，从0开始
+     */
+    private static ArrayList<String> parseStringArray2ArrayList(String[][] array, int index) {
+        ArrayList<String> arrayList = new ArrayList<String>();
+        for (int i = 0; i < array[index].length; i++) {
+            arrayList.add(array[index][i]);
+        }
+        return arrayList;
+    }
+
+    /**
      * 求两个集合的并集，并且去重复，在attrList1后追加attrList2
      */
     private static ArrayList<String> unionArrayList(ArrayList<String> attrList1, ArrayList<String> attrList2) {
@@ -438,9 +452,19 @@ public class LangPolicy {
     public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String[][] attributes_S, String attributes_OMG, String policy_S, int threshold, String ciphertextFilePathAndName, String decryptFilePathAndName) throws Exception {
         Pairing pairing = pk.pairing;
         //将一个字符串解析成字符数组
-        ArrayList<String> attrList_A = parseString2ArrayList(attributes_A);
+        ArrayList<String> attrList_A = parseString2ArrayList(attributes_A);//Au
+        int length = 0;
+        //循环的次数是AA的个数
         for (int i = 0; i < attributes_S.length; i++) {
-            ArrayList<String> arrayList = parseString2ArrayList(attributes_A);
+            ArrayList<String> arrayList_Ack = parseStringArray2ArrayList(attributes_S, i);//Ack
+            //求Ack和Au的并集
+            ArrayList<String> arrayList_AckAndA = intersectionArrayList(attrList_A, arrayList_Ack);
+            System.out.println("集合Ack和Au并集的大小:" + arrayList_AckAndA.size() + "个，即：" + arrayList_AckAndA);
+            //循环的次数是a交集中元素的个数
+            for (int j = 0; j < arrayList_AckAndA.size(); j++) {
+                Element e_Eki_Dki = pairing.pairing(ciphertext.Ek.get(i).Eki.get(Integer.parseInt(arrayList_AckAndA.get(i)) - length - 1), sk.comps.get(i).Dki.get(Integer.parseInt(arrayList_AckAndA.get(i)))).duplicate();
+            }
+            length += attributes_S[i].length;
         }
 
 
