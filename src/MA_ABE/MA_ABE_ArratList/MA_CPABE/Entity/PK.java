@@ -1,10 +1,9 @@
-package MA_ABE.MA_CPABE.Entity;
+package MA_ABE.MA_ABE_ArratList.MA_CPABE.Entity;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * 系统公钥
@@ -16,6 +15,11 @@ public class PK {
     public int K;//属性中心AA的个数
     public ArrayList<PKComp> tk;//PKComp类型，k是AA的下标
     public Element Y0;//系统公钥，GT的,Y0=e(g,g)^y0
+//    public Element[] hList;//G1
+//    public Element d1;//kexi1,G1类型
+//    public Element d2;//kexi2,G1类型
+//    public Element d3;//kexi3,G1类型
+
 
     @Override
     public String toString() {

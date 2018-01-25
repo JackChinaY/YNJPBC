@@ -1,6 +1,9 @@
-package MA_ABE.MA_CPABE;
+package MA_ABE.MA_ABE_ArratList.MA_CPABE;
 
-import MA_ABE.MA_CPABE.Entity.*;
+import MA_ABE.MA_ABE_ArratList.MA_CPABE.Entity.AAK;
+import MA_ABE.MA_ABE_ArratList.MA_CPABE.Entity.Ciphertext;
+import MA_ABE.MA_ABE_ArratList.MA_CPABE.Entity.PK;
+import MA_ABE.MA_ABE_ArratList.MA_CPABE.Entity.SK;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -22,7 +25,7 @@ public class MA_CPABE implements Ident {
     private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
     //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "2 3 4 5 6 7 9";
+    private String attributes_A = "1 2 3 4 5 6 7 8 9";
     //    private String attributes_A = "1 2 7";
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
     private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};

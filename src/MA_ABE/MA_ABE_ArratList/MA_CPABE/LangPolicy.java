@@ -1,6 +1,6 @@
-package MA_ABE.MA_CPABE;
+package MA_ABE.MA_ABE_ArratList.MA_CPABE;
 
-import MA_ABE.MA_CPABE.Entity.*;
+import MA_ABE.MA_ABE_ArratList.MA_CPABE.Entity.*;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
@@ -9,7 +9,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.StringTokenizer;
 
 /**
@@ -53,10 +52,10 @@ public class LangPolicy {
             //属性的个数
             comp.n = arrayList.size();
             //Zr类型，i=1,2,...,n
-            comp.ti = new HashMap<>();
+            comp.ti = new Element[arrayList.size()];
             //对ti赋值
             for (int j = 0; j < arrayList.size(); j++) {
-                comp.ti.put(arrayList.get(j), pairing.getZr().newRandomElement());
+                comp.ti[j] = pairing.getZr().newRandomElement();
             }
             pk.tk.add(comp);
 //            System.out.print((i + 1) + ", ");
@@ -70,13 +69,15 @@ public class LangPolicy {
             aak.ask = new ASK();
             aak.ask.s = pk.tk.get(i).s;
             aak.ask.n = arrayList.size();
-            aak.ask.ti = new HashMap<>();
-            aak.ask.ti = pk.tk.get(i).ti;
+            aak.ask.ti = new Element[arrayList.size()];
+            for (int j = 0; j < arrayList.size(); j++) {
+                aak.ask.ti[j] = pk.tk.get(i).ti[j];
+            }
             //生成属性中心公钥APK
             aak.apk = new APK();
-            aak.apk.Ti = new HashMap<>();
+            aak.apk.Ti = new Element[arrayList.size()];
             for (int j = 0; j < arrayList.size(); j++) {
-                aak.apk.Ti.put(arrayList.get(j), pk.g.duplicate().powZn(pk.tk.get(i).ti.get(arrayList.get(j))));
+                aak.apk.Ti[j] = pk.g.duplicate().powZn(pk.tk.get(i).ti[j]);
             }
             AAKList.add(aak);
 //            System.out.println("第" + (i + 1) + "个属性中心的ASK和APK生成成功！");
@@ -253,7 +254,7 @@ public class LangPolicy {
             //添加一个AA的私钥
             sk.comps.add(new SKComp());
             //AA的Dk,i
-            sk.comps.get(i).Dki = new HashMap<>();
+            sk.comps.get(i).Dki = new ArrayList<Element>();
             //循环的次数是用户属性的个数
             for (int j = 0; j < arrayList_A.size(); j++) {
                 //设置当前属性值
@@ -262,14 +263,14 @@ public class LangPolicy {
                 Zr_temp1.setToOne();
                 Zr_temp1 = computePolynomial(Zr_temp1, polynomial, nodeID);
                 //获取tk,i的值
-                Zr_temp2 = AAKList.get(i).ask.ti.get(arrayList_A.get(j)).duplicate();
+                Zr_temp2 = AAKList.get(i).ask.ti[Integer.parseInt(arrayList_A.get(j)) - 1].duplicate();
                 //Zr_temp1=1/(tk,i)
                 Zr_temp2.invert();
                 //q(i)*(1/(tk,i))
                 Zr_temp2.mul(Zr_temp1);
                 //Dki=g^(q(i)*(1/(tk,i)))
                 Element Dki = pk.g.duplicate().powZn(Zr_temp2);
-                sk.comps.get(i).Dki.put(arrayList_A.get(j), Dki);
+                sk.comps.get(i).Dki.add(Dki);
 //                System.out.println("第" + (i + 1) + "个属性中心的第" + (j + 1) + "个元素的小钥匙生成成功，元素是：" + arrayList_A.get(j));
             }
         }
@@ -378,10 +379,10 @@ public class LangPolicy {
         //循环的次数是AA的个数
         for (int i = 0; i < attributes_S.length; i++) {
             ciphertext.Ek.add(new CiphertextComp());
-            ciphertext.Ek.get(i).Eki = new HashMap<>();
+            ciphertext.Ek.get(i).Eki = new ArrayList<Element>();
             //循环的次数是第i个AA管理的属性的个数
             for (int j = 0; j < attributes_S[i].length; j++) {
-                ciphertext.Ek.get(i).Eki.put(attributes_S[i][j], AAKList.get(i).apk.Ti.get(attributes_S[i][j]).duplicate().powZn(Zr_s));
+                ciphertext.Ek.get(i).Eki.add(AAKList.get(i).apk.Ti[Integer.parseInt(attributes_S[i][j]) - 1].duplicate().powZn(Zr_s));
 //                System.out.println("第" + (i + 1) + "个属性中心的第" + (j + 1) + "个元素添加成功，元素是：" + attributes_S[i][j]);
             }
         }
@@ -456,8 +457,8 @@ public class LangPolicy {
                 //循环的次数是交集中元素的个数
                 for (int j = 0; j < arrayList_AckAndA_threadhold.size(); j++) {
                     //求e_Eki_Dki
-                    e_Eki_Dki = pairing.pairing(ciphertext.Ek.get(i).Eki.get(arrayList_AckAndA_threadhold.get(j)),
-                            sk.comps.get(i).Dki.get(arrayList_AckAndA_threadhold.get(j))).duplicate();
+                    e_Eki_Dki = pairing.pairing(ciphertext.Ek.get(i).Eki.get(Integer.parseInt(arrayList_AckAndA_threadhold.get(j)) - length - 1),
+                            sk.comps.get(i).Dki.get(Integer.parseInt(arrayList_AckAndA_threadhold.get(j)) - 1)).duplicate();
                     //求拉格朗日系数 deta(0) (x-j)/(i-j)
                     Zr_temp1 = lagrangeCoef(Zr_temp1, arrayList_AckAndA_threadhold, arrayList_AckAndA_threadhold.get(j));
                     //乘上拉格朗日系数
