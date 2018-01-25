@@ -28,10 +28,10 @@ public class MA_CPABE implements Ident {
 //    private String policy_S = "university:jkd college:jsj major:major1";
 
     //属性全集U，共L个元素
-    private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
+    private String attributes_U = "1 2 3 4 5 6 7 8 9 10 11 12 13 14";
     //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "1 2 3 4 5 6";
+    private String attributes_A = "1 2 3 4 5 6 7 8 10";
     //    private String attributes_A = "1 2 7";
     //属性全集U`，共L-1个元素，是U的子集
     private String attributes_Us = "11 12 13 14 15 16 17 18 19";
@@ -43,8 +43,10 @@ public class MA_CPABE implements Ident {
 //    private String attributes_S = "1 2 3 4 5 6";
     //访问树中的解密策略 C
     private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
+    //各个AA中的门限值
+    private String thresholds = "3 3 2";
     //门限t
-    private int threshold = 5;
+    private int threshold = 3;
     //属性中心AA的个数
     private int K = 3;
 
@@ -59,7 +61,7 @@ public class MA_CPABE implements Ident {
      */
     @Override
     public void setup() {
-        System.out.println("----------------setup系统初始化阶段-------------------");
+        System.out.println("----------setup系统初始化阶段-------------");
         LangPolicy.setup(K, pk, attributes_U, AAKList);
     }
 
@@ -69,9 +71,9 @@ public class MA_CPABE implements Ident {
      */
     @Override
     public void keygen() {
-        System.out.println("-----------------keygen密钥生成阶段--------------------");
+        System.out.println("-----------keygen密钥生成阶段--------------");
         try {
-            sk = LangPolicy.keygen(mk, pk, threshold, AAKList, attributes_U, attributes_Us, attributes_A);
+            sk = LangPolicy.keygen(pk, thresholds, AAKList, attributes_A);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,9 +86,9 @@ public class MA_CPABE implements Ident {
      */
     @Override
     public void encrypt() {
-        System.out.println("-------------------encrypt加密阶段----------------------");
+        System.out.println("-------------encrypt加密阶段----------------");
         try {
-            ciphertext = LangPolicy.encrypt(mk, pk, attributes_U, attributes_OMG, attributes_C, AAKList, threshold, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
+            ciphertext = LangPolicy.encrypt(pk, attributes_C, AAKList, threshold, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -98,12 +100,12 @@ public class MA_CPABE implements Ident {
      */
     @Override
     public void decrypt() {
-        System.out.println("-------------------decrypt解密阶段----------------------");
-//        try {
-//            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_OMG, attributes_C, threshold, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        System.out.println("-------------decrypt解密阶段----------------");
+        try {
+            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_C, thresholds, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -116,6 +118,6 @@ public class MA_CPABE implements Ident {
         identProxy.setup();
         identProxy.keygen();
         identProxy.encrypt();
-//        identProxy.decrypt();
+        identProxy.decrypt();
     }
 }
