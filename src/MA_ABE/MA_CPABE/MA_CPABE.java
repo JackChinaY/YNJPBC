@@ -19,13 +19,16 @@ public class MA_CPABE implements Ident {
 
 
     //属性全集U，共L个元素
-    private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
+    private String attributes_U = "A B C D E F G H I J K L M N";
+//    private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
     //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "2 3 4 5 6 7 9";
+    private String attributes_A = "A B M D E F G H N";
+//    private String attributes_A = "2 3 4 5 6 7 9";
     //    private String attributes_A = "1 2 7";
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
-    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
+    private String[][] attributes_C = {{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H", "I"}};
+//    private String[][] attributes_C = {{"1", "2", "7"}, {"4", "5", "6"}, {"3", "8", "9"}};
     //各个AA中的门限值
     private String thresholds = "2 3 2";
 

@@ -45,17 +45,19 @@ public class Test3 {
 
 
 //        String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9", "10"}};
-        ArrayList<String> a = new ArrayList<>();
-        a.add("1");
-        a.add("2");
-        a.add("3");
-//        a.
-//        System.out.println(a.indexOf("2"));
-        Map<String, String> b = new HashMap<>();
-        b.put("1","qw");
-        b.put("2","qe");
-        b.put("3","qr");
-        System.out.println(b.get("2"));
+//        ArrayList<String> a = new ArrayList<>();
+//        a.add("1");
+//        a.add("2");
+//        a.add("3");
+////        a.
+////        System.out.println(a.indexOf("2"));
+//        Map<String, String> b = new HashMap<>();
+//        b.put("1","qw");
+//        b.put("2","qe");
+//        b.put("3","qr");
+        String buffer = null;
+        assert buffer != null :"12223";
+        System.out.println("67");
 //        byte[] a = FileOperation.file2byte("E:\\ABE\\CPABE\\public_key");
 //        System.out.println(Arrays.deepToString(attributes_C));
 //        System.out.println(bytesToHexString(a));

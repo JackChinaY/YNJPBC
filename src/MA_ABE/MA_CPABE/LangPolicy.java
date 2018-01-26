@@ -243,9 +243,9 @@ public class LangPolicy {
         sk.comps = new ArrayList<SKComp>();
         //每个AA产生的私钥，循环的次数是AA的个数
         for (int i = 0; i < AAKList.size(); i++) {
-            //根据AA的GID产生一个Zr的值，即p(0)=yk,u
+            //根据AA的种子产生一个Zr的值，即p(0)=yk,u
             Element Zr_yku = Hash4Zr(pk, AAKList.get(i).ask.s);
-            //构造一个多项式，对单个用户来讲，只产生一个多项式
+            //构造一个多项式，每个AA都会产生一个多项式，彼此各不相同
             Polynomial polynomial = createRandomPolynomial(Integer.parseInt(attrList_thresholds.get(i)) - 1, Zr_yku);
             //将用户属性解析成字符数组
             ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
@@ -257,7 +257,8 @@ public class LangPolicy {
             //循环的次数是用户属性的个数
             for (int j = 0; j < arrayList_A.size(); j++) {
                 //设置当前属性值
-                nodeID.set(Integer.parseInt(arrayList_A.get(j)));//j的值，j是属性
+//                nodeID.set(Integer.parseInt(arrayList_A.get(j)));//j的值，j是属性
+                nodeID = Hash4Zr(pk, arrayList_A.get(j));//j的值，j是属性
                 //计算多项式q(i)的值，Zr_temp=q(i)
                 Zr_temp1.setToOne();
                 Zr_temp1 = computePolynomial(Zr_temp1, polynomial, nodeID);
@@ -445,7 +446,6 @@ public class LangPolicy {
             //用于计算每个AA的对运算
             Element e_Eki_Dki;
             //用于累加各个AA中属性的个数
-            int length = 0;
             //循环的次数是AA的个数
             for (int i = 0; i < attributes_S.length; i++) {
                 //获取第i个AA管理的属性
@@ -459,13 +459,12 @@ public class LangPolicy {
                     e_Eki_Dki = pairing.pairing(ciphertext.Ek.get(i).Eki.get(arrayList_AckAndA_threadhold.get(j)),
                             sk.comps.get(i).Dki.get(arrayList_AckAndA_threadhold.get(j))).duplicate();
                     //求拉格朗日系数 deta(0) (x-j)/(i-j)
-                    Zr_temp1 = lagrangeCoef(Zr_temp1, arrayList_AckAndA_threadhold, arrayList_AckAndA_threadhold.get(j));
+                    Zr_temp1 = lagrangeCoef(pk, arrayList_AckAndA_threadhold, arrayList_AckAndA_threadhold.get(j));
                     //乘上拉格朗日系数
                     e_Eki_Dki.powZn(Zr_temp1);
                     GT_temp1.mul(e_Eki_Dki);
                     e_Eki_Dki.setToOne();
                 }
-                length += attributes_S[i].length;
             }
             //GT_temp2=Yca^s
             Element GT_temp2 = pairing.pairing(ciphertext.Eca, sk.Dca);
@@ -486,40 +485,37 @@ public class LangPolicy {
     }
 
     /**
-     * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)，即x=0，i=currentAttr，j=attrsList.get(k)
+     * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)，即x=0，j=currentAttr，i=attrsList.get(i)
      * 求p(0),对于n-1阶多项式来说，必须知道至少n个点才能求出，比如求p(0),对于4阶多项式来说，必须知道至少4个点才能求出p(0)的值
+     * 处理属性时，需要先将属性哈希到Zr群上，得到一个大质数
      *
      * @param attrsList   属性集合
      * @param currentAttr 当前属性
      */
-    private static Element lagrangeCoef(Element elementZr_1, ArrayList<String> attrsList, String currentAttr) {
-        String j;//临时值
-        Element elementZr_temp = elementZr_1.duplicate();
-//        System.out.println("数组元素总数：" + attrsList.size()+"，该数组：" + attrsList);
-//        System.out.println("当前解密的属性是：" + currentAttr);
-        elementZr_1.setToOne();
-        //求循环乘
-        for (int k = 0; k < attrsList.size(); k++) {
-            j = attrsList.get(k);
-//            System.out.println("当前的j是:" + j);
-            //i==j时，跳过
-            if (j.equals(currentAttr)) {
+    private static Element lagrangeCoef(PK pk, ArrayList<String> attrsList, String currentAttr) throws NoSuchAlgorithmException {
+        //运算过程中的中间结果
+        Element Zr_temp1 = pk.pairing.getZr().newElement();
+        //返回的结果
+        Element Zr_result = pk.pairing.getZr().newElement();
+        Zr_result.setToOne();
+        //循环次数是集合的元素个数
+        for (int i = 0; i < attrsList.size(); i++) {
+            //i==currentAttr时，跳过
+            if (attrsList.get(i).equals(currentAttr)) {
                 continue;
             }
-            //求(x-j)
-            elementZr_temp.set(-Integer.parseInt(j));//x-j=0-j
-            elementZr_1.mul(elementZr_temp);
-            //求(i-j)
-//            System.out.println("当前的i:" + Integer.parseInt(currentAttr));
-//            System.out.println("当前的j:" + Integer.parseInt(j));
-//            System.out.println("当前的i-j:" + (Integer.parseInt(currentAttr) - Integer.parseInt(j)));
-            elementZr_temp.set(Integer.parseInt(currentAttr) - Integer.parseInt(j));
-            //求1/(i-j)
-            elementZr_temp.invert();
-            //求(x-j)/(i-j)
-            elementZr_1.mul(elementZr_temp);
+            //Zr_temp1=x-i=0-i
+            Zr_temp1.setToZero();
+            Zr_temp1.sub(Hash4Zr(pk, attrsList.get(i)));
+            Zr_result.mul(Zr_temp1);
+            //Zr_temp1=currentAttr-i
+            Zr_temp1.set(Hash4Zr(pk, currentAttr).duplicate().sub(Hash4Zr(pk, attrsList.get(i))));
+            //Zr_temp1=1/(currentAttr-i)
+            Zr_temp1.invert();
+            //Zr_result=(0-i)/(currentAttr-i)
+            Zr_result.mul(Zr_temp1);
         }
-        return elementZr_1;
+        return Zr_result;
     }
     //endregion
 
@@ -528,45 +524,17 @@ public class LangPolicy {
      * 测试用
      */
     public static void main(String[] args) throws NoSuchAlgorithmException {
-        //仅对于双线性映射，要使用PBC包装并获得性能，必须设置配对工厂的使用PBC（可能）属性
-        PairingFactory.getInstance().setUsePBCWhenPossible(true);
-        //椭圆类型是Type A，生成 对称-质数阶-双线性群,即G1==G2，返回代数结构,代数结构包含：群、环、场（groups, rings and fields）
-        Pairing pairing = PairingFactory.getPairing("a.properties");
-        PK pk = new PK();
-        pk.pairing = pairing;
-        //根据AA的GID产生一个Zr的值，即p(0)=yk,u
-        Element Zr_yku = Hash4Zr(pk, "1");
-        System.out.println("yku:" + Zr_yku);
-        //构造一个多项式，对单个用户来讲，只产生一个多项式
-//        Polynomial polynomial = createRandomPolynomial(threshold - 1, Zr_yku);
-//
-//        //将用户属性解析成字符数组
-//        ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
-////            System.out.println("用户属性集合A大小：" + arrayList_A.size() + "个，即：" + arrayList_A);
-//        //添加一个AA的私钥
-//        sk.comps.add(new SKComp());
-//        //AA的Dk,i
-//        sk.comps.get(i).Dki = new ArrayList<Element>();
-//        //循环的次数是用户属性的个数
-//        for (int j = 0; j < arrayList_A.size(); j++) {
-//            //设置当前属性值
-//            nodeID.set(Integer.parseInt(arrayList_A.get(j)));//j的值，j是属性
-//            //计算多项式q(i)的值，Zr_temp=q(i)
-//            Zr_temp1.setToOne();
-//            Zr_temp1 = computePolynomial(Zr_temp1, polynomial, nodeID);
-//            //获取tk,i的值
-//            Zr_temp2 = AAKList.get(i).ask.ti[Integer.parseInt(arrayList_A.get(j)) - 1].duplicate();
-//            //Zr_temp1=1/(tk,i)
-//            Zr_temp2.invert();
-//            //q(i)*(1/(tk,i))
-//            Zr_temp2.mul(Zr_temp1);
-//            //Dki=g^(q(i)*(1/(tk,i)))
-//            Element Dki = pk.g.duplicate().powZn(Zr_temp2);
-//            sk.comps.get(i).Dki.add(Dki);
-//                System.out.println("第" + (i + 1) + "个属性中心的第" + (j + 1) + "个元素的小钥匙生成成功，元素是：" + arrayList_A.get(j));
-//        }
+//        //仅对于双线性映射，要使用PBC包装并获得性能，必须设置配对工厂的使用PBC（可能）属性
+//        PairingFactory.getInstance().setUsePBCWhenPossible(true);
+//        //椭圆类型是Type A，生成 对称-质数阶-双线性群,即G1==G2，返回代数结构,代数结构包含：群、环、场（groups, rings and fields）
+//        Pairing pairing = PairingFactory.getPairing("a.properties");
+//        PK pk = new PK();
+//        pk.pairing = pairing;
 
-
+//读取本地的CT密文文件
+        byte[] c = FileOperation.file2byte("E:/ABE/MACPABE/Message_Original.txt");//AES文件，密文文件
+        String b = new String(c);
+        System.out.println(b);
 //        Element g = pairing.getG1().newRandomElement();
 //        System.out.println("g:" + g);
 //        Element q;
