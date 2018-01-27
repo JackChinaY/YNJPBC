@@ -48,7 +48,7 @@ public class LangPolicy {
         //对每个PKComp里面生成n个随机变量
         for (int i = 0; i < K; i++) {
             PKComp comp = new PKComp();
-            //各属性中心的种子
+            //各属性中心的种子，暂时用i值的MD5算法实现
             comp.s = DigestUtils.md5Hex(String.valueOf(i));
             //属性的个数
             comp.n = arrayList.size();
@@ -146,8 +146,8 @@ public class LangPolicy {
      * 求两个集合的并集，并且去重复，在attrList1后追加attrList2
      */
     private static ArrayList<String> unionArrayList(ArrayList<String> attrList1, ArrayList<String> attrList2) {
-        ArrayList<String> list1 = attrList1;
-        ArrayList<String> list2 = attrList2;
+        ArrayList<String> list1 = (ArrayList<String>) attrList1.clone();
+        ArrayList<String> list2 = (ArrayList<String>) attrList2.clone();
         list2.removeAll(list1);//去重复
         list1.addAll(list2);//并集
         return list1;

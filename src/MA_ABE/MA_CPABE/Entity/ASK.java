@@ -11,8 +11,8 @@ import java.util.Map;
 public class ASK {
     public String s;//各属性中心的种子，由序号的MD5值算出，是32位的字符串，之后哈希到Zr上，得到一个Zr类型的Element
     public int n;//每个属性中心管理的属性的个数n
-//    public Element[] ti;//Zr类型，i=1,2,...,n
-    public Map<String, Element> ti;
+//    public Element[] ti;
+    public Map<String, Element> ti;//Zr类型，i=1,2,...,n
     @Override
     public String toString() {
         return "ASK{" +
