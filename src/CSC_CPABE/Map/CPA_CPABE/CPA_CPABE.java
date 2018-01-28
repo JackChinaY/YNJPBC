@@ -33,7 +33,7 @@ public class CPA_CPABE implements Ident {
     private String attributes_U = "100 2 3 4 5 6 7 8 9 20";
     //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "100 2 3 4 5";
+    private String attributes_A = "1 2 3 4 5";
     //    private String attributes_A = "1 2 3";
     //属性全集U`，共L-1个元素，是U的子集
     private String attributes_Us = "11 12 13 14 15 16 17 18 19";
@@ -42,7 +42,7 @@ public class CPA_CPABE implements Ident {
     private String attributes_OMG = "11 12 13 14 15 16 17";
     //    private String attributes_OMG = "11 12 13";
     //访问树中的解密策略 S
-    private String attributes_S = "100 2 3 4 5 6";
+    private String attributes_S = "1 2 3 4 5 6";
     //门限t
     private int threshold = 3;
 

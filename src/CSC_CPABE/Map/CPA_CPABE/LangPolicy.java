@@ -398,15 +398,10 @@ public class LangPolicy {
             //最外层连乘，处理i
             for (int i = 0; i < arrayList_AsAndOMG.size(); i++) {
                 //最内层连乘，处理j
-                for (int k = 0; k < arrayList_SAndOMG.size(); k++) {
+                for (int j = 0; j < arrayList_SAndOMG.size(); j++) {
                     //i不等于j时
-                    if (!arrayList_SAndOMG.get(k).equals(arrayList_AsAndOMG.get(i))) {
-//                            int temp1 = Integer.parseInt(arrayList_SAndOMG.get(k)) - 1;
-//                            System.out.println("temp1：" + temp1);
-//                            Element temp2 = sk.comps.get(j).hList[temp1];
-//                            System.out.println("temp2：" + temp2);
-//                            G1_temp1.mul(temp2);
-                        G1_temp1.mul(sk.comps.get(arrayList_AsAndOMG.get(i)).hList.get(arrayList_SAndOMG.get(k)));
+                    if (!arrayList_SAndOMG.get(j).equals(arrayList_AsAndOMG.get(i))) {
+                        G1_temp1.mul(sk.comps.get(arrayList_AsAndOMG.get(i)).hList.get(arrayList_SAndOMG.get(j)));
                     }
                 }
                 //乘上ai
@@ -419,7 +414,7 @@ public class LangPolicy {
                 G1_temp1.setToOne();
             }
             D1 = G1_temp2.duplicate();
-            /**-----------------------------------接下来求D1-------------------------------**/
+            /**-----------------------------------接下来求D2-------------------------------**/
             //接下来求D2
             G1_temp1.setToOne();
             G1_temp2.setToOne();
