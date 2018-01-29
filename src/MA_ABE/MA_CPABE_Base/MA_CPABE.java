@@ -1,6 +1,6 @@
-package MA_ABE.MA_CPABE;
+package MA_ABE.MA_CPABE_Base;
 
-import MA_ABE.MA_CPABE.Entity.*;
+import MA_ABE.MA_CPABE_Base.Entity.*;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;

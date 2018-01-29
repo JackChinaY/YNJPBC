@@ -1,4 +1,4 @@
-package MA_ABE.MA_CPABE;
+package MA_ABE.MA_CPABE_CSC_CCA;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

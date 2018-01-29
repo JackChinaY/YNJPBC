@@ -1,4 +1,4 @@
-package MA_ABE.MA_CPABE.Entity;
+package MA_ABE.MA_CPABE_Base.Entity;
 
 /**
  * 每个属性中心的所独有的部件,包含ASK和APK

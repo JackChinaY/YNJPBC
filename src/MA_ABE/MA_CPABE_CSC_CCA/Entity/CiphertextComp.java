@@ -1,8 +1,7 @@
-package MA_ABE.MA_CPABE.Entity;
+package MA_ABE.MA_CPABE_CSC_CCA.Entity;
 
 import it.unisa.dia.gas.jpbc.Element;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 /**
