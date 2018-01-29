@@ -44,7 +44,7 @@ public class LangPolicy {
         ArrayList<String> arrayList = parseString2ArrayList(attributes_U);
         System.out.println("属性全集U大小： " + arrayList.size() + "个，即：" + arrayList);
         //PKComp类型，k是AA的下标
-        pk.tk = new ArrayList<PKComp>();
+        pk.tk = new ArrayList<>();
         //对每个PKComp里面生成n个随机变量
         for (int i = 0; i < K; i++) {
             PKComp comp = new PKComp();
@@ -54,7 +54,7 @@ public class LangPolicy {
             comp.n = arrayList.size();
             //Zr类型，i=1,2,...,n
             comp.ti = new HashMap<>();
-            //对ti赋值
+//            对ti赋值
             for (int j = 0; j < arrayList.size(); j++) {
                 comp.ti.put(arrayList.get(j), pairing.getZr().newRandomElement());
             }
@@ -93,7 +93,7 @@ public class LangPolicy {
      * 将一个字符串按分隔符分开，返回字符串类型的数组，如：将一个字符串，此字符串包含一个人的各种属性，分隔符是空格，最后返回一个数组，数组中包含各个小属性
      */
     private static ArrayList<String> parseString2ArrayList(String string) {
-        ArrayList<String> arrayList = new ArrayList<String>();
+        ArrayList<String> arrayList = new ArrayList<>();
         //构造一个用来解析str的StringTokenizer对象。java默认的分隔符是“空格”、“制表符(‘\t’)”、“换行符(‘\n’)”、“回车符(‘\r’)”
         StringTokenizer stringTokenizer = new StringTokenizer(string);//此处按空格划分每个属性
         String token;
@@ -119,7 +119,7 @@ public class LangPolicy {
      * @param array 二维数组
      */
     private static ArrayList<String> parseStringArray2ArrayList(String[][] array) {
-        ArrayList<String> arrayList = new ArrayList<String>();
+        ArrayList<String> arrayList = new ArrayList<>();
         for (int i = 0; i < array.length; i++) {
             for (int j = 0; j < array[i].length; j++) {
                 arrayList.add(array[i][j]);

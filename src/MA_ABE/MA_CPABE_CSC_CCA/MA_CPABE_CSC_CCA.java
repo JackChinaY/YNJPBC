@@ -9,9 +9,9 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 
 /**
- * 定长密文CP-ABE之CCA_CPABE(选择密文攻击安全的CPABE)
+ * 多属性中心定长密文CP-ABE之CCA_CPABE(选择密文攻击安全的CPABE)
  */
-public class MA_CPABE implements Ident {
+public class MA_CPABE_CSC_CCA implements Ident {
     private String fileBasePath = "E:/ABE/MACPABE/";//文件保存的基础路径
     private String PK_File = "public_key";//系统公钥
     private String MK_File = "master_key";//系统主密钥
@@ -96,9 +96,9 @@ public class MA_CPABE implements Ident {
      * 主函数
      */
     public static void main(String[] args) {
-        MA_CPABE ident = new MA_CPABE();
+        MA_CPABE_CSC_CCA ident = new MA_CPABE_CSC_CCA();
         // 动态代理，统计各个方法耗时
-        Ident identProxy = (Ident) Proxy.newProxyInstance(MA_CPABE.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
+        Ident identProxy = (Ident) Proxy.newProxyInstance(MA_CPABE_CSC_CCA.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
         identProxy.setup();
         identProxy.keygen();
         identProxy.encrypt();
