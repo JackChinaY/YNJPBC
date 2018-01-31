@@ -96,17 +96,15 @@ public class FileOperation {
         try {
             File file = new File(filePath + "\\" + fileName);
             FileInputStream fis = new FileInputStream(file);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] b = new byte[1024];
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(1000);
+            byte[] b = new byte[1000];
             int n;
-            // 将内容读到b中，读到末尾为-1
             while ((n = fis.read(b)) != -1) {
-                // 将读到字节数组(b变量)内容写到内存缓冲区中，起到保存每次内容的作用
                 bos.write(b, 0, n);
             }
-            buffer = bos.toByteArray();
-            bos.close();
             fis.close();
+            bos.close();
+            buffer = bos.toByteArray();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -129,9 +127,9 @@ public class FileOperation {
             while ((n = fis.read(b)) != -1) {
                 bos.write(b, 0, n);
             }
-            buffer = bos.toByteArray();
-            bos.close();
             fis.close();
+            bos.close();
+            buffer = bos.toByteArray();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -139,29 +137,7 @@ public class FileOperation {
         }
         return buffer;
     }
-    /**
-     * 读取本地文件，转成String字符串
-     */
-    public static String file2String(String PathName) throws IOException {
-        byte[] buffer = null;
-        try {
-            File file = new File(PathName);
-            FileInputStream fis = new FileInputStream(file);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(1000);
-            byte[] b = new byte[1000];
-            int n;
-            while ((n = fis.read(b)) != -1) {
-                bos.write(b, 0, n);
-            }
-            buffer = bos.toByteArray();
-            bos.close();
-            fis.close();
-            return new String(buffer);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+
     /**
      * 将密文保存到本地
      * 1、首先判断文件是否存在，不存在就新建一个
@@ -203,7 +179,6 @@ public class FileOperation {
         os.write(aesBuf);
         os.close();
     }
-
     /**
      * 读取本地保存的密文
      */

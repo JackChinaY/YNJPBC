@@ -17,40 +17,17 @@ public class MA_CPABE_CSC_CPA implements Ident {
     private String Message_Original_File = "Message_Original.txt";//明文
     private String Message_Ciphertext_File = "Message_Ciphertext";//密文
     private String Message_Decrypt_File = "Message_Decrypt.txt";//解密后的明文
-    //    //属性全集U，共L个元素
-//    private String attributes_U = "university:jkd college:jsj major:major1 type:student2 title:student";
-//    //用户的属性
-//    private String attributes_user = "university:jkd college:jsj major:major1 title:student";
-//    //属性全集U`，共L-1个元素，是U的子集
-//    private String attributes_Us = "university:jkd college:jsj major:major1 title:student";
-//    //属性集OMG，共L-t个元素，是U`的子集
-//    private String attributes_OMG = "university:jkd college:jsj major:major1";
-//    //访问树中的解密策略 S
-//    private String policy_S = "university:jkd college:jsj major:major1";
 
-    //属性全集U，共L个元素
-    private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
-    //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "1 2 3 4 5 6 7 8";
+//    private String attributes_A = "1 2 3 4 5 6 7 8";
+    private String attributes_A = "A B C D E F G H I";
     //    private String attributes_A = "1 2 3";
-    //属性全集U`，共L-1个元素，是U的子集
-    private String attributes_Us = "11 12 13 14 15 16 17 18 19";
-    //    private String attributes_Us = "11 12 13 14 15";
-    //属性集OMG，共L-t个元素，是U`的子集
-    private String attributes_OMG = "11 12 13 14 15 16 17";
-    //    private String attributes_OMG = "11 12 13";
-    //访问树中的解密策略 S
-    private String attributes_S = "1 2 3 4 5";
-    //门限t
-    private int threshold = 3;
 
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
-//    private String[][] attributes_C = {{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H", "I"}};
-    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
+    private String[][] attributes_C = {{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H", "I"}};
+//    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
     //各个AA中的门限值
-    private String thresholds = "2 3 2";
-
+    private String thresholds = "2 3 3";
     private MK mk = new MK();
     private PK pk = new PK();
     private SK sk = new SK();

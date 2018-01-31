@@ -424,8 +424,8 @@ public class LangPolicy {
                 for (int i = 0; i < Integer.parseInt(arrayList_thresholds.get(k)); i++) {
                     arrayList_As.add(arrayList_AAndAAi.get(i));
                 }
-//                System.out.println("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
-//                System.out.println("集合AAi的大小:" + arrayList_AAi.size() + "个，即：" + arrayList_AAi);
+                System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
+                System.out.println("， 集合AAi的大小:" + arrayList_AAi.size() + "个，即：" + arrayList_AAi);
                 /**-----------------------------------接下来求D1-------------------------------**/
                 //最外层连乘，处理i
                 for (int i = 0; i < arrayList_As.size(); i++) {
@@ -527,7 +527,6 @@ public class LangPolicy {
         return Zr_result;
     }
     //endregion
-
 
     /**
      * 测试用的主函数

@@ -1,18 +1,16 @@
 package MA_ABE.MA_CPABE_CSC_CCA;
 
-import MA_ABE.MA_CPABE_CSC_CCA.Entity.AAK;
-import MA_ABE.MA_CPABE_CSC_CCA.Entity.Ciphertext;
-import MA_ABE.MA_CPABE_CSC_CCA.Entity.PK;
-import MA_ABE.MA_CPABE_CSC_CCA.Entity.SK;
+import MA_ABE.MA_CPABE_CSC_CCA.Entity.*;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 
 /**
- * 多属性中心定长密文CP-ABE之CCA_CPABE(选择密文攻击安全的CPABE)
+ * 多属性中心_定长密文_CP-ABE_CCA
+ * (选择密文攻击安全)
  */
 public class MA_CPABE_CSC_CCA implements Ident {
-    private String fileBasePath = "E:/ABE/MACPABE/";//文件保存的基础路径
+    private String fileBasePath = "E:/ABE/CPACPABE/";//文件保存的基础路径
     private String PK_File = "public_key";//系统公钥
     private String MK_File = "master_key";//系统主密钥
     private String SK_File = "private_key";//用户私钥
@@ -20,33 +18,29 @@ public class MA_CPABE_CSC_CCA implements Ident {
     private String Message_Ciphertext_File = "Message_Ciphertext";//密文
     private String Message_Decrypt_File = "Message_Decrypt.txt";//解密后的明文
 
-
-    //属性全集U，共L个元素
-    private String attributes_U = "A B C D E F G H I J K L M N";
-//    private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
-    //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "A B M D E F G H N";
-//    private String attributes_A = "2 3 4 5 6 7 9";
-    //    private String attributes_A = "1 2 7";
+//    private String attributes_A = "1 2 3 4 5 6 7 8";
+    private String attributes_A = "A B C D E F G H I";
+    //    private String attributes_A = "1 2 3";
+
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
     private String[][] attributes_C = {{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H", "I"}};
-//    private String[][] attributes_C = {{"1", "2", "7"}, {"4", "5", "6"}, {"3", "8", "9"}};
+    //    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
     //各个AA中的门限值
-    private String thresholds = "2 3 2";
-
-    public ArrayList<AAK> AAKList = new ArrayList<>();//AAK类型，所有属性中心
+    private String thresholds = "2 3 3";
+    private MK mk = new MK();
     private PK pk = new PK();
     private SK sk = new SK();
     private Ciphertext ciphertext = new Ciphertext();
+    public ArrayList<AAK> AAKList = new ArrayList<>();//AAK类型，所有属性中心
 
     /**
      * Setup 初始化接口， 生成公共参数 PK 和主密钥 MK，并分别存储到 pub_key 和 master_key 对应的文件路径中去。
      */
     @Override
     public void setup() {
-        System.out.println("----------setup系统初始化阶段-------------");
-        LangPolicy.setup(attributes_C.length, pk, attributes_U, AAKList);
+        System.out.println("----------------setup系统初始化阶段-------------------");
+        LangPolicy.setup(mk, pk, thresholds, attributes_C, AAKList);
     }
 
     /**
@@ -55,9 +49,9 @@ public class MA_CPABE_CSC_CCA implements Ident {
      */
     @Override
     public void keygen() {
-        System.out.println("-----------keygen密钥生成阶段--------------");
+        System.out.println("-----------------keygen密钥生成阶段--------------------");
         try {
-            sk = LangPolicy.keygen(pk, thresholds, AAKList, attributes_A);
+            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,9 +64,9 @@ public class MA_CPABE_CSC_CCA implements Ident {
      */
     @Override
     public void encrypt() {
-        System.out.println("-------------encrypt加密阶段----------------");
+        System.out.println("-------------------encrypt加密阶段----------------------");
         try {
-            ciphertext = LangPolicy.encrypt(pk, attributes_C, AAKList, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
+            ciphertext = LangPolicy.encrypt(pk, AAKList, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,9 +78,9 @@ public class MA_CPABE_CSC_CCA implements Ident {
      */
     @Override
     public void decrypt() {
-        System.out.println("-------------decrypt解密阶段----------------");
+        System.out.println("-------------------decrypt解密阶段----------------------");
         try {
-            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_C, thresholds, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_C, AAKList, thresholds, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
         } catch (Exception e) {
             e.printStackTrace();
         }

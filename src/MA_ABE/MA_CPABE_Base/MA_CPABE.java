@@ -6,7 +6,8 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 
 /**
- * 定长密文CP-ABE之CCA_CPABE(选择密文攻击安全的CPABE)
+ * 多属性中心CPABE
+ * ArrayList类型
  */
 public class MA_CPABE implements Ident {
     private String fileBasePath = "E:/ABE/MACPABE/";//文件保存的基础路径

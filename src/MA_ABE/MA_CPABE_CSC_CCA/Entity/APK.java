@@ -8,13 +8,12 @@ import java.util.Map;
  * 每个属性中心的私钥，Authority Public Key
  */
 public class APK {
-    //    public Element[] Ti;
-    public Map<String, Element> Ti;//G1类型，i=1,2,...,n
+    public Map<String, Element> Hi;//G1类型，i=1,2,...,n
 
     @Override
     public String toString() {
         return "APK{" +
-                "Ti=" + Ti +
+                "Hi=" + Hi +
                 '}';
     }
 }
