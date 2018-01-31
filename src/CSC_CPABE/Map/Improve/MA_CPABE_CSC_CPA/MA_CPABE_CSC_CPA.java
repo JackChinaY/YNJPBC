@@ -1,15 +1,17 @@
-package MA_ABE.MA_CPABE_CSC_CPA;
+package CSC_CPABE.Map.Improve.MA_CPABE_CSC_CPA;
 
-import MA_ABE.MA_CPABE_CSC_CPA.Entity.*;
+import CSC_CPABE.Map.Improve.MA_CPABE_CSC_CPA.Entity.Ciphertext;
+import CSC_CPABE.Map.Improve.MA_CPABE_CSC_CPA.Entity.MK;
+import CSC_CPABE.Map.Improve.MA_CPABE_CSC_CPA.Entity.PK;
+import CSC_CPABE.Map.Improve.MA_CPABE_CSC_CPA.Entity.SK;
 
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 
 /**
  * 多属性中心_定长密文_CP-ABE_CPA
  * (选择明文攻击安全)
  */
-public class MA_CPABE_CSC_CPA implements Ident {
+public class MA_CPABE_CSC_CPA implements MA_ABE.MA_CPABE_CSC_CPA.Ident {
     private String fileBasePath = "E:/ABE/CPACPABE/";//文件保存的基础路径
     private String PK_File = "public_key";//系统公钥
     private String MK_File = "master_key";//系统主密钥
@@ -32,7 +34,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
     //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "1 2 3 4 5 6 7 8";
+    private String attributes_A = "1 2 3 4 5";
     //    private String attributes_A = "1 2 3";
     //属性全集U`，共L-1个元素，是U的子集
     private String attributes_Us = "11 12 13 14 15 16 17 18 19";
@@ -47,7 +49,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
 
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
 //    private String[][] attributes_C = {{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H", "I"}};
-    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
+    private String[][] attributes_C = {{"1", "2", "7"}, {"4", "5", "6"}, {"3", "8", "9"}};
     //各个AA中的门限值
     private String thresholds = "2 3 2";
 
@@ -55,7 +57,6 @@ public class MA_CPABE_CSC_CPA implements Ident {
     private PK pk = new PK();
     private SK sk = new SK();
     private Ciphertext ciphertext = new Ciphertext();
-    public ArrayList<AAK> AAKList = new ArrayList<>();//AAK类型，所有属性中心
 
     /**
      * Setup 初始化接口， 生成公共参数 PK 和主密钥 MK，并分别存储到 pub_key 和 master_key 对应的文件路径中去。
@@ -63,7 +64,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     @Override
     public void setup() {
         System.out.println("----------------setup系统初始化阶段-------------------");
-        LangPolicy.setup(mk, pk, thresholds, attributes_C, AAKList);
+        LangPolicy.setup(mk, pk, attributes_U, attributes_Us);
     }
 
     /**
@@ -74,7 +75,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     public void keygen() {
         System.out.println("-----------------keygen密钥生成阶段--------------------");
         try {
-            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A);
+            sk = LangPolicy.keygen(mk, pk, attributes_U, attributes_Us, attributes_A, threshold, thresholds);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -89,7 +90,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     public void encrypt() {
         System.out.println("-------------------encrypt加密阶段----------------------");
         try {
-            ciphertext = LangPolicy.encrypt(pk, AAKList, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
+            ciphertext = LangPolicy.encrypt(mk, pk, attributes_U, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -103,7 +104,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     public void decrypt() {
         System.out.println("-------------------decrypt解密阶段----------------------");
         try {
-            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_C, thresholds, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_OMG, attributes_S, threshold, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -115,7 +116,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     public static void main(String[] args) {
         MA_CPABE_CSC_CPA ident = new MA_CPABE_CSC_CPA();
         // 动态代理，统计各个方法耗时
-        Ident identProxy = (Ident) Proxy.newProxyInstance(MA_CPABE_CSC_CPA.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
+        MA_ABE.MA_CPABE_CSC_CPA.Ident identProxy = (MA_ABE.MA_CPABE_CSC_CPA.Ident) Proxy.newProxyInstance(MA_CPABE_CSC_CPA.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
         identProxy.setup();
         identProxy.keygen();
         identProxy.encrypt();
