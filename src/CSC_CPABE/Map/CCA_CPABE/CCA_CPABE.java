@@ -33,7 +33,7 @@ public class CCA_CPABE implements Ident {
     private String attributes_U = "1 2 3 4 5 6 7 8 9 10";
     //    private String attributes_U = "1 2 3 4 5 6";
     //用户的属性
-    private String attributes_A = "1 2 3 4 5";
+    private String attributes_A = "1 2 3 4 5 6 7 8 9";
     //    private String attributes_A = "1 2 7";
     //属性全集U`，共L-1个元素，是U的子集
     private String attributes_Us = "11 12 13 14 15 16 17 18 19";

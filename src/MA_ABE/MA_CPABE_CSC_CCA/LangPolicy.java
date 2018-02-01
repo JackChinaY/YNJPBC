@@ -215,7 +215,7 @@ public class LangPolicy {
                         comp.b = pk.g.duplicate().powZn(Zr_r);
                         //将pk中的h0---h2L-1复制到comp.hList
                         comp.hList = new HashMap<>();//2L-1个
-                        //将和用户属性一样的属性值赋值过去, TODO 此处是创新点1,减少h的个数
+                        //h的个数是该个用户属性所在的AA的掌管的所有的属性的个数, TODO 此处是创新点1,减少h的个数
                         for (Map.Entry<String, Element> entry2 : AAKList.get(i).apk.Hi.entrySet()) {
 //                            for (String str2 : arrayList_A) {
 //                                if (entry2.getKey().equals(str2)) {
@@ -575,6 +575,7 @@ public class LangPolicy {
                     G1_temp1.setToOne();
                 }
                 D2 = G1_temp2.duplicate();
+                /**-----------------------------------接下来求Zk^s-------------------------------**/
                 //计算M
                 Element e_C2_D2 = pairing.pairing(ciphertext.Ci.get(k), D2).duplicate();
                 Element e_C1_D1 = pairing.pairing(ciphertext.C1, D1).duplicate();

@@ -14,7 +14,7 @@ public class PK {
     public Element g2;//G1 g2
     public Element Z;//GT的,Z=e(g1,g2)
     public Element h0;//G1
-    public Map<String, Element> hList;//G1类型
+//    public Map<String, Element> hList;//G1类型
     public Element d1;//kexi1,G1类型
     public Element d2;//kexi2,G1类型
     public Element d3;//kexi3,G1类型
