@@ -4,6 +4,7 @@ import MA_ABE.MA_CPABE_CSC_CCA.Entity.*;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * 多属性中心_定长密文_CP-ABE_CCA
@@ -28,6 +29,8 @@ public class MA_CPABE_CSC_CCA implements Ident {
     //    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
     //各个AA中的门限值
     private String thresholds = "2 3 3";
+    //用户的GUID
+    private String AID = UUID.randomUUID().toString();
     private MK mk = new MK();
     private PK pk = new PK();
     private SK sk = new SK();
@@ -51,7 +54,7 @@ public class MA_CPABE_CSC_CCA implements Ident {
     public void keygen() {
         System.out.println("-----------------keygen密钥生成阶段--------------------");
         try {
-            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A);
+            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A, AID);
         } catch (Exception e) {
             e.printStackTrace();
         }

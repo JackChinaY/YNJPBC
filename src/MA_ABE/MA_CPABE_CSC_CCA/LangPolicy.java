@@ -8,10 +8,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * 主函数调用的全部方法，各个过程具体执行的方法
@@ -167,8 +164,9 @@ public class LangPolicy {
      * @param pk           SK
      * @param AAKList      属性全集
      * @param attributes_A 用户的属性
+     * @param AID          用户的GUID
      */
-    public static SK keygen(MK mk, PK pk, ArrayList<AAK> AAKList, String attributes_A) throws NoSuchAlgorithmException {
+    public static SK keygen(MK mk, PK pk, ArrayList<AAK> AAKList, String attributes_A, String AID) throws NoSuchAlgorithmException {
         Pairing pairing = pk.pairing;
         //将用户属性解析成字符数组
         ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
@@ -186,8 +184,13 @@ public class LangPolicy {
         //每个AA产生的私钥，循环的次数是AA的个数
         for (int i = 0; i < AAKList.size(); i++) {
             //根据AA的种子产生一个Zr的值
-            Element p0 = Hash4Zr(pk, AAKList.get(i).s);
-//            System.out.println("AA: " + p0);
+//            Element p0 = Hash4Zr(pk, AAKList.get(i).s);
+            Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + AID));
+//            String a = UUID.randomUUID().toString();
+//            Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + a));
+//            System.out.println("AAID: " + AAKList.get(i).s);
+//            System.out.println("AID: " + a);
+//            System.out.println("MD5: " + DigestUtils.md5Hex(AAKList.get(i).s + AID));
             //构造一个多项式
             Polynomial polynomial = createRandomPolynomial(AAKList.get(i).threshold - 1, p0);
             //对单个属性中心遍历
@@ -241,8 +244,9 @@ public class LangPolicy {
         Element Zr_temp3 = pairing.getZr().newElement();
         Zr_temp3.setToZero();
         for (int i = 0; i < AAKList.size(); i++) {
-            //Zr_temp3=对K个s求和
-            Zr_temp3.add(Hash4Zr(pk, AAKList.get(i).s).duplicate());
+            //Zr_temp3=对K个s求和 ;
+//            Zr_temp3.add(Hash4Zr(pk, AAKList.get(i).s).duplicate());
+            Zr_temp3.add(Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + AID)));
         }
         //Zr_temp4 = x-求和(K个xi)
         Element Zr_temp4 = mk.x.duplicate().sub(Zr_temp3);
