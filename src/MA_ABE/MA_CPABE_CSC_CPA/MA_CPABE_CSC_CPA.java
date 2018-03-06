@@ -4,6 +4,7 @@ import MA_ABE.MA_CPABE_CSC_CPA.Entity.*;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * 多属性中心_定长密文_CP-ABE_CPA
@@ -25,7 +26,9 @@ public class MA_CPABE_CSC_CPA implements Ident {
 
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
     private String[][] attributes_C = {{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H", "I"}};
-//    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
+    //private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
+    //用户的GUID
+    private String AID = UUID.randomUUID().toString();
     //各个AA中的门限值
     private String thresholds = "2 3 3";
     private MK mk = new MK();
@@ -51,7 +54,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     public void keygen() {
         System.out.println("-----------------keygen密钥生成阶段--------------------");
         try {
-            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A);
+            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A, AID);
         } catch (Exception e) {
             e.printStackTrace();
         }

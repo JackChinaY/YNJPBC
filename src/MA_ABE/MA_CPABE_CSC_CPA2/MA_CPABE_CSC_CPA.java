@@ -4,6 +4,7 @@ import MA_ABE.MA_CPABE_CSC_CPA2.Entity.*;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * 多属性中心_定长密文_CP-ABE_CPA
@@ -29,6 +30,8 @@ public class MA_CPABE_CSC_CPA implements Ident {
     // 属性全集U`，共L-1个元素，是U的子集，又称AA的伪属性
     private String[][] attributes_Us = {{"AA", "AB"}, {"BA", "BB"}, {"CA", "CB"}};
     //    private String[][] attributes_Us = {{"AA", "AB", "AC"}, {"BA", "BB", "BC"}, {"CA", "CB"}};
+    //用户的GUID
+    private String AID = UUID.randomUUID().toString();
     //各个AA中的门限值
     private String thresholds = "2 3 2";
     private MK mk = new MK();
@@ -54,7 +57,7 @@ public class MA_CPABE_CSC_CPA implements Ident {
     public void keygen() {
         System.out.println("-----------------keygen密钥生成阶段--------------------");
         try {
-            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A, attributes_Us);
+            sk = LangPolicy.keygen(mk, pk, AAKList, attributes_A, attributes_Us, AID);
         } catch (Exception e) {
             e.printStackTrace();
         }

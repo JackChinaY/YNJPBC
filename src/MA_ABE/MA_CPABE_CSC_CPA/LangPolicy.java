@@ -152,7 +152,7 @@ public class LangPolicy {
      * @param AAKList      属性全集
      * @param attributes_A 用户的属性
      */
-    public static SK keygen(MK mk, PK pk, ArrayList<AAK> AAKList, String attributes_A) throws NoSuchAlgorithmException {
+    public static SK keygen(MK mk, PK pk, ArrayList<AAK> AAKList, String attributes_A, String AID) throws NoSuchAlgorithmException {
         Pairing pairing = pk.pairing;
         //将用户属性解析成字符数组
         ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
@@ -170,7 +170,8 @@ public class LangPolicy {
         //每个AA产生的私钥，循环的次数是AA的个数
         for (int i = 0; i < AAKList.size(); i++) {
             //根据AA的种子产生一个Zr的值
-            Element p0 = Hash4Zr(pk, AAKList.get(i).s);
+//            Element p0 = Hash4Zr(pk, AAKList.get(i).s);
+            Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + AID));
 //            System.out.println("AA: " + p0);
             //构造一个多项式
             Polynomial polynomial = createRandomPolynomial(AAKList.get(i).threshold - 1, p0);
@@ -226,7 +227,8 @@ public class LangPolicy {
         Zr_temp3.setToZero();
         for (int i = 0; i < AAKList.size(); i++) {
             //Zr_temp3=对K个s求和
-            Zr_temp3.add(Hash4Zr(pk, AAKList.get(i).s).duplicate());
+//            Zr_temp3.add(Hash4Zr(pk, AAKList.get(i).s).duplicate());
+            Zr_temp3.add(Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + AID)));
         }
         //Zr_temp4 = x-求和(K个xi)
         Element Zr_temp4 = mk.x.duplicate().sub(Zr_temp3);
