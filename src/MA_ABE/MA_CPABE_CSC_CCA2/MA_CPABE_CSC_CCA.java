@@ -21,16 +21,24 @@ public class MA_CPABE_CSC_CCA implements Ident {
 
     //用户的属性
 //    private String attributes_A = "1 2 3 4 5 6 7 8";
-    private String attributes_A = "A B C D E F G H I";
+    private String attributes_A = "X1 X4 X5 X6 E F A2 D A3";
     //    private String attributes_A = "1 2 3";
 
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
-    private String[][] attributes_C = {{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H", "I"}};
+//    private String[][] attributes_C = {{"A", "B", "C", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9"}, {"D", "E", "F", "Y1", "Y2", "Y3", "Y4", "Y5"}, {"G", "H", "I", "Z1", "Z2", "Z3"}};
+//    private String[][] attributes_C = {{"A", "B"}, {"D", "E"}, {"G", "H"}};
+//    private String[][] attributes_C = {{"X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8"}, {"D", "E", "F", "Y1", "Y2", "Y3", "Y4", "Y5"}};
+//    private String[][] attributes_C = {{"X1", "X2", "X3", "X4", "A4"}, { "X5", "X6","X7", "X8", "BA"}, { "D", "E", "F","Y1"}, { "Y2", "Y3", "Y4", "Y5"}};
+    private String[][] attributes_C = {{"X1", "X2"}, {"X4", "A4"}, {"X6", "X7"}, {"BA", "D"}, {"X8", "E"}, {"F", "Y1"}, {"A3", "A7"}, {"X3", "X5"}, {"A2", "A6"}, {"B4", "Y4"}};
     //    private String[][] attributes_C = {{"1", "2", "3"}, {"4", "5", "6"}, {"7", "8", "9"}};
     // 属性全集U`，共L-1个元素，是U的子集，又称AA的伪属性
-    private String[][] attributes_Us = {{"AA", "AB"}, {"BA", "BB"}, {"CA", "CB"}};
+//    private String[][] attributes_Us = {{"AA", "AB", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9"}, {"BA", "BB", "B1", "B2", "B3", "B4", "B5"}, {"CA", "CB", "C1", "C2", "C3"}};
+//    private String[][] attributes_Us = {{"AA"}, {"BA"}, {"CA"}};
+//    private String[][] attributes_Us = {{"A1", "A2", "A3", "A4", "A5", "A6", "A7",}, {"BA", "BB", "B1", "B2", "B3", "B4", "B5"}};
+//    private String[][] attributes_Us = {{"A1", "A2", "A3"}, { "A5","A6", "A7"}, { "BB", "B1","B2"}, {"B3", "B4", "B5"}};
+    private String[][] attributes_Us = {{"A1"}, {"A5"}, {"BB"}, {"B3"}, {"Y3"}, {"B5"}, {"Y5"}, {"Y2"}, {"B2"}, {"B1"}};
     //各个AA中的门限值
-    private String thresholds = "2 2 2";
+    private String thresholds = "1 1 1 1 1 1 1 1 1 1";
     //用户的GUID
     private String AID = UUID.randomUUID().toString();
     private MK mk = new MK();
@@ -100,7 +108,7 @@ public class MA_CPABE_CSC_CCA implements Ident {
         Ident identProxy = (Ident) Proxy.newProxyInstance(MA_CPABE_CSC_CCA.class.getClassLoader(), new Class[]{Ident.class}, new TimeCountProxyHandle(ident));
         identProxy.setup();
         identProxy.keygen();
-        identProxy.encrypt();
-        identProxy.decrypt();
+//        identProxy.encrypt();
+//        identProxy.decrypt();
     }
 }

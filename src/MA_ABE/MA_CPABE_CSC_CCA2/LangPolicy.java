@@ -46,8 +46,8 @@ public class LangPolicy {
         pk.d1 = pairing.getG1().newRandomElement();
         pk.d2 = pairing.getG1().newRandomElement();
         pk.d3 = pairing.getG1().newRandomElement();
-        System.out.println("系统主密钥 " + mk.toString());
-        System.out.println("系统公钥 " + pk.toString());
+//        System.out.println("系统主密钥 " + mk.toString());
+//        System.out.println("系统公钥 " + pk.toString());
         //将各个AA中的门限值解析成字符数组
         ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
         /**---------------------------为各个属性中心AA生成属性中心私钥ASK和属性中心公钥APK---------------------------**/
@@ -72,7 +72,7 @@ public class LangPolicy {
             AAKList.add(aak);
 //            System.out.println("第" + (i + 1) + "个属性中心的APK生成成功！");
         }
-        System.out.println("各属性中心私钥： " + AAKList);
+//        System.out.println("各属性中心私钥： " + AAKList);
     }
 
     /**
@@ -179,7 +179,7 @@ public class LangPolicy {
         Pairing pairing = pk.pairing;
         //将用户属性解析成字符数组
         ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
-        System.out.println("集合A大小：" + arrayList_A.size() + "个，即：" + arrayList_A);
+//        System.out.println("集合A大小：" + arrayList_A.size() + "个，即：" + arrayList_A);
         Element Zr_temp = pairing.getZr().newElement();
         Element nodeID = pairing.getZr().newElement();
         Element Zr_r = pairing.getZr().newElement();
@@ -189,17 +189,17 @@ public class LangPolicy {
         SK sk = new SK();
         //给小钥匙赋值属性
         sk.comps = new HashMap<>();
-        System.out.print("附属属性：");
-        int count = 0;
-        for (int i = 0; i < attributes_Us.length; i++) {
-            count += attributes_Us[i].length;
-            for (int j = 0; j < attributes_Us[i].length; j++) {
-                System.out.print(attributes_Us[i][j] + ", ");
-            }
-        }
-        System.out.print("共" + count + "个");
-        System.out.println();
-        System.out.println("私钥中共有" + (arrayList_A.size() + count) + "个小钥匙！");
+//        System.out.print("附属属性：");
+//        int count = 0;
+//        for (int i = 0; i < attributes_Us.length; i++) {
+//            count += attributes_Us[i].length;
+//            for (int j = 0; j < attributes_Us[i].length; j++) {
+//                System.out.print(attributes_Us[i][j] + ", ");
+//            }
+//        }
+//        System.out.print("共" + count + "个");
+//        System.out.println();
+//        System.out.println("私钥中共有" + (arrayList_A.size() + count) + "个小钥匙！");
         /**---------------------------每个AA给用户生成私钥，循环的次数是AA的个数---------------------------**/
         //每个AA产生的私钥，循环的次数是AA的个数
         for (int i = 0; i < AAKList.size(); i++) {
@@ -301,7 +301,7 @@ public class LangPolicy {
             }
         }
         System.out.println();
-        System.out.println("私钥中各个AA的小钥匙到此生成完毕！");
+//        System.out.println("私钥中各个AA的小钥匙到此生成完毕！");
         //CA产生的私钥
         Element Zr_temp3 = pairing.getZr().newElement();
         Zr_temp3.setToZero();
@@ -314,7 +314,7 @@ public class LangPolicy {
         Element Zr_temp4 = mk.x.duplicate().sub(Zr_temp3);
 //        System.out.println("4  " + Zr_temp4);
         sk.Dca = pk.g2.duplicate().powZn(Zr_temp4);
-        System.out.println("私钥中CA的小钥匙生成成功！");
+//        System.out.println("私钥中CA的小钥匙生成成功！");
         return sk;
     }
 
@@ -478,14 +478,16 @@ public class LangPolicy {
         ciphertext.C3 = G1_temp1.duplicate();
         /**-----------------------------------接下来开始对明文加密-------------------------------**/
         //加密成功
-        System.out.println("AES加密文件的种子：" + M);
+//        System.out.println("AES加密文件的种子：" + M);
         //从本地读取明文文件
         byte[] messageBuf = FileOperation.file2byte(MPathName);
+        System.out.println("明文大小：" + messageBuf.length);
         //明文的字节数组
         //先将明文使用AES方法进行加密
         byte[] aesBuf = AESCoder.encrypt(M.duplicate().toBytes(), messageBuf);
         // 将密文保存到本地
         FileOperation.Ciphertext2File(CTPathName, aesBuf);
+        System.out.println("密文大小：" + aesBuf.length);
         System.out.println("密文成功生成，已保存到本地！");
         return ciphertext;
     }
@@ -531,10 +533,12 @@ public class LangPolicy {
         ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
         /**-----------------------------------接下来验证用户属性-------------------------------**/
         //标志位，用户的属性是否满足门限值
+        int count = 0;
         boolean isSatisfy = true;
         for (int i = 0; i < attributes_S.length; i++) {
             //第i个AA管理的属性
             ArrayList<String> arrayList_AAi = parseStringArray2ArrayList(attributes_S, i);
+            count += 2 * arrayList_AAi.size() - 1;
             //求A和AAi的并集
             ArrayList<String> arrayList_AAndAAi = intersectionArrayList(attrList_A, arrayList_AAi);
 //            System.out.println("用户和AAi的交集的大小:" + arrayList_AAndAAi.size() + "个，即：" + arrayList_AAndAAi);
@@ -545,6 +549,7 @@ public class LangPolicy {
                 break;
             }
         }
+        System.out.println("AA们的总属性个数：" + count);
         /**------------------------------接下来验证两个参数，第一个参数e(g,C2)--------------------------**/
         //循环乘hj
         for (int k = 0; k < attributes_S.length; k++) {
@@ -590,7 +595,7 @@ public class LangPolicy {
             Element e_g_C2_1 = pairing.pairing(pk.g, ciphertext.Ci.get(k));
             Element e_g_C2_2 = pairing.pairing(ciphertext.C1, G1_temp3);
             if (e_g_C2_1.isEqual(e_g_C2_2)) {
-                System.out.println("第一个条件满足，关于第" + (k + 1) + "个属性中心！");
+//                System.out.println("第一个条件满足，关于第" + (k + 1) + "个属性中心！");
             } else {
                 System.err.println("第一个条件不满足，程序退出！");
                 System.exit(0);
@@ -618,14 +623,14 @@ public class LangPolicy {
         Element e_g_C3_1 = pairing.pairing(pk.g, ciphertext.C3).duplicate();
         Element e_g_C3_2 = pairing.pairing(ciphertext.C1, G1_temp4).duplicate();
         if (e_g_C3_1.isEqual(e_g_C3_2)) {
-            System.out.println("第二个条件满足！");
+//            System.out.println("第二个条件满足！");
         } else {
             System.err.println("第二个条件不满足，程序退出！");
             System.exit(0);
         }
         /**------------------------如果SK满足密文中的访问策略，则开始解密-----------------------**/
         if (isSatisfy) {
-            System.out.println("用户属性满足，开始解密...");
+//            System.out.println("用户属性满足，开始解密...");
             //解密用的D1和D2
             Element D1;
             Element D2 = pairing.getGT().newElement();
@@ -649,8 +654,8 @@ public class LangPolicy {
                 for (int i = 0; i < Integer.parseInt(arrayList_thresholds.get(k)); i++) {
                     arrayList_As.add(arrayList_AAndAAi.get(i));
                 }
-                System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
-                System.out.print("， 集合AAi的大小:" + arrayList_AAi.size() + "个，即：" + arrayList_AAi);
+//                System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
+//                System.out.print("， 集合AAi的大小:" + arrayList_AAi.size() + "个，即：" + arrayList_AAi);
                 //第i个OMG管理的属性
                 ArrayList<String> arrayList_Us = parseStringArray2ArrayList(attributes_Us, k);
                 ArrayList<String> arrayList_OMG = new ArrayList<>();
@@ -658,13 +663,13 @@ public class LangPolicy {
                 for (int i = 0; i < attributes_S[k].length - Integer.parseInt(arrayList_thresholds.get(k)); i++) {
                     arrayList_OMG.add(arrayList_Us.get(i));
                 }
-                System.out.print("，集合OMG:" + arrayList_OMG.size() + "个，即：" + arrayList_OMG);
+//                System.out.print("，集合OMG:" + arrayList_OMG.size() + "个，即：" + arrayList_OMG);
                 //求A`和OMG的交集
                 ArrayList<String> arrayList_AsAndOMG = unionArrayList(arrayList_As, arrayList_OMG);
                 //求AAi和OMG的交集
                 ArrayList<String> arrayList_AAiAndOMG = unionArrayList(arrayList_AAi, arrayList_OMG);
-                System.out.print("，A`和OMG交集:" + arrayList_AsAndOMG.size() + "个，即：" + arrayList_AsAndOMG);
-                System.out.println("，AAi和OMG交集:" + arrayList_AAiAndOMG.size() + "个，即：" + arrayList_AAiAndOMG);
+//                System.out.print("，A`和OMG交集:" + arrayList_AsAndOMG.size() + "个，即：" + arrayList_AsAndOMG);
+//                System.out.println("，AAi和OMG交集:" + arrayList_AAiAndOMG.size() + "个，即：" + arrayList_AAiAndOMG);
                 /**-----------------------------------接下来求D1-------------------------------**/
                 //最外层连乘，处理i
                 for (int i = 0; i < arrayList_AsAndOMG.size(); i++) {
@@ -723,7 +728,7 @@ public class LangPolicy {
             GT_temp.invert();
             //AES种子
             Element M = ciphertext.C0.duplicate().mul(GT_temp);
-            System.out.println("解密后计算出AES种子：" + M);
+//            System.out.println("解密后计算出AES种子：" + M);
             //读取本地的CT密文文件
             byte[] ciphertextFileBuf = FileOperation.file2byte(CTPathName);//AES文件，密文文件
             byte[] pltBuf = AESCoder.decrypt(M.toBytes(), ciphertextFileBuf);
