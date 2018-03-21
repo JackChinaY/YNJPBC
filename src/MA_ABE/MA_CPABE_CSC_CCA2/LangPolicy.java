@@ -50,8 +50,9 @@ public class LangPolicy {
 //        System.out.println("系统公钥 " + pk.toString());
         //将各个AA中的门限值解析成字符数组
         ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
-        /**---------------------------为各个属性中心AA生成属性中心私钥ASK和属性中心公钥APK---------------------------**/
+        /**---------------------------为各个属性中心AA生成属性中心公钥APK---------------------------**/
         for (int i = 0; i < attributes_C.length; i++) {
+            long begin = System.currentTimeMillis();
             AAK aak = new AAK();
             //各当前的属性中心的门限值赋值
             aak.threshold = Integer.parseInt(arrayList_thresholds.get(i));
@@ -70,6 +71,8 @@ public class LangPolicy {
                 aak.apk.Hi.put(attributes_Us[i][j], pairing.getG1().newRandomElement());
             }
             AAKList.add(aak);
+            long end = System.currentTimeMillis();
+            System.out.println("单个AA耗时:" + (end - begin) + "ms");
 //            System.out.println("第" + (i + 1) + "个属性中心的APK生成成功！");
         }
 //        System.out.println("各属性中心私钥： " + AAKList);
@@ -203,6 +206,7 @@ public class LangPolicy {
         /**---------------------------每个AA给用户生成私钥，循环的次数是AA的个数---------------------------**/
         //每个AA产生的私钥，循环的次数是AA的个数
         for (int i = 0; i < AAKList.size(); i++) {
+            long begin = System.currentTimeMillis();
             //根据AA的种子产生一个Zr的值
 //            Element p0 = Hash4Zr(pk, AAKList.get(i).s);
             Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + AID));
@@ -212,7 +216,7 @@ public class LangPolicy {
 //            System.out.println("AID: " + a);
 //            System.out.println("MD5: " + DigestUtils.md5Hex(AAKList.get(i).s + AID));
             //构造一个多项式
-            Polynomial polynomial = createRandomPolynomial(AAKList.get(i).threshold - 1, p0);
+            Polynomial polynomial = createRandomPolynomial(AAKList.get(i).number - 1, p0);
             //对单个属性中心遍历
             for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
                 //对用户属性遍历
@@ -299,6 +303,9 @@ public class LangPolicy {
                     }
                 }
             }
+            System.out.println();
+            long end = System.currentTimeMillis();
+            System.out.println("单个AA耗时:" + (end - begin) + "ms");
         }
         System.out.println();
 //        System.out.println("私钥中各个AA的小钥匙到此生成完毕！");
@@ -423,6 +430,7 @@ public class LangPolicy {
         G1_temp1.setToOne();
         //循环次数是AA的个数
         for (int i = 0; i < AAKList.size(); i++) {
+            long begin = System.currentTimeMillis();
             //G1_temp1=循环乘hj
             for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
                 //循环AA管理的属性，共L个
@@ -450,12 +458,15 @@ public class LangPolicy {
             G1_temp1.setToOne();
 //            Element e_C2_D2 = pairing.pairing(pk.g.duplicate().powZn(Hash4Zr(pk, AAKList.get(i).s).duplicate()), pk.g2.duplicate().powZn(Zr_s)).duplicate();
 //            System.out.println("e_C2_D2 " + e_C2_D2);
+            long end = System.currentTimeMillis();
+            System.out.println("单个AA耗时:" + (end - begin) + "ms");
         }
         /**-----------------------------------接下来求C3-------------------------------**/
         //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
         G1_temp1.setToOne();
         //将C0C1C2转换成字节数组 TODO 如果属性中心个数增加了，此处需要收到增加参数
-        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
+        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1));
+//        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
         //求哈希值
         Element c = Hash4Zr(pk, byteArray);
         //G1D1=d1^c
@@ -606,7 +617,8 @@ public class LangPolicy {
         G1_temp4.setToOne();
         //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
         //将C0C1C2转换成字节数组，TODO 如果属性中心个数增加了，此处需要收到增加参数
-        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
+        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1));
+//        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
         //求哈希值
         Element c = Hash4Zr(pk, byteArray);
         //G1D1=d1^c
@@ -645,6 +657,7 @@ public class LangPolicy {
             G1_temp2.setToOne();
             GT_temp.setToOne();
             for (int k = 0; k < attributes_S.length; k++) {
+                long begin = System.currentTimeMillis();
                 //第i个AA管理的属性
                 ArrayList<String> arrayList_AAi = parseStringArray2ArrayList(attributes_S, k);
                 //求A和AAi的并集
@@ -719,6 +732,8 @@ public class LangPolicy {
                 GT_temp.mul(e_C1_D1);
                 //累加置1
                 G1_temp2.setToOne();
+                long end = System.currentTimeMillis();
+                System.out.println("单个AA耗时:" + (end - begin) + "ms");
             }
             //GT_temp2=e(g,g2^s)^x-(x1+x2+x3)
             Element GT_temp2 = pairing.pairing(ciphertext.C1, sk.Dca);
