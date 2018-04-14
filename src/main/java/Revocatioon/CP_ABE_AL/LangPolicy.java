@@ -520,82 +520,91 @@ public class LangPolicy {
             G1_temp1 = pk.g.duplicate().powZn(ti);
             ciphertext.C3.put(i, G1_temp1.duplicate());
         }
-//        //计算C2
-//        Element G1_temp1 = pairing.getG1().newElement();
-//        G1_temp1.setToOne();
-//        //循环乘hj
-//        for (int i = 0; i < AAKList.size(); i++) {
-//            for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
-//                G1_temp1.mul(entry.getValue());
-//            }
-//        }
-//        //G1_temp1=h0*(循环乘hj)
-//        G1_temp1.mul(pk.h0);
-//        //计算C2=(h0*(循环乘hj))^s
-//        ciphertext.C2 = G1_temp1.powZn(Zr_s).duplicate();
-//        /**-----------------------------------接下来求Ci-------------------------------**/
-//        ciphertext.Ci = new ArrayList<>();
-//        Element G1_temp1 = pairing.getG1().newElement();
-//        G1_temp1.setToOne();
-//        //循环次数是AA的个数
-//        for (int i = 0; i < AAKList.size(); i++) {
-//            long begin = System.currentTimeMillis();
-//            //G1_temp1=循环乘hj
-//            for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
-//                //循环AA管理的属性，共L个
-//                for (int j = 0; j < attributes_S[i].length; j++) {
-//                    if (entry.getKey().equals(attributes_S[i][j])) {
-//                        G1_temp1.mul(entry.getValue());
-////                        System.out.print(entry.getKey() + " ");
-//                        break;
-//                    }
-//                }
-//                //循环AA管理的附属属性，共L-t个
-//                for (int j = 0; j < (AAKList.get(i).number - AAKList.get(i).threshold); j++) {
-//                    if (entry.getKey().equals(attributes_Us[i][j])) {
-//                        G1_temp1.mul(entry.getValue());
-////                        System.out.print(entry.getKey() + " ");
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            //G1_temp1=h0*(循环乘hj)
-//            G1_temp1.mul(pk.h0);
-//            //Ci=(h0*(循环乘hj))^s
-//            ciphertext.Ci.add(G1_temp1.powZn(Zr_s).duplicate());
-//            G1_temp1.setToOne();
-////            Element e_C2_D2 = pairing.pairing(pk.g.duplicate().powZn(Hash4Zr(pk, AAKList.get(i).s).duplicate()), pk.g2.duplicate().powZn(Zr_s)).duplicate();
-////            System.out.println("e_C2_D2 " + e_C2_D2);
-//            long end = System.currentTimeMillis();
-//            System.out.println("单个AA耗时:" + (end - begin) + "ms");
-//        }
-//        /**-----------------------------------接下来求C3-------------------------------**/
-//        //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
-//        G1_temp1.setToOne();
-//        //将C0C1C2转换成字节数组 TODO 如果属性中心个数增加了，此处需要收到增加参数
-//        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1));
-////        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
-//        //求哈希值
-//        Element c = Hash4Zr(pk, byteArray);
-//        //G1D1=d1^c
-//        Element G1D1 = pk.d1.duplicate().powZn(c);
-//        //Zr的随机值r
-//        Element Zr_r = pairing.getZr().newRandomElement();
-//        //赋值r
-//        ciphertext.r = Zr_r.duplicate();
-//        //G1_temp1=1*d1^c
-//        G1_temp1.mul(G1D1);
-//        //G1D2=d2^r
-//        Element G1D2 = pk.d2.duplicate().powZn(Zr_r);//G1D2=d2^r
-//        //G1_temp1=1 * d1^c * d2^r
-//        G1_temp1.mul(G1D2);
-//        //G1_temp1=1 * d1^c * d2^r * d3
-//        G1_temp1.mul(pk.d3.duplicate());
-//        //G1_temp1=( 1 * d1^c * d2^r * d3 )^s
-//        G1_temp1.powZn(Zr_s);
-//        //C3=( 1 * d1^c * d2^r * d3 )^s
-//        ciphertext.C3 = G1_temp1.duplicate();
+        /**-----------------------------------接下来开始对明文加密-------------------------------**/
+        //加密成功
+//        System.out.println("AES加密文件的种子：" + M);
+        //从本地读取明文文件
+        byte[] messageBuf = FileOperation.file2byte(MPathName);
+        System.out.println("明文大小：" + messageBuf.length);
+        //先将明文使用AES方法进行加密
+        byte[] aesBuf = AESCoder.encrypt(M.duplicate().toBytes(), messageBuf);
+        // 将密文保存到本地
+        FileOperation.Ciphertext2File(CTPathName, aesBuf);
+        System.out.println("密文大小：" + aesBuf.length);
+        System.out.println("密文成功生成，已保存到本地！");
+        return ciphertext;
+    }
+    /**
+     * 重加密
+     *
+     * @param pk         SK
+     * @param AAKList    属性中心们
+     * @param MPathName  明文
+     * @param CTPathName 密文
+     */
+    public static Ciphertext re_encrypt(PK pk, ArrayList<AAK> AAKList, String[][] attributes_S, String[][] attributes_Us, int[][] matrix, String MPathName, String CTPathName) throws Exception {
+        Pairing pairing = pk.pairing;
+        //表示GT的随机值，AES种子
+        Element M = pairing.getGT().newRandomElement();
+        //Zr_s=s
+        Element Zr_s = pairing.getZr().newRandomElement();
+        //密文实体
+        Ciphertext ciphertext = new Ciphertext();
+        /**---------------------求C----------------------**/
+        //GT_temp=(e(g,g)^a)^s
+        Element GT_temp = pk.e_g_g_a.duplicate().powZn(Zr_s);
+        //C=M*(e(g,g)^a)^s
+        ciphertext.C = M.duplicate().mul(GT_temp);
+        /**---------------------求C0----------------------**/
+        //C0=g^s
+        ciphertext.C0 = pk.g.duplicate().powZn(Zr_s);
+        /**---------------------求C1、C2、C3----------------------**/
+        //ti
+        Element ti = pairing.getZr().newElement();
+        //l*n的矩阵M
+        Element[][] matixElement = new Element[matrix.length][matrix[0].length];
+        for (int i = 0; i < matixElement.length; i++) {
+            for (int j = 0; j < matixElement[0].length; j++) {
+                if (matrix[i][j] == 0) matixElement[i][j] = pairing.getZr().newElement().setToZero();
+                else if (matrix[i][j] == 1) matixElement[i][j] = pairing.getZr().newElement().setToOne();
+            }
+        }
+        //向量v
+        Element[] v = new Element[matrix[0].length];
+        for (int i = 0; i < v.length; i++) {
+            v[i] = pairing.getZr().newElement();
+        }
+        Element Zr_temp1 = pairing.getZr().newElement();
+        Element Zr_temp2 = pairing.getZr().newElement().setToOne();
+        Element G1_temp1;
+        Element G1_temp2;
+        //循环次数是AA的个数
+        for (int i = 0; i < matrix.length; i++) {
+            /**---------------------求C1----------------------**/
+            //ti
+            ti.setToRandom();
+            //lanmda
+            for (int j = 0; j < v.length; j++) {
+                Zr_temp1 = matixElement[i][j].duplicate().mul(v[j]);
+                Zr_temp2.add(Zr_temp1);
+            }
+            //w^lanmda
+            G1_temp1 = pk.w.duplicate().powZn(Zr_temp2);
+            //v^ti
+            G1_temp2 = pk.v.duplicate().powZn(ti);
+            ciphertext.C1.put(i, G1_temp1.mul(G1_temp2).duplicate());
+            /**---------------------求C2----------------------**/
+            //构造一个多项式
+//            Polynomial polynomial = createRandomPolynomial(AAKList.get(i).number - 1, p0);
+            G1_temp1 = pk.u.duplicate().mul(pk.h);
+            Zr_temp1.setToZero();
+            Zr_temp1.sub(ti);
+            G1_temp1.powZn(Zr_temp1);
+            ciphertext.C2.put(i, G1_temp1.duplicate());
+            /**---------------------求C3----------------------**/
+            G1_temp1 = pk.g.duplicate().powZn(ti);
+            ciphertext.C3.put(i, G1_temp1.duplicate());
+        }
         /**-----------------------------------接下来开始对明文加密-------------------------------**/
         //加密成功
 //        System.out.println("AES加密文件的种子：" + M);
