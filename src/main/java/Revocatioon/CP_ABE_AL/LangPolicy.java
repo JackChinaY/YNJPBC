@@ -84,7 +84,7 @@ public class LangPolicy {
      * java默认的分隔符是“空格”、“制表符(‘\t’)”、“换行符(‘\n’)”、“回车符(‘\r’)”
      */
     private static ArrayList<String> parseString2ArrayList(String string) {
-        ArrayList<String> arrayList = new ArrayList<>();
+        ArrayList<String> arrayList = new ArrayList<String>();
         //构造一个用来解析str的StringTokenizer对象
         StringTokenizer stringTokenizer = new StringTokenizer(string);//此处按空格划分每个属性
         String token;
