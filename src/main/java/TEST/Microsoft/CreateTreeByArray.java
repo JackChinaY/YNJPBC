@@ -53,6 +53,7 @@ public class CreateTreeByArray {
                 list.get(j).right = list.get(j * 2 + 2);
 //                System.out.println(" ->" + list.get(j * 2 + 2).data);
             }
+            list.get(4).left = null;
         } catch (Exception e) {
 //                 e.printStackTrace();
 //            System.out.println(" -> null");
@@ -63,7 +64,7 @@ public class CreateTreeByArray {
 
     }
 
-    //先序遍历二叉树
+    //先序遍历二叉树 NLR
     public void Indorder(Node root) {
         if (root == null) {
             return;
@@ -73,7 +74,7 @@ public class CreateTreeByArray {
         Indorder(root.right); //递归遍历右子树
     }
 
-    //中序遍历二叉树
+    //中序遍历二叉树 LNR
     public void inOrderTraverse(Node root) {
         if (root == null) {
             return;
@@ -83,7 +84,7 @@ public class CreateTreeByArray {
         inOrderTraverse(root.right); //遍历右子树
     }
 
-    //后序遍历
+    //后序遍历  LRN
     public void postOrderTraverse(Node root) {
         if (root == null) {
             return;
@@ -92,24 +93,44 @@ public class CreateTreeByArray {
         postOrderTraverse(root.right); //遍历右子树节点
         System.out.print(root.data + " "); //从下往上遍历
     }
+
     //实现广度遍历需要的队列
     private LinkedList<Node> queue = new LinkedList<>();
     //第n层最右节点的标志
     private boolean leftMost = false;
 
+    //    public boolean processChild(Node child) {
+//        if (child != null) {
+//            if (!leftMost) {
+//                queue.addLast(child);
+//            } else {
+//                return false;
+//            }
+//        } else {
+//            leftMost = true;
+//        }
+//        return true;
+//    }
+    //判断子节点
     public boolean processChild(Node child) {
-        if (child != null) {
-            if (!leftMost) {
-                queue.addLast(child);
-            } else {
-                return false;
-            }
+        if (child == null) {
+            leftMost = true;//如果该节点为空，则说明已触及到最后一个节点，至此已经是完全二叉树
+            return true;
         } else {
-            leftMost = true;
+            if (leftMost) {
+                return false;//在已经是完全二叉树的情况下，如果还有节点，则说明该二叉树不是完全二叉树
+            } else {
+                queue.addLast(child);//在还未检测到是完全二叉树的情况下，就将该节点加入队列
+                return true;
+            }
         }
-        return true;
     }
 
+    /**
+     *  判断一个二叉树是否为完全二叉树
+     *  广度优先英文缩写为BFS即Breadth FirstSearch。其过程检验来说是对每一层节点依次访问，访问完一层进入下一层，而且每个节点只能访问一次
+     * https://www.cnblogs.com/toSeeMyDream/p/5816682.html
+     */
     public boolean isCompleteTree(Node root) {
         //空树也是完全二叉树
         if (root == null) return true;
@@ -117,6 +138,7 @@ public class CreateTreeByArray {
         queue.addLast(root);
         while (!queue.isEmpty()) {
             Node node = queue.removeFirst();
+            System.out.println(node.data);
             //处理左子结点
             if (!processChild(node.left))
                 return false;
@@ -131,25 +153,25 @@ public class CreateTreeByArray {
     public static void main(String[] args) {
         long begin = System.currentTimeMillis();
         CreateTreeByArray createTreeByArray = new CreateTreeByArray();
-        int m = 21;
+        int m = 11;
         int[] arrays = new int[m];
         for (int i = 0; i < m; i++) {
             arrays[i] = i + 1;
         }
         createTreeByArray.createTreeByArray(arrays);
-//        System.out.println("===============================");
-//        System.out.print("先序遍历:");
-//        createTreeByArray.Indorder(createTreeByArray.list.get(0));
-//        System.out.println();
-//        System.out.print("中序遍历:");
-//        createTreeByArray.inOrderTraverse(createTreeByArray.list.get(0));
-//        System.out.println();
-//        System.out.print("后序遍历:");
-//        createTreeByArray.postOrderTraverse(createTreeByArray.list.get(0));
-//        System.out.println();
-        if (createTreeByArray.isCompleteTree(createTreeByArray.root)){
+        System.out.println("===============================");
+        System.out.print("先序遍历:");
+        createTreeByArray.Indorder(createTreeByArray.list.get(0));
+        System.out.println();
+        System.out.print("中序遍历:");
+        createTreeByArray.inOrderTraverse(createTreeByArray.list.get(0));
+        System.out.println();
+        System.out.print("后序遍历:");
+        createTreeByArray.postOrderTraverse(createTreeByArray.list.get(0));
+        System.out.println();
+        if (createTreeByArray.isCompleteTree(createTreeByArray.list.get(0))) {
             System.out.println("完全二叉树");
-        }else {
+        } else {
             System.out.println("非完全二叉树");
         }
         long end = System.currentTimeMillis();
