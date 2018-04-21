@@ -34,7 +34,7 @@ public class CreateTreeByArray {
     }
 
     //将将数组转化为一颗二叉树，转换规则：依次为节点列表中节点的左右孩子赋值。左孩子为i*2+1,右孩子为i*2+2
-    @SuppressWarnings("unchecked")
+//    @SuppressWarnings("unchecked")
     public void createTreeByArray(int[] array) {
         this.list = new ArrayList<>();
         //将数组添加到节点列表
@@ -48,12 +48,10 @@ public class CreateTreeByArray {
             for (int j = 0; j < (list.size() / 2); j++) {
                 //为左子树赋值  j*2+1
                 list.get(j).left = list.get(j * 2 + 1);
-//                System.out.println("节点" + list.get(j).data + "左子树 ->" + list.get(j * 2 + 1).data);
-                System.out.print("节点" + list.get(j).data + "的左右子树： " + list.get(j * 2 + 1).data + "<- " + list.get(j).data);
+//                System.out.print("节点" + list.get(j).data + "的左右子树： " + list.get(j * 2 + 1).data + "<- " + list.get(j).data);
                 //为右子树赋值 j*2+2
                 list.get(j).right = list.get(j * 2 + 2);
-//                System.out.println("节点" + list.get(j).data + "右子树 ->" + list.get(j * 2 + 2).data);
-                System.out.println(" ->" + list.get(j * 2 + 2).data);
+//                System.out.println(" ->" + list.get(j * 2 + 2).data);
             }
         } catch (Exception e) {
 //                 e.printStackTrace();
@@ -95,7 +93,7 @@ public class CreateTreeByArray {
         System.out.print(root.data + " "); //从下往上遍历
     }
     //实现广度遍历需要的队列
-    private LinkedList<Node> queue = new LinkedList<Node>();
+    private LinkedList<Node> queue = new LinkedList<>();
     //第n层最右节点的标志
     private boolean leftMost = false;
 
@@ -115,13 +113,10 @@ public class CreateTreeByArray {
     public boolean isCompleteTree(Node root) {
         //空树也是完全二叉树
         if (root == null) return true;
-
         //首先根节点入队列
         queue.addLast(root);
-
         while (!queue.isEmpty()) {
             Node node = queue.removeFirst();
-
             //处理左子结点
             if (!processChild(node.left))
                 return false;
@@ -129,7 +124,6 @@ public class CreateTreeByArray {
             if (!processChild(node.right))
                 return false;
         }
-
         //广度优先遍历完毕，此树是完全二叉树
         return true;
     }
@@ -143,16 +137,21 @@ public class CreateTreeByArray {
             arrays[i] = i + 1;
         }
         createTreeByArray.createTreeByArray(arrays);
-        System.out.println("===============================");
-        System.out.print("先序遍历:");
-        createTreeByArray.Indorder(createTreeByArray.list.get(0));
-        System.out.println();
-        System.out.print("中序遍历:");
-        createTreeByArray.inOrderTraverse(createTreeByArray.list.get(0));
-        System.out.println();
-        System.out.print("后序遍历:");
-        createTreeByArray.postOrderTraverse(createTreeByArray.list.get(0));
-        System.out.println();
+//        System.out.println("===============================");
+//        System.out.print("先序遍历:");
+//        createTreeByArray.Indorder(createTreeByArray.list.get(0));
+//        System.out.println();
+//        System.out.print("中序遍历:");
+//        createTreeByArray.inOrderTraverse(createTreeByArray.list.get(0));
+//        System.out.println();
+//        System.out.print("后序遍历:");
+//        createTreeByArray.postOrderTraverse(createTreeByArray.list.get(0));
+//        System.out.println();
+        if (createTreeByArray.isCompleteTree(createTreeByArray.root)){
+            System.out.println("完全二叉树");
+        }else {
+            System.out.println("非完全二叉树");
+        }
         long end = System.currentTimeMillis();
         System.out.println("耗时:" + (end - begin) + "ms");
     }
