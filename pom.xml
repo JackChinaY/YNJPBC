@@ -22,6 +22,12 @@
             <version>1.7.25</version>
             <scope>test</scope>
         </dependency>
+        <!--netty TCP/IP长连接-->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>5.0.0.Alpha2</version>
+        </dependency>
 
     </dependencies>
 </project>
