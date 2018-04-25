@@ -4,9 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Currency;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 服务器端Socket
@@ -60,14 +57,10 @@ class ServerUtils {
      */
     public static void write(Socket socket, byte[] message) {
         try {
-            //PrintWriter pw = new PrintWriter(socket.getOutputStream());//将字节输出流包装为打印流
-            //pw.write(message);
-            //pw.flush();
             //将字节输出流包装为带缓冲的字节输出流
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
             bufferedOutputStream.write(message);
             bufferedOutputStream.flush();
-//            socket.shutdownOutput();//关闭输出流
         } catch (IOException e) {
             e.printStackTrace();
         }
