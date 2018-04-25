@@ -16,11 +16,8 @@ public class Server {
 
     public void init(int port) {
         try {
-            //1.创建一个服务器端Socket，即ServerSocket，指定绑定的端口，并监听此端口
+            //创建一个服务器端Socket，即ServerSocket，指定绑定的端口，并监听此端口
             serverSocket = new ServerSocket(port);
-//            Socket socket = null;
-            //记录客户端的数量
-            int count = 0;
             System.out.println("***服务器即将启动，等待客户端的连接***");
             //循环监听等待客户端的连接
             while (true) {
@@ -32,14 +29,13 @@ public class Server {
                 new Thread(serverThread).start();
                 System.out.println("远程客户端的IP：" + socket.getRemoteSocketAddress());
                 ClientSocketMap.show();
-//                System.out.println("当前客户端的IP：" + socket.getInetAddress() + "：" + socket.getPort());
 //                System.out.println("当前客户端的IP：" + address.getHostAddress()+"端口号：" + address.getHostName());
             }
         } catch (IOException e) {
             if (!serverSocket.isClosed()) {
                 try {
                     serverSocket.close();
-                    System.out.println("此客户端已关闭连接。");
+                    System.out.println("此服务端已关闭连接");
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -52,23 +48,11 @@ public class Server {
         ClientSocketMap clientSocketMap = new ClientSocketMap();
         new Thread(clientSocketMap).start();
         new Server().init(5001);
-
-//        for (int i = 0; i < 2; i++) {
-//            try {
-//                Thread.sleep(5000);
-//                for (Map.Entry entry : ClientSocketMap.clientSocketMap.entrySet()) {
-//                    byte[] message = {0x00, 0x01, 0x02, 0x03};
-//                    ServerUtils.write((Socket) entry.getValue(), message);
-//                }
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
     }
 }
 
 /**
- * 客户Socket端集合
+ * 服务器端常用工具
  */
 class ServerUtils {
     /**
