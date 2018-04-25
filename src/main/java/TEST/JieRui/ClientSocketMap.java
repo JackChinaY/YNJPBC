@@ -19,7 +19,7 @@ public class ClientSocketMap implements Runnable {
     }
 
     /**
-     * 添加一个新的客户端
+     * 添加一个新的客户端，如果已存在则将旧的覆盖掉
      */
     public static void add(Socket socket) {
         clientSocketMap.put(socket.getRemoteSocketAddress().toString(), socket);
@@ -34,6 +34,15 @@ public class ClientSocketMap implements Runnable {
                 clientSocketMap.remove(IP);
                 System.out.println("服务器端断开了与客户端 " + IP + " 的连接");
             }
+        }
+    }
+
+    /**
+     * 移除所有已存在客户端
+     */
+    public static void removeAll() {
+        for (Map.Entry entry : clientSocketMap.entrySet()) {
+            clientSocketMap.remove(entry.getKey());
         }
     }
 

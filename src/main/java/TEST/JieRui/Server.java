@@ -31,7 +31,9 @@ public class Server {
         } catch (IOException e) {
             if (!serverSocket.isClosed()) {
                 try {
+                    //如果服务器端出现问题，则关闭服务器端，并释放掉所有资源
                     serverSocket.close();
+                    ClientSocketMap.removeAll();
                     System.out.println("此服务端已关闭连接");
                 } catch (IOException e1) {
                     e1.printStackTrace();

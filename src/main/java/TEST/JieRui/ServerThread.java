@@ -14,14 +14,14 @@ public class ServerThread implements Runnable {
         this.socket = socket;
     }
 
-    private byte[] tempAll = new byte[10];// 每当端口有数据时就加入到此数组中
-    private volatile int i = 0;// 负责tempAll数组的移位工作
-    private volatile int p = 0;// 工作指针
-    // 第一步 上位机发送：fe 68 11 00 00 0b b9 d5 16
-    byte[] swjOutPut1 = {0x00, 0x68, 0x11, 0x00};
-    // 第二步 下位机发送：FE 68 20 00 00 0b b9 e4 16 (发送密码)
-    byte[] xwjInPut = {0x01, 0x68, 0x11, 0x00};
-    // 第三步 上位机发送: fe 68 22 00 00 0b ba e7 16 (密码比对成功)
+//    private byte[] tempAll = new byte[10];// 每当端口有数据时就加入到此数组中
+//    private volatile int i = 0;// 负责tempAll数组的移位工作
+//    private volatile int p = 0;// 工作指针
+//    // 第一步 上位机发送：fe 68 11 00 00 0b b9 d5 16
+//    byte[] swjOutPut1 = {0x00, 0x68, 0x11, 0x00};
+//    // 第二步 下位机发送：FE 68 20 00 00 0b b9 e4 16 (发送密码)
+//    byte[] xwjInPut = {0x01, 0x68, 0x11, 0x00};
+//    // 第三步 上位机发送: fe 68 22 00 00 0b ba e7 16 (密码比对成功)
 
     /**
      * 线程执行的操作，响应客户端的请求
