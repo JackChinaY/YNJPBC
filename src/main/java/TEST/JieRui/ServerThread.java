@@ -14,9 +14,9 @@ public class ServerThread implements Runnable {
         this.socket = socket;
     }
 
-//    private byte[] tempAll = new byte[10];// 每当端口有数据时就加入到此数组中
-//    private volatile int i = 0;// 负责tempAll数组的移位工作
-//    private volatile int p = 0;// 工作指针
+    private byte[] tempAll = new byte[50];// 每当端口有数据时就加入到此数组中
+    private volatile int i = 0;// 负责tempAll数组的移位工作
+    private volatile int p = 0;// 工作指针
 //    // 第一步 上位机发送：fe 68 11 00 00 0b b9 d5 16
 //    byte[] swjOutPut1 = {0x00, 0x68, 0x11, 0x00};
 //    // 第二步 下位机发送：FE 68 20 00 00 0b b9 e4 16 (发送密码)
@@ -28,7 +28,6 @@ public class ServerThread implements Runnable {
      */
     @Override
     public void run() {
-
 //        System.out.println("该客户端是否关闭：" + socket.isClosed());
         while (!socket.isClosed()) {
 //
@@ -41,23 +40,40 @@ public class ServerThread implements Runnable {
                 byte[] hex = new byte[numBytes];
                 for (int i = 0; i < numBytes; i++) {
                     hex[i] = readBuffer[i];
+//                    System.out.println(readBuffer[i]);
                 }
                 System.out.print("下位机 " + socket.getRemoteSocketAddress() + " 发送数据长度：" + numBytes);
                 System.out.println(" ，数据：" + bytesToHex(hex));
                 //解析数据
-//                for (int w = 0; w < numBytes; w++) {
-//                    tempAll[i] = readBuffer[w];
-//                    i++;
-//                    // System.out.print("  " + readBuffer[w]);
-//                }
-//                if (i - p >= 9) {
-//                    // // 判断前三位是FE 68 20 命令
-//                    if (tempAll[p] == xwjInPut[0] && tempAll[p + 1] == xwjInPut[1] && tempAll[p + 2] == xwjInPut[2]) {
-//                        p = p + 9;
-//                    }
-//                }
+                //出错是清零
+                if (i + numBytes >= tempAll.length || i < p || i - p > 100) {
+                    i = 0;// 计数从头开始
+                    p = 0;
+                    continue;
+                }
+                for (int w = 0; w < numBytes; w++) {
+                    tempAll[i] = readBuffer[w];
+                    i++;
+//                     System.out.print("  " + readBuffer[w]);
+                }
+                if (i - p >= 9) {
+                    // // 判断前三位是FE 68 20 命令
+                    if (tempAll[p] == 0x02 && tempAll[p + 1] == 0x01) {
+                        System.out.println("ARM上传了信息，指令是01");
+                        byte[] message = {0x01};
+                        ServerUtils.write(socket, message);
+                        i = 0;
+                        p = 0;
+                    } else if (tempAll[p] == 0x02 && tempAll[p + 1] == 0x02) {
+                        System.out.println("ARM上传了信息，指令是02");
+                        byte[] message = {0x02};
+                        ServerUtils.write(socket, message);
+                        i = 0;
+                        p = 0;
+                    }
+                }
 
-
+                System.out.println("i:" + i + " ，p:" + p);
 //                byte[] message = {0x00, 0x01, 0x02, 0x03};
 //                ServerUtils.write(socket, message);
             } catch (IOException e) {
