@@ -1,4 +1,4 @@
-package TEST.JieRui;
+package TEST.JieRui.OriginalSocket;
 
 import java.io.*;
 import java.net.Socket;
@@ -6,15 +6,15 @@ import java.net.Socket;
 /**
  * 客户端处理线程，每个客户端对应一个线程
  */
-public class ServerThread implements Runnable {
+public class ServerHandler implements Runnable {
     // 和本线程相关的Socket
     Socket socket;
 
-    public ServerThread(Socket socket) {
+    public ServerHandler(Socket socket) {
         this.socket = socket;
     }
 
-    private byte[] tempAll = new byte[50];// 每当端口有数据时就加入到此数组中
+    private byte[] tempAll = new byte[1024];// 每当端口有数据时就加入到此数组中
     private volatile int i = 0;// 负责tempAll数组的移位工作
     private volatile int p = 0;// 工作指针
 //    // 第一步 上位机发送：fe 68 11 00 00 0b b9 d5 16
@@ -51,20 +51,33 @@ public class ServerThread implements Runnable {
                     p = 0;
                     continue;
                 }
+                //将每次接收到的数据放入到缓存中
                 for (int w = 0; w < numBytes; w++) {
                     tempAll[i] = readBuffer[w];
                     i++;
 //                     System.out.print("  " + readBuffer[w]);
                 }
                 if (i - p >= 9) {
-                    // // 判断前三位是FE 68 20 命令
-                    if (tempAll[p] == 0x02 && tempAll[p + 1] == 0x01) {
-                        System.out.println("ARM上传了信息，指令是01");
-                        byte[] message = {0x01};
-                        ServerUtils.write(socket, message);
-                        i = 0;
-                        p = 0;
-                    } else if (tempAll[p] == 0x02 && tempAll[p + 1] == 0x02) {
+                    //判断前三位是FE 02 命令
+                    if (tempAll[p] == (byte) 0xfe && tempAll[p + 1] == 0x02) {
+                        System.out.print("ARM上传了信息，指令是02");
+                        int len = ServerUtils.byteArrayToIntS(tempAll, p + 2, 2);
+                        System.out.println("  DATA长度 " + len);
+                        //如果本条命令完整上传完毕
+                        if (i - p == 4 + len) {
+                            System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempAll, p + 4, 8));
+                            int lenth = ServerUtils.byteToInt(tempAll[p + 2 + 2 + 8]);
+                            System.out.println("  ARM管理的单灯数量： " + lenth);
+                            for (int j = 0; j < lenth; j++) {
+                                System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempAll, p + 2 + 2 + 8 + 1 + 9 * j, 8));
+                                System.out.println("  单灯亮度： " + ServerUtils.byteToInt(tempAll[p + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
+                            }
+                            byte[] message = {0x02};
+                            ServerUtils.write(socket, message);
+                            i = 0;
+                            p = 0;
+                        }
+                    } else if (tempAll[p] == 0xfe && tempAll[p + 1] == 0x01) {
                         System.out.println("ARM上传了信息，指令是02");
                         byte[] message = {0x02};
                         ServerUtils.write(socket, message);
@@ -92,11 +105,10 @@ public class ServerThread implements Runnable {
             }
         }
     }
-
     /**
      * 字节数组转16进制的字符串
      */
-    public String bytesToHex(byte[] bytes) {
+    public static String bytesToHex(byte[] bytes) {
         StringBuilder buf = new StringBuilder(bytes.length * 2);
         for (byte b : bytes) {
             // 使用String的format方法进行转换
