@@ -31,10 +31,11 @@ public class Server {
          * unit  指定keepAliveTime的单位，如TimeUnit.SECONDS。当将allowCoreThreadTimeOut设置为true时对corePoolSize生效。
          * workQueue  线程池中的阻塞任务队列.常用的有三种队列，SynchronousQueue,LinkedBlockingDeque,ArrayBlockingQueue。
          * threadFactory  线程工厂，提供创建新线程的功能。ThreadFactory是一个接口，只有一个方法
+         * https://blog.csdn.net/qq_25806863/article/details/71126867
          * 重要说明：当corePoolSize消耗完的时候，新的请求将会阻塞，最大阻塞数量为workQueue的capacity个，
          * 当最大阻塞数量消耗完的时候，线程池将会开启新的线程执行阻塞队列中的请求，开启的新的线程数为maximumPoolSize-corePoolSize个
          */
-        executor = new ThreadPoolExecutor(5, 200, 200, TimeUnit.MILLISECONDS,
+        executor = new ThreadPoolExecutor(100, 200, 200, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<Runnable>(200));
         //定时清除失效连接
         new Thread(new ClientSocketMap()).start();
@@ -49,12 +50,14 @@ public class Server {
             while (true) {
                 //调用accept()方法开始监听，等待客户端的连接，如果没有连接将一直在此阻塞等待
                 Socket socket = serverSocket.accept();
+                socket.setKeepAlive(true);//开启保持活动状态的套接字
+                socket.setSoTimeout(30000);//设置超时时间
                 ClientSocketMap.add(socket);
                 //创建一个新的线程，使用线程池
-                ServerHandler serverThread = new ServerHandler(socket, executor);
-                executor.execute(serverThread);
+                ServerHandler serverHandler = new ServerHandler(socket, executor);
+                executor.execute(serverHandler);
 //                new Thread(serverThread).start();
-//                System.out.println("远程客户端的IP：" + socket.getRemoteSocketAddress());
+                System.out.println("远程客户端的IP：" + socket.getRemoteSocketAddress());
                 ClientSocketMap.show(executor);
 //                System.out.println("线程池中线程数目：" + executor.getPoolSize() + "，队列中等待执行的任务数目：" +
 //                        executor.getQueue().size() + "，已执行完的任务数目：" + executor.getCompletedTaskCount());

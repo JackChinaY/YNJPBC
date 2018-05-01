@@ -32,10 +32,10 @@ public class SocketReadImpl implements SocketRead {
             if (count - position >= 9) {
                 //判断前三位是FE 02 命令
                 if (tempBytesArray[position] == (byte) 0xfe && tempBytesArray[position + 1] == 0x02) {
-                    System.out.println("ARM上传了信息，指令是02");
+//                    System.out.println("ARM上传了信息，指令是02");
                     readBrightnessOfARMAllSingleLamps(socket);
                 } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x03) {
-                    System.out.println("ARM上传了信息，指令是03");
+//                    System.out.println("ARM上传了信息，指令是03");
                     readErrorStateOfARMSingleLamp(socket);
                     byte[] message = {0x02};
                     ServerUtils.write(socket, message);
@@ -43,7 +43,7 @@ public class SocketReadImpl implements SocketRead {
                     position = 0;
                 }
             }
-            System.out.println("count:" + count + " ，position:" + position);
+//            System.out.println("count:" + count + " ，position:" + position);
         }
     }
 
@@ -53,15 +53,15 @@ public class SocketReadImpl implements SocketRead {
     @Override
     public void readBrightnessOfARMAllSingleLamps(Socket socket) {
         int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
-        System.out.println("  DATA长度 " + len);
+//        System.out.println("  DATA长度 " + len);
         //如果本条命令完整上传完毕
         if (count - position == 4 + len) {
-            System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 4, 8));
+//            System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 4, 8));
             int lenth = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
-            System.out.println("  ARM管理的单灯数量： " + lenth);
+//            System.out.println("  ARM管理的单灯数量： " + lenth);
             for (int j = 0; j < lenth; j++) {
-                System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
-                System.out.println("  单灯亮度： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
+//                System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
+//                System.out.println("  单灯亮度： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
             byte[] message = {0x02};
             ServerUtils.write(socket, message);
@@ -69,7 +69,7 @@ public class SocketReadImpl implements SocketRead {
             position = 0;
         }
 
-        System.out.println("count:" + count + " ，position:" + position);
+//        System.out.println("count:" + count + " ，position:" + position);
     }
 
     /**

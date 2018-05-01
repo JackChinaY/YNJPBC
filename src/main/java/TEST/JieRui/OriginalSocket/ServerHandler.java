@@ -43,6 +43,14 @@ public class ServerHandler implements Runnable {
                 byte[] readBuffer = new byte[128];//临时缓存数组
                 int length = 0;// 数据长度
                 length = socket.getInputStream().read(readBuffer);
+                if (length == -1) {
+                    ClientSocketMap.remove(socket.getRemoteSocketAddress().toString());
+                    socket.close();
+//                        System.out.println("服务器端断开了与此客户端的连接");
+                    ClientSocketMap.show(executor);
+                    break;
+                }
+                System.out.println(socket.getRemoteSocketAddress() + " ，ARM断开连接时发送的数据长度：" + length);
                 //用于测试输出
                 byte[] hex = new byte[length];
                 for (int i = 0; i < length; i++) {
@@ -52,51 +60,6 @@ public class ServerHandler implements Runnable {
                 System.out.print("下位机 " + socket.getRemoteSocketAddress() + " 发送数据长度：" + length);
                 System.out.println(" ，数据：" + bytesToHex(hex));
                 socketRead.readDataFromARM(readBuffer, length, socket);
-                //解析数据
-                //出错是清零
-//                if (i + numBytes >= tempAll.length || i < p || i - p > 100) {
-//                    i = 0;// 计数从头开始
-//                    p = 0;
-//                    continue;
-//                }
-//                //将每次接收到的数据放入到缓存中
-//                for (int w = 0; w < numBytes; w++) {
-//                    tempAll[i] = readBuffer[w];
-//                    i++;
-////                     System.out.print("  " + readBuffer[w]);
-//                }
-//                if (i - p >= 9) {
-//                    //判断前三位是FE 02 命令
-//                    if (tempAll[p] == (byte) 0xfe && tempAll[p + 1] == 0x02) {
-//                        System.out.print("ARM上传了信息，指令是02");
-//                        int len = ServerUtils.byteArrayToIntS(tempAll, p + 2, 2);
-//                        System.out.println("  DATA长度 " + len);
-//                        //如果本条命令完整上传完毕
-//                        if (i - p == 4 + len) {
-//                            System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempAll, p + 4, 8));
-//                            int lenth = ServerUtils.byteToInt(tempAll[p + 2 + 2 + 8]);
-//                            System.out.println("  ARM管理的单灯数量： " + lenth);
-//                            for (int j = 0; j < lenth; j++) {
-//                                System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempAll, p + 2 + 2 + 8 + 1 + 9 * j, 8));
-//                                System.out.println("  单灯亮度： " + ServerUtils.byteToInt(tempAll[p + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
-//                            }
-//                            byte[] message = {0x02};
-//                            ServerUtils.write(socket, message);
-//                            i = 0;
-//                            p = 0;
-//                        }
-//                    } else if (tempAll[p] == 0xfe && tempAll[p + 1] == 0x01) {
-//                        System.out.println("ARM上传了信息，指令是02");
-//                        byte[] message = {0x02};
-//                        ServerUtils.write(socket, message);
-//                        i = 0;
-//                        p = 0;
-//                    }
-//                }
-//
-//                System.out.println("i:" + i + " ，p:" + p);
-//                byte[] message = {0x00, 0x01, 0x02, 0x03};
-//                ServerUtils.write(socket, message);
             } catch (IOException e) {
                 if (!socket.isClosed()) {
                     try {
