@@ -16,7 +16,7 @@ public class Client {
         array.add(new SingleLamp("10001003", 83));
         array.add(new SingleLamp("10001004", 84));
         double ARM_ID = 12345001;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 50; i++) {
             try {
                 Thread.sleep(50);
                 ClientHandler clientHandler = new ClientHandler(String.valueOf(ARM_ID++), array);
@@ -55,9 +55,10 @@ class ClientHandler implements Runnable {
         while (true) {
             try {
                 size++;
-                if (size == 5) {
+                if (size == 40) {
+                    Thread.sleep(3000);
                     if (!socket.isClosed()) {
-                        socket.shutdownOutput();
+//                        socket.shutdownOutput();
                         socket.close();
                         break;
 //                        Thread.sleep(5000);
@@ -65,9 +66,9 @@ class ClientHandler implements Runnable {
                     }
 
                 }
-                Thread.sleep(200);
+                Thread.sleep(100);
                 writerToARM(ARM_ID, singleLampList, socket);
-                System.out.println(socket.getLocalAddress() + ":" + socket.getLocalPort() + " 成功发送给服务器一次数据，总发送次数：" + count++);
+                System.out.println(socket.getLocalAddress() + ":" + socket.getLocalPort() + " 成功发送给服务器一次数据，总发送次数：" + ++count);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (IOException e) {

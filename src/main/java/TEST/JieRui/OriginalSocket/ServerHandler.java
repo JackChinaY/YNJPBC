@@ -43,6 +43,7 @@ public class ServerHandler implements Runnable {
                 byte[] readBuffer = new byte[128];//临时缓存数组
                 int length = 0;// 数据长度
                 length = socket.getInputStream().read(readBuffer);
+                //如果ARM主动断开连接，则length为-1，此时服务器端要断开与此ARM的连接，并释放掉对应资源
                 if (length == -1) {
                     ClientSocketMap.remove(socket.getRemoteSocketAddress().toString());
                     socket.close();
@@ -50,15 +51,15 @@ public class ServerHandler implements Runnable {
                     ClientSocketMap.show(executor);
                     break;
                 }
-                System.out.println(socket.getRemoteSocketAddress() + " ，ARM断开连接时发送的数据长度：" + length);
+//                System.out.println(socket.getRemoteSocketAddress() + " ，ARM断开连接时发送的数据长度：" + length);
                 //用于测试输出
                 byte[] hex = new byte[length];
                 for (int i = 0; i < length; i++) {
                     hex[i] = readBuffer[i];
 //                    System.out.println(readBuffer[i]);
                 }
-                System.out.print("下位机 " + socket.getRemoteSocketAddress() + " 发送数据长度：" + length);
-                System.out.println(" ，数据：" + bytesToHex(hex));
+//                System.out.print("下位机 " + socket.getRemoteSocketAddress() + " 发送数据长度：" + length);
+//                System.out.println(" ，数据：" + bytesToHex(hex));
                 socketRead.readDataFromARM(readBuffer, length, socket);
             } catch (IOException e) {
                 if (!socket.isClosed()) {

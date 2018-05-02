@@ -1,5 +1,6 @@
 package TEST.JieRui.OriginalSocket;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +34,7 @@ public class ClientSocketMap implements Runnable {
         for (Map.Entry entry : clientSocketMap.entrySet()) {
             if (entry.getKey().equals(IP)) {
                 clientSocketMap.remove(IP);
-                System.out.println("服务器端断开了与客户端 " + IP + " 的连接");
+                System.out.print("服务器端断开了与客户端 " + IP + " 的连接 ");
             }
         }
     }
@@ -55,6 +56,11 @@ public class ClientSocketMap implements Runnable {
             if (((Socket) entry.getValue()).isClosed()) {
                 clientSocketMap.remove(entry.getKey());
             }
+//            try {
+//                ((Socket) entry.getValue()).sendUrgentData(0xff);
+//            } catch (IOException e) {
+//                clientSocketMap.remove(entry.getKey());
+//            }
         }
     }
 
@@ -91,7 +97,7 @@ public class ClientSocketMap implements Runnable {
     public void run() {
         while (true) {
             try {
-                Thread.sleep(20000);
+                Thread.sleep(10000);
                 removeInvalidation();
                 show();
             } catch (InterruptedException e) {

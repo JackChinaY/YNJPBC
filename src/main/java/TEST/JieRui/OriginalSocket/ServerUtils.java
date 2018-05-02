@@ -19,6 +19,7 @@ public class ServerUtils {
             bufferedOutputStream.write(message);
             bufferedOutputStream.flush();
         } catch (IOException e) {
+            System.err.println("数据发送失败，连接已断开");
             e.printStackTrace();
         }
     }

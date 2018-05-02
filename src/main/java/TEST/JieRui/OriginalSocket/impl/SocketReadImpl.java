@@ -37,8 +37,8 @@ public class SocketReadImpl implements SocketRead {
                 } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x03) {
 //                    System.out.println("ARM上传了信息，指令是03");
                     readErrorStateOfARMSingleLamp(socket);
-                    byte[] message = {0x02};
-                    ServerUtils.write(socket, message);
+//                    byte[] message = {0x02};
+//                    ServerUtils.write(socket, message);
                     count = 0;
                     position = 0;
                 }

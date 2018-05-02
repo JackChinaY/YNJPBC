@@ -50,8 +50,8 @@ public class Server {
             while (true) {
                 //调用accept()方法开始监听，等待客户端的连接，如果没有连接将一直在此阻塞等待
                 Socket socket = serverSocket.accept();
-                socket.setKeepAlive(true);//开启保持活动状态的套接字
-                socket.setSoTimeout(30000);//设置超时时间
+//                socket.setKeepAlive(true);//开启保持活动状态的套接字
+//                socket.setSoTimeout(5000);//设置超时时间
                 ClientSocketMap.add(socket);
                 //创建一个新的线程，使用线程池
                 ServerHandler serverHandler = new ServerHandler(socket, executor);
@@ -81,6 +81,6 @@ public class Server {
     public static void main(String[] args) {
 //        ClientSocketMap clientSocketMap = new ClientSocketMap();
 //        new Thread(clientSocketMap).start();
-        new Server(5001).start();
+        new Server(5002).start();
     }
 }
