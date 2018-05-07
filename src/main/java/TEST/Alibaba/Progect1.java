@@ -3,7 +3,7 @@ package TEST.Alibaba;
 import java.util.Scanner;
 
 public class Progect1 {
-    public class Work {
+    class Work {
         int Di;//工作难度
         int Pi;//工作报酬
     }
