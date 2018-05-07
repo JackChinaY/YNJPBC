@@ -55,7 +55,7 @@ class ClientHandler implements Runnable {
         while (true) {
             try {
                 size++;
-                if (size == 40) {
+                if (size == 400) {
                     Thread.sleep(3000);
                     if (!socket.isClosed()) {
 //                        socket.shutdownOutput();

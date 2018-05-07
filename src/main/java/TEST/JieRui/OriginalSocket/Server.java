@@ -81,6 +81,6 @@ public class Server {
     public static void main(String[] args) {
 //        ClientSocketMap clientSocketMap = new ClientSocketMap();
 //        new Thread(clientSocketMap).start();
-        new Server(5002).start();
+        new Server(5001).start();
     }
 }
