@@ -16,6 +16,12 @@ public class SocketReadImpl implements SocketRead {
         this.position = 0;
     }
 
+    /**
+     * 读取ARM发过来的数据
+     * @param readBuffer
+     * @param length
+     * @param socket
+     */
     @Override
     public void readDataFromARM(byte[] readBuffer, int length, Socket socket) {
         //出错时清零
@@ -30,17 +36,25 @@ public class SocketReadImpl implements SocketRead {
 //                     System.out.print("  " + readBuffer[w]);
             }
             if (count - position >= 9) {
-                //判断前三位是FE 02 命令
-                if (tempBytesArray[position] == (byte) 0xfe && tempBytesArray[position + 1] == 0x02) {
+                //判断ARM发送的数据是何种数据
+                if (tempBytesArray[position] == (byte) 0xfe && tempBytesArray[position + 1] == 0x11) {
 //                    System.out.println("ARM上传了信息，指令是02");
+                    //0x11 是ARM上报上来每个单灯的亮度
                     readBrightnessOfARMAllSingleLamps(socket);
-                } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x03) {
+                    count = 0;
+                    position = 0;
+                } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x12) {
 //                    System.out.println("ARM上传了信息，指令是03");
+                    //0x12 是ARM上报上来每个单灯的亮度
                     readErrorStateOfARMSingleLamp(socket);
 //                    byte[] message = {0x02};
 //                    ServerUtils.write(socket, message);
-                    count = 0;
-                    position = 0;
+                } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x13) {
+//                    System.out.println("ARM上传了信息，指令是03");
+                    //0x12 是ARM上报上来每个单灯的亮度
+                    readErrorStateOfARMSingleLamp(socket);
+//                    byte[] message = {0x02};
+//                    ServerUtils.write(socket, message);
                 }
             }
 //            System.out.println("count:" + count + " ，position:" + position);
@@ -73,7 +87,7 @@ public class SocketReadImpl implements SocketRead {
     }
 
     /**
-     * 读取ARM发送过来的数据，数据为该ARM管理的部分单灯的故障状态
+     * 读取ARM发送过来的数据，数据为该ARM管理的一个或多个单灯的故障状态
      */
     @Override
     public void readErrorStateOfARMSingleLamp(Socket socket) {
@@ -87,7 +101,31 @@ public class SocketReadImpl implements SocketRead {
             System.out.println("  ARM管理的单灯数量： " + lenth);
             for (int j = 0; j < lenth; j++) {
                 System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
-                System.out.println("  单灯亮度： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
+                System.out.println("  单灯故障： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
+            }
+            byte[] message = {0x02};
+            ServerUtils.write(socket, message);
+            count = 0;
+            position = 0;
+        }
+    }
+
+    /**
+     * 读取ARM发送过来的数据，数据为该ARM管理的一个或多个单灯的能耗
+     */
+    @Override
+    public void readEnergyConsumptionOfARMSingleLamp(Socket socket) {
+        //判断前三位是Fint("ARM上传了信息，指令是02");
+        int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
+        System.out.println("  DATA长度 " + len);
+        //如果本条命令完整上传完毕
+        if (count - position == 4 + len) {
+            System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 4, 8));
+            int lenth = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
+            System.out.println("  ARM管理的单灯数量： " + lenth);
+            for (int j = 0; j < lenth; j++) {
+                System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
+                System.out.println("  单灯能耗： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
             byte[] message = {0x02};
             ServerUtils.write(socket, message);

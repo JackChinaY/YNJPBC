@@ -10,6 +10,7 @@ package TEST.Alibaba;
  * 时间限制: 3S (C/C++以外的语言为: 5 S)   内存限制: 128M (C/C++以外的语言为: 640 M)
  * 输入:
  * 刚才我说了我要退款我要退款我要退款我都说了我要退款
+ * 刚才我说了我要退款我要退款我要退款，我都说了我要退款我要退款我要退款
  * 输出:
  * 阿里旺旺
  * 输入范例:
@@ -31,15 +32,15 @@ public class Main {
             for (int j = i + 2; j < temp.length; j++) {
                 if (temp[i] != '&' && temp[i] == temp[j]) {
                     Di = j - i;
-                    for (int k = i; k < temp.length - Di; k++) {
-                        if (temp[k] == temp[k + Di]) {
+                    for (int k = i; k < i + Di; k++) {
+                        if ((k + Di) < temp.length && temp[k] == temp[k + Di]) {
                             Pi++;
                         } else {
                             break;
                         }
                     }
                     if (Di == Pi) {
-                        for (int k = j; k < j + Di; k++) {
+                        for (int k = i; k < i + Di; k++) {
                             temp[k] = '&';
                         }
                         Di = 0;
@@ -50,12 +51,15 @@ public class Main {
                 }
             }
         }
+        StringBuilder stringBuilder1 = new StringBuilder();
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < temp.length; i++) {
+            stringBuilder1.append(temp[i]);
             if (temp[i] != '&') {
                 stringBuilder.append(temp[i]);
             }
         }
+//        System.out.println(stringBuilder1);
         System.out.println(stringBuilder);
     }
 }

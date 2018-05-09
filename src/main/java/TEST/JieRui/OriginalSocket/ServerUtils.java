@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 /**
- * 服务器端常用工具
+ * 服务器端常用工具，int byte byte[] float之间的相互转换
  */
 public class ServerUtils {
     /**
@@ -14,6 +14,69 @@ public class ServerUtils {
      */
     public static void write(Socket socket, byte[] message) {
         try {
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            System.err.println("数据发送失败，连接已断开");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 服务器发送给ARM的指令：ARM需要上报每个单灯的亮度
+     */
+    public static void writeToARMGetSingleLampBrightness(Socket socket) {
+        try {
+            byte[] message = {(byte) 0xfe, 0x01};
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            System.err.println("数据发送失败，连接已断开");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 服务器发送给ARM的指令：ARM需要上报每个单灯的状态（故障等信息）
+     */
+    public static void writeToARMGetSingleLampState(Socket socket) {
+        try {
+            byte[] message = {(byte) 0xfe, 0x02};
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            System.err.println("数据发送失败，连接已断开");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 服务器发送给ARM的指令：ARM需要上报每个单灯的能耗
+     */
+    public static void writeToARMGetSingleLampEnergyConsumption(Socket socket) {
+        try {
+            byte[] message = {(byte) 0xfe, 0x03};
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            System.err.println("数据发送失败，连接已断开");
+            e.printStackTrace();
+        }
+    }
+    /**
+     * 服务器成功接收ARM发过来的数据，给ARM的响应数据
+     */
+    public static void writeToARMSuccess(Socket socket) {
+        try {
+            byte[] message = {(byte) 0xfe, 0x01};
             //将字节输出流包装为带缓冲的字节输出流
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
             bufferedOutputStream.write(message);

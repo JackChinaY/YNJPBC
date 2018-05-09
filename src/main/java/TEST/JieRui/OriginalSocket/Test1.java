@@ -33,11 +33,12 @@ public class Test1 {
 ////        System.out.println(Arrays.toString(b));
 //        System.out.println(new String(b));
 
-        ArrayList<SingleLamp> array = new ArrayList<>();
-        array.add(new SingleLamp("10001001", 81));
-        array.add(new SingleLamp("10001002", 82));
-        array.add(new SingleLamp("10001003", 83));
-        array.add(new SingleLamp("10001004", 84));
-        System.out.println(ServerUtils.bytesToHex(ServerUtils.Message("12341234", array.size(), array)));
+//        ArrayList<SingleLamp> array = new ArrayList<>();
+//        array.add(new SingleLamp("10001001", 81));
+//        array.add(new SingleLamp("10001002", 82));
+//        array.add(new SingleLamp("10001003", 83));
+//        array.add(new SingleLamp("10001004", 84));
+//        System.out.println(ServerUtils.bytesToHex(ServerUtils.Message("12341234", array.size(), array)));
+//        int a = 0x01;
     }
 }
