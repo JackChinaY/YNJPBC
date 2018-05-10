@@ -6,12 +6,13 @@ import TEST.JieRui.OriginalSocket.SocketRead;
 import java.net.Socket;
 
 public class SocketReadImpl implements SocketRead {
+    private static int cacheLenth = 1024 * 2;//缓存数组的长度
     private byte[] tempBytesArray;// 每当端口有数据时就加入到此数组中
-    private volatile int count;// 数据长度
-    private volatile int position;// 当前处理的数据在数组中的位置
+    private int count;// 数据长度
+    private int position;// 当前处理的数据在数组中的位置
 
     public SocketReadImpl() {
-        this.tempBytesArray = new byte[1024];
+        this.tempBytesArray = new byte[cacheLenth];
         this.count = 0;
         this.position = 0;
     }
@@ -19,14 +20,14 @@ public class SocketReadImpl implements SocketRead {
     /**
      * 读取ARM发过来的数据
      *
-     * @param readBuffer
-     * @param length
-     * @param socket
+     * @param readBuffer 本次接收的字节数组
+     * @param length     本次接收的字节数组的长度
+     * @param socket     本次socket
      */
     @Override
     public void readDataFromARM(byte[] readBuffer, int length, Socket socket) {
         //出错时清零
-        if (count + length >= tempBytesArray.length || count < position || count - position > 100) {
+        if (count + length >= tempBytesArray.length || count < position || count - position > (0.5 * cacheLenth)) {
             count = 0;// 计数从头开始
             position = 0;
         } else {
