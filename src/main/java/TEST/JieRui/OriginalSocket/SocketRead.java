@@ -7,13 +7,13 @@ public interface SocketRead {
     /**
      * 读取ARM发送过来的数据，数据为该ARM管理的所有单灯的亮度状态
      */
-    void readBrightnessOfARMAllSingleLamps(Socket socket);
+    boolean readBrightnessOfARMAllSingleLamps(Socket socket);
     /**
      * 读取ARM发送过来的数据，数据为该ARM管理的一个或多个单灯的故障状态
      */
-    void readErrorStateOfARMSingleLamp(Socket socket);
+    boolean readErrorStateOfARMSingleLamp(Socket socket);
     /**
      * 读取ARM发送过来的数据，数据为该ARM管理的一个或多个单灯的能耗
      */
-    void readEnergyConsumptionOfARMSingleLamp(Socket socket);
+    boolean readEnergyConsumptionOfARMSingleLamp(Socket socket);
 }

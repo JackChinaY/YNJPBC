@@ -6,7 +6,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 /**
- * 服务器端常用工具，int byte byte[] float之间的相互转换
+ * 服务器端常用工具，包含如下方法：
+ * int byte byte[] float之间的相互转换、服务器主动给ARM发送的指令、服务器响应ARM指令发送成功接收的标志
  */
 public class ServerUtils {
     /**
@@ -71,12 +72,29 @@ public class ServerUtils {
             e.printStackTrace();
         }
     }
+
     /**
      * 服务器成功接收ARM发过来的数据，给ARM的响应数据
      */
     public static void writeToARMSuccess(Socket socket) {
         try {
-            byte[] message = {(byte) 0xfe, 0x01};
+            byte[] message = {(byte) 0xfe, 0x00, 0x01, 0x01};
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            System.err.println("数据发送失败，连接已断开");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 服务器失败接收ARM发过来的数据，给ARM的响应数据，让ARM重发
+     */
+    public static void writeToARMFailAndRepeat(Socket socket) {
+        try {
+            byte[] message = {(byte) 0xfe, 0x00, 0x01, 0x02};
             //将字节输出流包装为带缓冲的字节输出流
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
             bufferedOutputStream.write(message);
@@ -216,15 +234,18 @@ public class ServerUtils {
     }
 
     /**
-     * 字节数组转16进制的字符串
+     * 服务器主动给ARM发送指令的调用接口
+     *
+     * @param ARM_ID         ARM的编号，8位字符串，如：“12345678”
+     * @param singleLampList 单灯的集合，8位字符串，如：“12345678”
      */
-    public static byte[] Message(String ARM_ID, int singleLampCount, ArrayList<SingleLamp> singleLampList) {
-        byte[] m = new byte[2 + 2 + 8 + 1 + singleLampCount * 9];
+    public static byte[] Message(String ARM_ID, ArrayList<SingleLamp> singleLampList) {
+        byte[] m = new byte[2 + 2 + 8 + 1 + singleLampList.size() * 9];
         //添加开始标志和命令标志 2字节
         m[0] = (byte) 0xfe;
         m[1] = (byte) 0x02;
         //添加DATA的长度，四位保留后两个位  2字节
-        byte[] len = intToByteArray(8 + 1 + singleLampCount * 9);
+        byte[] len = intToByteArray(8 + 1 + singleLampList.size() * 9);
 //        System.out.println(Arrays.toString(len));
         m[2] = len[2];
         m[3] = len[3];
@@ -234,14 +255,14 @@ public class ServerUtils {
             m[i + 4] = arm[i];
         }
         //添加ARM的管理的单灯数量  1字节
-        m[12] = intToByte(singleLampCount);
+        m[12] = intToByte(singleLampList.size());
         //添加单灯
         for (int i = 0; i < singleLampList.size(); i++) {
             byte[] singleLamp = singleLampList.get(i).getId().getBytes();
             for (int j = 0; j < 8; j++) {
                 m[13 + j + 9 * i] = singleLamp[j];
             }
-            m[13 + 9 * (i + 1) - 1] = intToByte(singleLampList.get(i).getState());
+            m[13 + 9 * (i + 1) - 1] = intToByte(singleLampList.get(i).getValue());
         }
         return m;
     }

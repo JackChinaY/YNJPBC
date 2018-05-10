@@ -18,6 +18,7 @@ public class SocketReadImpl implements SocketRead {
 
     /**
      * 读取ARM发过来的数据
+     *
      * @param readBuffer
      * @param length
      * @param socket
@@ -39,22 +40,43 @@ public class SocketReadImpl implements SocketRead {
                 //判断ARM发送的数据是何种数据
                 if (tempBytesArray[position] == (byte) 0xfe && tempBytesArray[position + 1] == 0x11) {
 //                    System.out.println("ARM上传了信息，指令是02");
-                    //0x11 是ARM上报上来每个单灯的亮度
+                    //0x11 是ARM被动上报每个单灯的数据
                     readBrightnessOfARMAllSingleLamps(socket);
                     count = 0;
                     position = 0;
                 } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x12) {
 //                    System.out.println("ARM上传了信息，指令是03");
-                    //0x12 是ARM上报上来每个单灯的亮度
+                    //0x12 是AARM被动上报每个单灯的状态数据（故障等信息）
                     readErrorStateOfARMSingleLamp(socket);
 //                    byte[] message = {0x02};
 //                    ServerUtils.write(socket, message);
                 } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x13) {
 //                    System.out.println("ARM上传了信息，指令是03");
-                    //0x12 是ARM上报上来每个单灯的亮度
+                    //0x12 是ARM被动上报每个单灯的能耗数据
                     readErrorStateOfARMSingleLamp(socket);
 //                    byte[] message = {0x02};
 //                    ServerUtils.write(socket, message);
+                } else if (tempBytesArray[position] == (byte) 0xfe && tempBytesArray[position + 1] == 0x21) {
+                    //0x21 是ARM主动上报每个单灯的数据
+                    if (readBrightnessOfARMAllSingleLamps(socket)) {
+                        ServerUtils.writeToARMSuccess(socket);
+                    } else {
+                        ServerUtils.writeToARMFailAndRepeat(socket);
+                    }
+                } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x22) {
+                    //0x22 是ARM主动上报每个单灯的状态数据（故障等信息）
+                    if (readErrorStateOfARMSingleLamp(socket)) {
+                        ServerUtils.writeToARMSuccess(socket);
+                    } else {
+                        ServerUtils.writeToARMFailAndRepeat(socket);
+                    }
+                } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x23) {
+                    //0x23 是ARM主动上报每个单灯的能耗数据
+                    if (readErrorStateOfARMSingleLamp(socket)) {
+                        ServerUtils.writeToARMSuccess(socket);
+                    } else {
+                        ServerUtils.writeToARMFailAndRepeat(socket);
+                    }
                 }
             }
 //            System.out.println("count:" + count + " ，position:" + position);
@@ -65,7 +87,7 @@ public class SocketReadImpl implements SocketRead {
      * 读取ARM发送过来的数据，数据为该ARM管理的所有单灯的亮度状态
      */
     @Override
-    public void readBrightnessOfARMAllSingleLamps(Socket socket) {
+    public boolean readBrightnessOfARMAllSingleLamps(Socket socket) {
         int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
 //        System.out.println("  DATA长度 " + len);
         //如果本条命令完整上传完毕
@@ -77,11 +99,11 @@ public class SocketReadImpl implements SocketRead {
 //                System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
 //                System.out.println("  单灯亮度： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
-            byte[] message = {0x02};
-            ServerUtils.write(socket, message);
             count = 0;
             position = 0;
+            return true;
         }
+        return false;
 
 //        System.out.println("count:" + count + " ，position:" + position);
     }
@@ -90,7 +112,7 @@ public class SocketReadImpl implements SocketRead {
      * 读取ARM发送过来的数据，数据为该ARM管理的一个或多个单灯的故障状态
      */
     @Override
-    public void readErrorStateOfARMSingleLamp(Socket socket) {
+    public boolean readErrorStateOfARMSingleLamp(Socket socket) {
         //判断前三位是Fint("ARM上传了信息，指令是02");
         int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
         System.out.println("  DATA长度 " + len);
@@ -103,18 +125,18 @@ public class SocketReadImpl implements SocketRead {
                 System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
                 System.out.println("  单灯故障： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
-            byte[] message = {0x02};
-            ServerUtils.write(socket, message);
             count = 0;
             position = 0;
+            return true;
         }
+        return false;
     }
 
     /**
      * 读取ARM发送过来的数据，数据为该ARM管理的一个或多个单灯的能耗
      */
     @Override
-    public void readEnergyConsumptionOfARMSingleLamp(Socket socket) {
+    public boolean readEnergyConsumptionOfARMSingleLamp(Socket socket) {
         //判断前三位是Fint("ARM上传了信息，指令是02");
         int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
         System.out.println("  DATA长度 " + len);
@@ -127,10 +149,10 @@ public class SocketReadImpl implements SocketRead {
                 System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
                 System.out.println("  单灯能耗： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
-            byte[] message = {0x02};
-            ServerUtils.write(socket, message);
             count = 0;
             position = 0;
+            return true;
         }
+        return false;
     }
 }
