@@ -38,7 +38,7 @@ public class SocketWriterImpl implements SocketWriter {
             for (int j = 0; j < 8; j++) {
                 message[13 + j + 9 * i] = singleLamp[j];
             }
-            message[13 + 9 * (i + 1) - 1] = ServerUtils.intToByte(singleLampList.get(i).getState());
+            message[13 + 9 * (i + 1) - 1] = ServerUtils.intToByte(singleLampList.get(i).getValue());
         }
         //开始发送数据
         try {
