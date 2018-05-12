@@ -9,16 +9,15 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  *
  */
-public class MultiPortEcho {
+public class NioServer {
     private int port;
     private ByteBuffer echoBuffer = ByteBuffer.allocate(5);
 
-    public MultiPortEcho(int port) throws IOException {
+    public NioServer(int port) throws IOException {
         this.port = port;
         go();
     }
@@ -86,6 +85,6 @@ public class MultiPortEcho {
 
     static public void main(String args[]) throws Exception {
         int port = 5008;
-        new MultiPortEcho(port);
+        new NioServer(port);
     }
 }
