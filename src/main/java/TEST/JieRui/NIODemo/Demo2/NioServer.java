@@ -34,43 +34,52 @@ public class NioServer {
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
     }
 
-    public void listen() throws IOException {
+    public void listen() {
         System.out.println("服务器端启动成功");
         //使用轮询访问selector
         while (true) {
             //当有注册的事件到达时，方法返回，否则阻塞
-            selector.select();
+            try {
+                selector.select();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             //获取selector中的迭代器，选中项为注册的事件
             Iterator<SelectionKey> ite = selector.selectedKeys().iterator();
             System.out.println(selector.selectedKeys().size());
             while (ite.hasNext()) {
-                SelectionKey key = ite.next();
-                //删除已选key，防止重复处理
-                ite.remove();
-                //客户端请求连接事件
-                if (key.isAcceptable()) {
-                    //先拿到这个SelectionKey里面的ServerSocketChannel
-                    ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
-                    //获得客户端连接通道
-                    SocketChannel channel = serverSocketChannel.accept();
-                    channel.configureBlocking(false);
-                    //向客户端发消息
-                    channel.write(ByteBuffer.wrap(new String("abcd1234").getBytes()));
-                    //在与客户端连接成功后，为客户端通道注册SelectionKey.OP_READ事件,如果你对不止一种事件感兴趣，那么可以用“位或”操作符将常量连接起来，如下：int interestSet = SelectionKey.OP_READ | SelectionKey.OP_WRITE
-                    channel.register(selector, SelectionKey.OP_READ);
-                    System.out.println("客户端请求连接事件");
-                } else if (key.isReadable()) {//有可读数据事件
-                    //获取客户端传输数据可读取消息通道
-                    SocketChannel channel = (SocketChannel) key.channel();
-                    //创建读取数据缓冲器
-                    ByteBuffer buffer = ByteBuffer.allocate(10);
-                    int read = channel.read(buffer);
-                    byte[] data = buffer.array();
-                    String message = new String(data);
+                try {
+                    SelectionKey key = ite.next();
+                    //删除已选key，防止重复处理
+                    ite.remove();
+                    //客户端请求连接事件
+                    if (key.isAcceptable()) {
+                        //先拿到这个SelectionKey里面的ServerSocketChannel
+                        ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+                        //获得客户端连接通道
+                        SocketChannel channel = serverSocketChannel.accept();
+                        channel.configureBlocking(false);
+                        //向客户端发消息
+                        channel.write(ByteBuffer.wrap(new String("abcd1234").getBytes()));
+                        //在与客户端连接成功后，为客户端通道注册SelectionKey.OP_READ事件,如果你对不止一种事件感兴趣，那么可以用“位或”操作符将常量连接起来，如下：int interestSet = SelectionKey.OP_READ | SelectionKey.OP_WRITE
+                        channel.register(selector, SelectionKey.OP_READ);
+                        System.out.println("客户端请求连接事件，客户端地址：" + channel.socket().getRemoteSocketAddress());
+                    } else if (key.isReadable()) {//有可读数据事件
+                        //获取客户端传输数据可读取消息通道
+                        SocketChannel channel = (SocketChannel) key.channel();
+                        //创建读取数据缓冲器
+                        ByteBuffer buffer = ByteBuffer.allocate(10);
+                        int read = channel.read(buffer);
+                        byte[] data = buffer.array();
+                        String message = new String(data);
 
-                    System.out.println("接受了客户端(" + channel.socket().getRemoteSocketAddress() + ")发送的消息, 大小:" + buffer.position() + " 内容: " + message);
+                        System.out.println("接受了客户端(" + channel.socket().getRemoteSocketAddress() + ")发送的消息, 大小:" + buffer.position() + " 内容: " + message);
 //                    ByteBuffer outbuffer = ByteBuffer.wrap(("server.".concat(msg)).getBytes());
 //                    channel.write(outbuffer);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    break;
                 }
             }
         }

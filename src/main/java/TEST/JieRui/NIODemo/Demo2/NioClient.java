@@ -15,7 +15,7 @@ public class NioClient {
     public static void main(String[] args) throws IOException {
         for (int i = 0; i < 10; i++) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(0);
                 ClientHandler clientHandler = new ClientHandler("127.0.0.1", 9981);
                 new Thread(clientHandler).start();
             } catch (InterruptedException e) {
@@ -79,12 +79,13 @@ class ClientHandler implements Runnable {
                         String message = new String(data);
 
                         System.out.println("接受了服务器发送的消息, 大小:" + buffer.position() + " 内容: " + message);
-//                    ByteBuffer outbuffer = ByteBuffer.wrap(("client.".concat(msg)).getBytes());
-//                    channel.write(outbuffer);
+                        ByteBuffer outbuffer = ByteBuffer.wrap("xyzw7896.".getBytes());
+                        channel.write(outbuffer);
                     }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                break;
             }
         }
     }
