@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="shortcut icon" type="image/x-icon" href="image/favicon.ico"/>
+    <link rel="stylesheet" href="zui/zui.css">
+    <script src="javascript/jquery-1.11.3.min.js"></script>
+    <script src="javascript/jquery.cookie.js"></script>
+    <script src="zui/zui.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            //登录
+            $("#button_login").click(function () {
+                if ($("#username").val() == "" && $("#password").val() == "") {
+                    new $.zui.Messager('Username and Password cannot be empty！', {
+                        type: 'danger',
+                        placement: 'top' // 定义显示位置
+                    }).show();
+                } else if ($("#username").val() == "") {
+                    new $.zui.Messager('Username cannot be empty！', {
+                        type: 'danger',
+                        placement: 'top'
+                    }).show();
+                } else if ($("#password").val() == "") {
+                    new $.zui.Messager('Password cannot be empty！', {
+                        type: 'danger',
+                        placement: 'top'
+                    }).show();
+                }
+                else {
+                    $("#button_login").val("LOGIN...");
+                    $.ajax({
+                        type: "POST",
+                        url: "Action_login.action",
+                        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+                        data: {
+                            "username": $("#username").val(),
+                            "password": $("#password").val()
+                        },
+                        dataType: "json",
+                        cache: false,
+                        success: function (data) {
+                            if (data.jsonObject == "1") {
+                                $.cookie('username', data.username);
+                                $.cookie('userFlag', "comm");
+//                                setTimeout(function() {
+//                                    $("#button_login").val("登录成功");
+//                                },2000);
+                                $("#button_login").val("LOGIN");
+                                location.href = "index.html";
+                            } else {
+                                new $.zui.Messager("Username or Password error !", {
+                                    type: 'danger',
+                                    placement: 'top'
+                                }).show();
+                                $("#button_login").val("LOGIN");
+                            }
+                        },
+                        error: function (jqXHR) {
+                            new $.zui.Messager("Operation failed, possible causes：" + jqXHR.status, {
+                                type: 'danger',
+                                placement: 'top'
+                            }).show();
+                            $("#button_login").val("LOGIN");
+                        }
+                    });
+                }
+            });
+
+            // 将name=login的文本框清空，以便重新输入
+            $("#button_login_clear").click(function () {
+                $("input[name='login']").val("");
+            });
+
+            // var count = 0;
+            // var $dragLog = $('#dragLog');
+            // $('#draggableBox').draggable({
+            //     container: '#draggableBox',
+            //     selector: '.btn-draggable', // 可拖动元素选择器
+            //     before: function (e) {
+            //         $dragLog.prepend(count++ + ': ' + '[开始] 拖动【按钮#' + e.element.find('.btn-draggable-id').text() + '】...\n');
+            //     },
+            //     drag: function (e) {
+            //         $dragLog.prepend(count++ + ': ' + '拖动【按钮#' + e.element.find('.btn-draggable-id').text() + '】: pos = ' + JSON.stringify(e.pos) + ', offset = ' + JSON.stringify(e.offset) + '\n');
+            //     },
+            //     finish: function (e) {
+            //         $dragLog.prepend(count++ + ': ' + '[完毕]【按钮#' + e.element.find('.btn-draggable-id').text() + '】：pos = ' + JSON.stringify(e.pos) + ', offset = ' + JSON.stringify(e.offset) + '\n');
+            //     }
+            // });
+
+            function findAllTax() {
+                var html = '<div style="width: 300px">\n' +
+                    '    <form class="form-horizontal">\n' +
+                    '        <div class="form-group">\n' +
+                    '            <label class="col-sm-3">ID</label>\n' +
+                    '            <label id="number" class="col-sm-3" style="font-size: 16px">12345678</label>\n' +
+                    '        </div>\n' +
+                    '        <div class="form-group">\n' +
+                    '            <label class="col-sm-3">开关</label>\n' +
+                    '            <div class="col-sm-6">\n' +
+                    '                <div class="switch">\n' +
+                    '                    <input id="stock_control" type="checkbox">\n' +
+                    '                    <label>NO/YES</label>\n' +
+                    '                </div>\n' +
+                    '            </div>\n' +
+                    '        </div>\n' +
+                    '    </form>\n' +
+                    '</div>';
+                return html;
+            }
+
+            //弹出税目索引框
+            $("#bt1").popover({
+                html: true,
+                title: "单灯控制面板",
+                placement: 'top',
+                content: findAllTax()
+            });
+//修改商品信息 弹出对话框
+            $(".main_box").on("click", "button[name='update']", function () {
+                $("#myModal3").modal({moveable: true});
+            });
+
+        })
+    </script>
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+            font-family: Arial;
+            font-size: 14px;
+            /*color: blue;*/
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            /*background-color: white;*/
+            /*overflow-x: auto;*/
+            /*filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr='#f5f5f5', endColorStr='#4682B4', gradientType=0); !* IE < 10 *!*/
+            /*background: -ms-linear-gradient(top, #f5f5f5, #4682B4); !* IE 10 *!*/
+            /*background: -webkit-gradient(linear, 0 0, 0 bottom, from(#f5f5f5), to(#4682B4)); !* Webkit: Safari 5.1+, Chrome 10+ *!*/
+        }
+
+        /*.box {*/
+        /*width: 100%;*/
+        /*height: 100%;*/
+        /*position: absolute;*/
+        /*!*以下为控制位于此div中的模块垂直和水平居中*!*/
+        /*display: flex;*/
+        /*justify-content: center;*/
+        /*align-items: center;*/
+        /*}*/
+
+        /*.box-content {*/
+        /*width: 400px;*/
+        /*!*上右下左*!*/
+        /*padding: 30px 60px 70px 60px;*/
+        /*background: rgba(0, 0, 0, 0.4);*/
+        /*!*background: rgba(255, 255, 255, 0.2);*!*/
+        /*border-radius: 25px;*/
+        /*}*/
+
+        /*a {*/
+        /*color: #C0C0C0;*/
+        /*text-decoration: underline;*/
+        /*cursor: pointer;*/
+        /*}*/
+        /*#draggableBox {*/
+        /*height: 500px;*/
+        /*width: 700px;*/
+        /*!*background-color: #fafafa;*!*/
+        /*background-color: #D3D3D3;*/
+        /*!*position: relative;*!*/
+        /*}*/
+
+        /*#draggableBox .btn-draggable {*/
+        /*position: absolute;*/
+        /*transition: none;*/
+        /*cursor: move;*/
+        /*}*/
+
+        #dragLog {
+            margin: 0;
+            border: none;
+            background: none;
+        }
+
+        .main_box {
+            margin-left: 270px;
+            margin-right: 270px;
+            height: 500px;
+            /*width: 700px;*/
+            background-color: #fafafa;
+            /*background-color: #D3D3D3;*/
+            padding: 20px 50px 10px 50px;
+        }
+
+        .btn-link {
+            float: left;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="main_box">
+    <div style="background-color: #00000000;">
+        <strong>说明： </strong>
+        <span><i class="icon icon-lightbulb icon-2x" style="color:#32CD32"></i>：正常照明中 &nbsp;&nbsp;</span>
+        <!--<span><i class="icon icon-lightbulb icon-2x" style="color:#FFD700"></i>：单灯部分故障</span>-->
+        <span><i class="icon icon-lightbulb icon-2x" style="color:#FF0000"></i>：存在故障,不亮 &nbsp;&nbsp;</span>
+        <span><i class="icon icon-lightbulb icon-2x" style="color:#000000"></i>：处于关闭状态</span>
+    </div>
+    <div style="background-color: #00000000;float: none;margin-top:100px; margin-bottom: 100px">
+        <button id="bt1" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>1</span>
+        </button>
+        <button class="btn  btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>2</span>
+        </button>
+        <button class="btn  btn-link " type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
+            <span>3</span>
+        </button>
+        <button class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>4</span>
+        </button>
+        <button class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>5</span>
+        </button>
+        <button class="btn btn-link" type="button" style="float: none">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>6</span>
+        </button>
+    </div>
+
+    <div style="background-color: #00000000; float: none;">
+        <button class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#FF0000"></i>
+            <span>7</span>
+        </button>
+        <button class="btn  btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>8</span>
+        </button>
+        <button class="btn  btn-link " type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>9</span>
+        </button>
+        <button class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>10</span>
+        </button>
+        <button class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
+            <span>11</span>
+        </button>
+        <button class="btn btn-link" type="button" style="float: none">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span>12</span>
+        </button>
+    </div>
+</div>
+<button class="btn" type="button"><i class="icon icon-lightbulb icon-2x" style="color:#FFD700"></i></button>
+<input id="button_login" class="btn btn-default" type="button" value="LOGIN">
+<div>
+    <form class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-3">Number</label>
+            <label id="number" class="col-sm-3" style="font-size: 16px"></label>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3">Stock Control</label>
+            <div class="col-sm-6">
+                <div class="switch">
+                    <input id="stock_control" type="checkbox">
+                    <label>NO/YES</label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<!--对话框 修改商品信息-->
+<div class="modal fade" id="myModal3">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title">Modify A Good</h4>
+            </div>
+            <div class="modal-body">
+                <div style="display: none">
+                    <input id="updateId">
+                    <input id="updateBarcode">
+                </div>
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-3">Number</label>
+                        <label id="number2" class="col-sm-3" style="font-size: 16px"></label>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3">Name</label>
+                        <div class="col-sm-6">
+                            <input id="name2" type="text" class="form-control" maxlength="30"
+                                   placeholder="1-30 characters" style="ime-mode: disabled"
+                                   onkeyup="this.value=this.value.replace(/[^\d\s()a-zA-Z+-]/g,'')">
+                        </div>
+                        <strong>*</strong>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3">Barcode</label>
+                        <div class="col-sm-6">
+                            <input id="barcode2" type="tel" class="form-control" maxlength="13"
+                                   placeholder="0-13 characters" style="ime-mode: disabled"
+                                   onkeyup="this.value=this.value.replace(/[^\d]/g,'')">
+                            <!--onkeypress="return (event.keyCode >= 48 && event.keyCode <= 57)">-->
+                            <input id="barcode2_copy" type="text" class="form-control" style="display: none">
+                        </div>
+                        <strong id="barcode_info2"></strong>
+                        <label style="padding-left: 10px"><i id="code_flag3" class="icon icon-check"
+                                                             style="color: green" hidden="hidden"></i>
+                            <i id="code_flag4" class="icon icon-times"
+                               style="color: red" hidden="hidden"></i></label>
+                        <label id="code_info2" hidden="hidden"></label>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3">Price</label>
+                        <div class="col-sm-6">
+                            <input id="price2" type="tel" class="form-control" maxlength="9"
+                                   placeholder="0-999999.99" style="ime-mode: disabled"
+                                   onkeyup="this.value=this.value.replace(/[^\d\.]/g,'')">
+                        </div>
+                        <strong>*</strong>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3">Tax Index</label>
+                        <div class="col-sm-6">
+                            <input id="tax_index2" type="text" class="form-control" disabled="disabled">
+                            <input id="tax_code2" type="text" class="form-control" style="display: none">
+                        </div>
+                        <strong>*</strong>
+                        <input id="choose2" value="..." type="button" class="btn btn-default">
+
+                    </div>
+                    <div class="form-group" id="RRP_DIV2" hidden="hidden">
+                        <label class="col-sm-3">RRP</label>
+                        <div class="col-sm-6">
+                            <input id="rrp2" type="tel" class="form-control" maxlength="9"
+                                   placeholder="0-999999.99" style="ime-mode: disabled"
+                                   onkeyup="this.value=this.value.replace(/[^\d\.]/g,'')">
+                        </div>
+                        <strong>*</strong>
+                    </div>
+                    <!--<div class="form-group">-->
+                    <!--<label class="col-sm-3">Stock Control</label>-->
+                    <!--<div class="col-sm-6">-->
+                    <!--<select id="stock_control2" class="form-control">-->
+                    <!--<option value="0" selected="selected">0</option>-->
+                    <!--<option value="1">1</option>-->
+                    <!--</select>-->
+                    <!--</div>-->
+                    <!--<span class="label label-badge">1 / YES ,  0 / NO</span>-->
+                    <!--</div>-->
+                    <div class="form-group">
+                        <label class="col-sm-3">Stock Control</label>
+                        <div class="col-sm-6">
+                            <div class="switch">
+                                <input id="stock_control2" type="checkbox">
+                                <label>NO/YES</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3">Stock Amount</label>
+                        <div class="col-sm-6">
+                            <input id="stock_amount2" type="tel" class="form-control" maxlength="9"
+                                   placeholder="0-9999.9999" style="ime-mode: disabled"
+                                   onkeyup="this.value=this.value.replace(/[^\d\.]/g,'')">
+                        </div>
+                        <strong id="stock_amount_info2"></strong>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button id="submit3" type="button" class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
