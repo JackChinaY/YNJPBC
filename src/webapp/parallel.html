@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ch">
+<head>
+    <meta charset="UTF-8">
+    <title>单灯管理（条形）</title>
+    <meta name="descrition" content="12个单灯成2条横杠分布">
+    <link rel="shortcut icon" type="image/x-icon" href="image/favicon.ico"/>
+    <link rel="stylesheet" href="zui/zui.css">
+    <script src="javascript/jquery-1.11.3.min.js"></script>
+    <!--<script src="javascript/jquery.cookie.js"></script>-->
+    <script src="zui/zui.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            //登录
+            $("#button_login").click(function () {
+                if ($("#username").val() == "" && $("#password").val() == "") {
+                    new $.zui.Messager('Username and Password cannot be empty！', {
+                        type: 'danger',
+                        placement: 'top' // 定义显示位置
+                    }).show();
+                } else if ($("#username").val() == "") {
+                    new $.zui.Messager('Username cannot be empty！', {
+                        type: 'danger',
+                        placement: 'top'
+                    }).show();
+                } else if ($("#password").val() == "") {
+                    new $.zui.Messager('Password cannot be empty！', {
+                        type: 'danger',
+                        placement: 'top'
+                    }).show();
+                }
+                else {
+                    $("#button_login").val("LOGIN...");
+                    $.ajax({
+                        type: "POST",
+                        url: "Action_login.action",
+                        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+                        data: {
+                            "username": $("#username").val(),
+                            "password": $("#password").val()
+                        },
+                        dataType: "json",
+                        cache: false,
+                        success: function (data) {
+                            if (data.jsonObject == "1") {
+                                $.cookie('username', data.username);
+                                $.cookie('userFlag', "comm");
+//                                setTimeout(function() {
+//                                    $("#button_login").val("登录成功");
+//                                },2000);
+                                $("#button_login").val("LOGIN");
+                                location.href = "index.html";
+                            } else {
+                                new $.zui.Messager("Username or Password error !", {
+                                    type: 'danger',
+                                    placement: 'top'
+                                }).show();
+                                $("#button_login").val("LOGIN");
+                            }
+                        },
+                        error: function (jqXHR) {
+                            new $.zui.Messager("Operation failed, possible causes：" + jqXHR.status, {
+                                type: 'danger',
+                                placement: 'top'
+                            }).show();
+                            $("#button_login").val("LOGIN");
+                        }
+                    });
+                }
+            });
+
+            // 将name=login的文本框清空，以便重新输入
+            $("#button_login_clear").click(function () {
+                $("input[name='login']").val("");
+            });
+
+            // var count = 0;
+            // var $dragLog = $('#dragLog');
+            // $('#draggableBox').draggable({
+            //     container: '#draggableBox',
+            //     selector: '.btn-draggable', // 可拖动元素选择器
+            //     before: function (e) {
+            //         $dragLog.prepend(count++ + ': ' + '[开始] 拖动【按钮#' + e.element.find('.btn-draggable-id').text() + '】...\n');
+            //     },
+            //     drag: function (e) {
+            //         $dragLog.prepend(count++ + ': ' + '拖动【按钮#' + e.element.find('.btn-draggable-id').text() + '】: pos = ' + JSON.stringify(e.pos) + ', offset = ' + JSON.stringify(e.offset) + '\n');
+            //     },
+            //     finish: function (e) {
+            //         $dragLog.prepend(count++ + ': ' + '[完毕]【按钮#' + e.element.find('.btn-draggable-id').text() + '】：pos = ' + JSON.stringify(e.pos) + ', offset = ' + JSON.stringify(e.offset) + '\n');
+            //     }
+            // });
+
+            // function findAllTax() {
+            //     var html = '<div style="width: 300px">\n' +
+            //         '    <form class="form-horizontal">\n' +
+            //         '        <div class="form-group">\n' +
+            //         '            <label class="col-sm-3">ID</label>\n' +
+            //         '            <label id="number" class="col-sm-3" style="font-size: 16px">12345678</label>\n' +
+            //         '        </div>\n' +
+            //         '        <div class="form-group">\n' +
+            //         '            <label class="col-sm-3">开关</label>\n' +
+            //         '            <div class="col-sm-6">\n' +
+            //         '                <div class="switch">\n' +
+            //         '                    <input id="stock_control" type="checkbox">\n' +
+            //         '                    <label>NO/OFF</label>\n' +
+            //         '                </div>\n' +
+            //         '            </div>\n' +
+            //         '        </div>\n' +
+            //         '    </form>\n' +
+            //         '</div>';
+            //     return html;
+            // }
+            /**
+             * 画圆
+             */
+            var a = 600, b = 270, r = 200, times = 0;
+            function flutter() {
+                if (times <= 120) {
+                    times += 2;
+                    console.log(times);
+                    var hudu = (2 * Math.PI / 360) * 3 * times;
+                    var X = a + Math.sin(hudu) * r;
+                    var Y = b - Math.cos(hudu) * r;   //  注意此处是“-”号，因为我们要得到的Y是相对于（0,0）而言的。
+                    //$(".sky_text").css({"left":X+"px","top":Y+"px"});
+                    $("body").append('<div style="position:absolute; left:' + X + 'px; top:' + Y + 'px; width:5px; height:5px; background:#000022;"></div>');
+                    if (times == 10) {
+                        return;
+                    }
+                }
+            }
+
+            /**
+             * 初始化单灯数据
+             */
+            function init() {
+                //画圆
+                // setInterval(flutter, 10);
+                //数组
+                var arr = [
+                    {
+                        "singleLampId": 10000001,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 100
+                    }, {
+                        "singleLampId": 10000002,
+                        "singleLampState": 2,
+                        "singleLampBrightnessValue": 0
+                    }, {
+                        "singleLampId": 10000003,
+                        "singleLampState": 3,
+                        "singleLampBrightnessValue": 0
+                    }, {
+                        "singleLampId": 10000004,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 80
+                    }, {
+                        "singleLampId": 10000005,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 100
+                    }, {
+                        "singleLampId": 10000006,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 100
+                    }, {
+                        "singleLampId": 10000007,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 100
+                    }, {
+                        "singleLampId": 10000008,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 100
+                    }, {
+                        "singleLampId": 10000009,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 100
+                    }, {
+                        "singleLampId": 100000010,
+                        "singleLampState": 2,
+                        "singleLampBrightnessValue": 0
+                    }, {
+                        "singleLampId": 100000011,
+                        "singleLampState": 1,
+                        "singleLampBrightnessValue": 100
+                    }, {
+                        "singleLampId": 100000012,
+                        "singleLampState": 3,
+                        "singleLampBrightnessValue": 0
+                    }
+                ];
+                //JSON数组
+                var jsonarray = JSON.stringify(arr);
+                // console.log(jsonarray.toString());
+                var jsonArray = $.parseJSON(jsonarray);
+                var currentElement = $(".main_box button");//设置全局变量，为当前操作的单灯
+                console.log(currentElement.length);
+                // console.log(jsonArray.toString());
+                for (var i = 0; i < currentElement.length; i++) {
+                    //设置面板上的单灯图标颜色（点亮）
+                    if (jsonArray[i].singleLampState == 1) {
+                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#32CD32");
+                    } else if (jsonArray[i].singleLampState == 2) {
+                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#FF0000");
+                    } else if (jsonArray[i].singleLampState == 3) {
+                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#000000");
+                    }
+                    //设置单灯ID编号
+                    currentElement.eq(i).find(".singleLampId").text(jsonArray[i].singleLampId);
+                    //设置面板上的单灯的状态码
+                    currentElement.eq(i).find(".singleLampState").text(jsonArray[i].singleLampState);
+                    //初始化亮度值
+                    currentElement.eq(i).find(".singleLampBrightnessValue").text(jsonArray[i].singleLampBrightnessValue);
+                }
+            }
+
+            init();
+            /**
+             * 修改单灯信息 弹出对话框
+             */
+            var currentElement;//设置全局变量，为当前操作的单灯
+            $(".main_box").on("click", "button[name='singleLamp']", function () {
+                //弹出税目索引框
+                // $(this).popover({
+                //     html: true,
+                //     title: "单灯控制面板",
+                //     placement: 'top',
+                //     content: findAllTax()
+                // });
+                //设置全局变量，为当前操作的单灯
+                currentElement = $(this);
+                //设置开关按钮默认状态，1：正常照明中，2：存在故障,不亮，3：处于关闭状态
+                if ($(this).find(".singleLampState").text() == "1") {
+                    //设置单灯图标颜色
+                    $("#update_image").css("color", "#32CD32");
+                    //设置单灯图标右下角数字
+                    $("#update_number").text($(this).find(".singleLampNumber").text());
+                    //设置单灯ID编号
+                    $("#update_Id").text($(this).find(".singleLampId").text());
+                    //开关显示为打开状态
+                    $("#update_switch").prop("checked", true);
+                    //开关显示为打开状态时，微调亮度控件也要显示
+                    $("#brightness").show();
+                    //初始化亮度值
+                    $("#brightness_value").val($(this).find(".singleLampBrightnessValue").text());
+                    //弹出修改对话框
+                    $("#myModal").modal({moveable: true});
+                } else if ($(this).find(".singleLampState").text() == "2") {
+                    //弹出警告信息
+                    new $.zui.Messager("单灯( ID: " + $(this).find(".singleLampId").text() + " )已损坏，无法设置亮度，请及时修复该单灯！", {
+                        type: 'danger',
+                        placement: 'top',
+                        time: 10000
+                    }).show();
+                } else if ($(this).find(".singleLampState").text() == "3") {
+                    //设置单灯图标颜色
+                    $("#update_image").css("color", "#000000");
+                    //设置单灯图标右下角数字
+                    $("#update_number").text($(this).find(".singleLampNumber").text());
+                    //单灯ID编号
+                    $("#update_Id").text($(this).find(".singleLampId").text());
+                    //开关显示为关闭状态
+                    $("#update_switch").prop("checked", false);
+                    //开关显示为关闭状态时，微调亮度控件也要关闭
+                    $("#brightness").hide();
+                    //弹出修改对话框
+                    $("#myModal").modal({moveable: true});
+                }
+            });
+            /**
+             * 点击开关即打开/关闭单灯，如果开关按钮关闭，则隐藏亮度调节一栏，如果打开，则显示亮度调节一栏
+             */
+            $("#update_switch").click(function () {
+                //如果开关为打开状态
+                if ($("#update_switch").is(':checked')) {
+                    //开关显示为打开状态时，微调亮度控件也要显示
+                    $("#brightness").show();
+                    //初始化亮度值
+                    $("#brightness_value").val(100);
+                    //设置弹出框中单灯图标颜色
+                    $("#update_image").css("color", "#32CD32");
+                    //设置面板上的单灯图标颜色（点亮）
+                    currentElement.find(".icon-lightbulb").css("color", "#32CD32");
+                    //设置面板上的单灯的状态码
+                    currentElement.find(".singleLampState").text(1);
+                    //设置面板上的单灯的亮度值
+                    currentElement.find(".singleLampBrightnessValue").text($("#brightness_value").val());
+                    //弹出提示信息
+                    new $.zui.Messager("单灯已打开，亮度为100%，接下来您可以选择去微调或者不去微调亮度值！", {
+                        type: 'success',
+                        placement: 'top'
+                    }).show();
+                }
+                //如果开关为关闭状态
+                else {
+                    //开关显示为关闭状态时，微调亮度控件也要关闭
+                    $("#brightness").hide();
+                    //设置弹出框中单灯图标颜色
+                    $("#update_image").css("color", "#000000");
+                    //设置面板上的单灯图标颜色（点亮）
+                    currentElement.find(".icon-lightbulb").css("color", "#000000");
+                    //设置面板上的单灯的状态码
+                    currentElement.find(".singleLampState").text(3);
+                    //设置面板上的单灯的亮度值
+                    currentElement.find(".singleLampBrightnessValue").text(0);
+                    //弹出提示信息
+                    new $.zui.Messager("单灯已关闭！", {
+                        type: 'default',
+                        placement: 'top',
+                        time: 3000
+                    }).show();
+                }
+            });
+            /**
+             * 亮度值自减按钮触发事件
+             */
+            $("#brightness_decrease").click(function () {
+                if ($("#brightness_value").val() > 10) {
+                    $("#brightness_value").val(parseInt($("#brightness_value").val()) - 10);
+                } else {
+                }
+            });
+            /**
+             * 亮度值自增按钮触发事件
+             */
+            $("#brightness_add").click(function () {
+                if ($("#brightness_value").val() <= 90) {
+                    $("#brightness_value").val(parseInt($("#brightness_value").val()) + 10);
+                } else {
+                }
+            });
+            /**
+             * 提交亮度值按钮触发事件
+             */
+            $("#brightness_submit").click(function () {
+                //如果亮度为0，此功能暂时关闭
+                if ($("#brightness_value").val() == 0) {
+                    new $.zui.Messager("您设置的亮度值为0，单灯关闭！", {
+                        type: 'warning',
+                        placement: 'top'
+                    }).show();
+                    //开关显示为关闭状态时，微调亮度控件也要关闭
+                    $("#brightness").hide();
+                    //开关显示为关闭状态
+                    $("#update_switch").prop("checked", false);
+                    //设置弹出框中单灯图标颜色
+                    $("#update_image").css("color", "#000000");
+                    //设置面板上的单灯图标颜色（点亮）
+                    currentElement.find(".icon-lightbulb").css("color", "#000000");
+                    //弹出提示信息
+                    new $.zui.Messager("单灯已关闭！", {
+                        type: 'default',
+                        placement: 'top',
+                        time: 3000
+                    }).show();
+                } else {
+                    //设置面板上的单灯的亮度值
+                    currentElement.find(".singleLampBrightnessValue").text($("#brightness_value").val());
+                    //弹出提示信息
+                    new $.zui.Messager("亮度值（" + $("#brightness_value").val() + "%）设置成功！", {
+                        type: 'success',
+                        placement: 'top'
+                    }).show();
+                }
+                $("#myModal").modal('hide');   //关闭对话框
+            });
+        })
+    </script>
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+            font-family: Arial;
+            font-size: 14px;
+            /*color: blue;*/
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            /*background-color: white;*/
+            /*overflow-x: auto;*/
+            /*filter: progid:DXImageTransform.Microsoft.Gradient(startColorStr='#f5f5f5', endColorStr='#4682B4', gradientType=0); !* IE < 10 *!*/
+            /*background: -ms-linear-gradient(top, #f5f5f5, #4682B4); !* IE 10 *!*/
+            /*background: -webkit-gradient(linear, 0 0, 0 bottom, from(#f5f5f5), to(#4682B4)); !* Webkit: Safari 5.1+, Chrome 10+ *!*/
+        }
+
+        /*.box {*/
+        /*width: 100%;*/
+        /*height: 100%;*/
+        /*position: absolute;*/
+        /*!*以下为控制位于此div中的模块垂直和水平居中*!*/
+        /*display: flex;*/
+        /*justify-content: center;*/
+        /*align-items: center;*/
+        /*}*/
+
+        /*.box-content {*/
+        /*width: 400px;*/
+        /*!*上右下左*!*/
+        /*padding: 30px 60px 70px 60px;*/
+        /*background: rgba(0, 0, 0, 0.4);*/
+        /*!*background: rgba(255, 255, 255, 0.2);*!*/
+        /*border-radius: 25px;*/
+        /*}*/
+
+        /*a {*/
+        /*color: #C0C0C0;*/
+        /*text-decoration: underline;*/
+        /*cursor: pointer;*/
+        /*}*/
+        /*#draggableBox {*/
+        /*height: 500px;*/
+        /*width: 700px;*/
+        /*!*background-color: #fafafa;*!*/
+        /*background-color: #D3D3D3;*/
+        /*!*position: relative;*!*/
+        /*}*/
+
+        /*#draggableBox .btn-draggable {*/
+        /*position: absolute;*/
+        /*transition: none;*/
+        /*cursor: move;*/
+        /*}*/
+
+        #dragLog {
+            margin: 0;
+            border: none;
+            background: none;
+        }
+
+        .main_box {
+            margin-left: auto;
+            margin-right: auto;
+            height: 500px;
+            width: 730px;
+            /*background-color: #fafafa;*/
+            /*background-color: #DEDEDE;*/
+            background-color: #D3D3D3;
+            padding: 20px 50px 10px 50px;
+        }
+
+        .btn-link {
+            float: left;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="main_box">
+    <!--提示说明区-->
+    <div style="background-color: #00000000;">
+        <strong>说明： </strong>
+        <span><i class="icon icon-lightbulb icon-2x" style="color:#32CD32"></i>：正常照明中 &nbsp;&nbsp;</span>
+        <!--<span><i class="icon icon-lightbulb icon-2x" style="color:#FFD700"></i>：单灯部分故障</span>-->
+        <span><i class="icon icon-lightbulb icon-2x" style="color:#FF0000"></i>：存在故障,不亮 &nbsp;&nbsp;</span>
+        <span><i class="icon icon-lightbulb icon-2x" style="color:#000000"></i>：处于关闭状态</span>
+        <span style="float: right"><i class="icon icon-long-arrow-up icon-3x"></i>北</span>
+    </div>
+    <!--第一排灯光-->
+    <div style="background-color: #00000000;float: none;margin-top:100px; margin-bottom: 100px">
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <!--图标-->
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <!--图标右下角数字-->
+            <span class="singleLampNumber">1</span>
+            <!--单灯实际编号，用于ARM发送指令用-->
+            <span class="singleLampId" hidden="hidden">10000001</span>
+            <!--单灯状态，1：正常照明中，2：存在故障,不亮，3：处于关闭状态-->
+            <span class="singleLampState" hidden="hidden">1</span>
+            <!--单灯亮度值-->
+            <span class="singleLampBrightnessValue" hidden="hidden">100</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span class="singleLampNumber">2</span>
+            <span class="singleLampId" hidden="hidden">10000002</span>
+            <span class="singleLampState" hidden="hidden">1</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">90</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
+            <span class="singleLampNumber">3</span>
+            <span class="singleLampId" hidden="hidden">10000003</span>
+            <span class="singleLampState" hidden="hidden">3</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">0</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#FF0000"></i>
+            <span class="singleLampNumber">4</span>
+            <span class="singleLampId" hidden="hidden">10000004</span>
+            <span class="singleLampState" hidden="hidden">2</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">0</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span class="singleLampNumber">5</span>
+            <span class="singleLampId" hidden="hidden">10000005</span>
+            <span class="singleLampState" hidden="hidden">1</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">90</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button" style="float: none">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span class="singleLampNumber">6</span>
+            <span class="singleLampId" hidden="hidden">10000006</span>
+            <span class="singleLampState" hidden="hidden">1</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">90</span>
+        </button>
+    </div>
+    <!--第二排灯光-->
+    <div style="background-color: #00000000; float: none;">
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#FF0000"></i>
+            <span class="singleLampNumber">7</span>
+            <span class="singleLampId" hidden="hidden">10000007</span>
+            <span class="singleLampState" hidden="hidden">2</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">0</span>
+        </button>
+        <button name="singleLamp" class="btn  btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span class="singleLampNumber">8</span>
+            <span class="singleLampId" hidden="hidden">10000008</span>
+            <span class="singleLampState" hidden="hidden">1</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">90</span>
+        </button>
+        <button name="singleLamp" class="btn  btn-link " type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span class="singleLampNumber">9</span>
+            <span class="singleLampId" hidden="hidden">10000009</span>
+            <span class="singleLampState" hidden="hidden">1</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">90</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span class="singleLampNumber">10</span>
+            <span class="singleLampId" hidden="hidden">10000010</span>
+            <span class="singleLampState" hidden="hidden">1</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">100</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button">
+            <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
+            <span class="singleLampNumber">11</span>
+            <span class="singleLampId" hidden="hidden">10000011</span>
+            <span class="singleLampState" hidden="hidden">3</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">90</span>
+        </button>
+        <button name="singleLamp" class="btn btn-link" type="button" style="float: none">
+            <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+            <span class="singleLampNumber">12</span>
+            <span class="singleLampId" hidden="hidden">10000012</span>
+            <span class="singleLampState" hidden="hidden">1</span>
+            <span class="singleLampBrightnessValue" hidden="hidden">90</span>
+        </button>
+    </div>
+</div>
+<!--测试用-->
+<button class="btn" type="button"><i class="icon icon-lightbulb icon-2x" style="color:#FFD700"></i></button>
+<input id="button_login" class="btn btn-default" type="button" value="LOGIN">
+<div>
+    <form class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-3">Number</label>
+            <label id="number" class="col-sm-3" style="font-size: 16px"></label>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3">Stock Control</label>
+            <div class="col-sm-6">
+                <div class="switch">
+                    <input id="stock_control" type="checkbox">
+                    <label>NO/OFF</label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<!--对话框 修改单灯信息 -->
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title">单灯控制面板</h4>
+            </div>
+            <div class="modal-body">
+                <div hidden="hidden">
+                    <input id="updateId">
+                </div>
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-4"></label>
+                        <div class="col-sm-6">
+                            <i id="update_image" class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
+                            <span id="update_number" class="singleLampState">1</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3">ID</label>
+                        <label id="update_Id" class="col-sm-3" style="font-size: 16px"></label>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3">开关</label>
+                        <div class="col-sm-8">
+                            <div class="switch">
+                                <input id="update_switch" type="checkbox">
+                                <label>OFF/NO</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="brightness" class="form-group" hidden="hidden">
+                        <label class="col-sm-3">亮度</label>
+                        <div class="col-sm-8">
+                            <button id="brightness_decrease" class="btn" type="button" style="float: left"><i
+                                    class="icon icon-minus"></i></button>
+                            <input id="brightness_value" type="tel" class="form-control" maxlength="3"
+                                   disabled="disabled"
+                                   style="width:40px;ime-mode: disabled;float: left;"
+                                   onkeyup="this.value=this.value.replace(/[^\d]/g,'')">
+                            <button id="brightness_add" class="btn" type="button"><i class="icon icon-plus"></i>
+                            </button>&nbsp;
+                            <button id="brightness_submit" class="btn" type="button"><i class="icon icon-check"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <!--<button id="submit3" type="button" class="btn btn-primary">Submit</button>-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

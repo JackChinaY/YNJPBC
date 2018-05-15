@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="javascript/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            var a = 500, b = 200, r = 100, times = 0;
+            setInterval(function flutter() {
+                times += 0.3;
+                var hudu = (2 * Math.PI / 360) * 3 * times;
+                var X = a + Math.sin(hudu) * r;
+                var Y = b - Math.cos(hudu) * r;   //  注意此处是“-”号，因为我们要得到的Y是相对于（0,0）而言的。
+                //$(".sky_text").css({"left":X+"px","top":Y+"px"});
+                $("body").append('<div style="position:absolute; left:' + X + 'px; top:' + Y + 'px; width:3px; height:3px; background:#000000;"></div>');
+                if (times == 120) {
+                    return;
+                }
+            }, 1);
+        })
+    </script>
+    <style type="text/css">
+        body, html {
+            padding: 0;
+            margin: 0;
+        }
+
+        .main_box {
+            margin-left: auto;
+            margin-right: auto;
+            height: 500px;
+            width: 730px;
+            /*background-color: #fafafa;*/
+            /*background-color: #DEDEDE;*/
+            background-color: #D3D3D3;
+            padding: 20px 50px 10px 50px;
+        }
+    </style>
+</head>
+<body>
+<div class="main_box">
+</div>
+<!--<div style="position:absolute; left:198px; top:198px; width:4px; height:4px; background:#F00;"></div>-->
+</body>
+</html>
