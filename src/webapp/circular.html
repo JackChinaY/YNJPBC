@@ -10,6 +10,71 @@
     <script src="zui/zui.js"></script>
     <script type="text/javascript">
         $(function () {
+            /**--------------------------定义标准颜色--------------------------**/
+            var GreenColor = "#32CD32";
+            var RedColor = "#FF0000";
+            var GrayColor = "#A9A9A9";
+            var BlackColor = "#000000";
+            /**-------------------------发送消息统一接口-----------------------**/
+            var DefaultMessager = new $.zui.Messager({
+                type: 'default',
+                // fade:  false,  // 禁用渐隐效果
+                // scale: false,   // 禁用缩放动画
+                placement: 'top',
+                time: 2000
+            });
+            var SuccessMessager = new $.zui.Messager({
+                type: 'success',
+                // fade:  false,  // 禁用渐隐效果
+                // scale: false,  // 禁用缩放动画
+                placement: 'top'
+            });
+            var DangerMessager = new $.zui.Messager({
+                type: 'danger',
+                // fade:  false,  // 禁用渐隐效果
+                placement: 'top'
+            });
+
+            /**
+             * 发送默认消息（黑色）
+             */
+            function sendDefaultMessager(message) {
+                if (SuccessMessager.isShow) {
+                    SuccessMessager.hide();
+                }
+                if (DangerMessager.isShow) {
+                    DangerMessager.hide();
+                }
+                DefaultMessager.show(message);
+            }
+
+            /**
+             * 发送成功消息（绿色）
+             */
+            function sendSuccessMessager(message) {
+                if (DefaultMessager.isShow) {
+                    DefaultMessager.hide();
+                }
+                if (DangerMessager.isShow) {
+                    DangerMessager.hide();
+                }
+                SuccessMessager.show(message);
+            }
+
+            /**
+             * 发送警告消息（红色）
+             */
+            function sendDangerMessager(message) {
+                if (DefaultMessager.isShow) {
+                    DefaultMessager.hide();
+                }
+                if (SuccessMessager.isShow) {
+                    SuccessMessager.hide();
+                }
+                DangerMessager.show(message);
+            }
+
+            /**-------------------------业务逻辑-----------------------**/
             /**
              * 画圆
              */
@@ -39,77 +104,97 @@
                 //数组
                 var arr = [
                     {
+                        "singleLampNumber": 1,
                         "singleLampId": 10000001,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 2,
                         "singleLampId": 10000002,
                         "singleLampState": 2,
                         "singleLampBrightnessValue": 0
                     }, {
+                        "singleLampNumber": 3,
                         "singleLampId": 10000003,
                         "singleLampState": 3,
                         "singleLampBrightnessValue": 0
                     }, {
+                        "singleLampNumber": 4,
                         "singleLampId": 10000004,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 80
                     }, {
+                        "singleLampNumber": 5,
                         "singleLampId": 10000005,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 6,
                         "singleLampId": 10000006,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 7,
                         "singleLampId": 10000007,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 8,
                         "singleLampId": 10000008,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 9,
                         "singleLampId": 10000009,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 10,
                         "singleLampId": 100000010,
                         "singleLampState": 2,
                         "singleLampBrightnessValue": 0
                     }, {
+                        "singleLampNumber": 11,
                         "singleLampId": 100000011,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 12,
                         "singleLampId": 100000012,
                         "singleLampState": 3,
                         "singleLampBrightnessValue": 0
                     }
                 ];
-                //JSON数组
+                //JSON数组字符串
                 var jsonarray = JSON.stringify(arr);
                 // console.log(jsonarray.toString());
+                //将JSON格式的字符串转换成JSON对象
                 var jsonArray = $.parseJSON(jsonarray);
-                var currentElement = $(".main_box button");//设置全局变量，为当前操作的单灯
-                console.log(currentElement.length);
+                //获取当前所有操作的单灯
+                var currentElement = $(".main_box button");
+                // console.log(currentElement.length);
                 // console.log(jsonArray.toString());
+                //给单灯赋值，可以不考虑后台传过来数据顺序
                 for (var i = 0; i < currentElement.length; i++) {
-                    //设置面板上的单灯图标颜色（点亮）
-                    if (jsonArray[i].singleLampState == 1) {
-                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#32CD32");
-                    } else if (jsonArray[i].singleLampState == 2) {
-                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#FF0000");
-                    } else if (jsonArray[i].singleLampState == 3) {
-                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#000000");
+                    for (var j = 0; j < jsonArray.length; j++) {
+                        if (jsonArray[j].singleLampNumber == (i + 1)) {
+                            //设置面板上的单灯图标颜色（点亮）
+                            if (jsonArray[j].singleLampState == 1) {
+                                currentElement.eq(i).find(".icon-lightbulb").css("color", GreenColor);
+                            } else if (jsonArray[j].singleLampState == 2) {
+                                currentElement.eq(i).find(".icon-lightbulb").css("color", RedColor);
+                            } else if (jsonArray[j].singleLampState == 3) {
+                                currentElement.eq(i).find(".icon-lightbulb").css("color", BlackColor);
+                            }
+                            //设置单灯ID编号
+                            currentElement.eq(i).find(".singleLampId").text(jsonArray[j].singleLampId);
+                            //设置面板上的单灯的状态码
+                            currentElement.eq(i).find(".singleLampState").text(jsonArray[j].singleLampState);
+                            //初始化亮度值
+                            currentElement.eq(i).find(".singleLampBrightnessValue").text(jsonArray[j].singleLampBrightnessValue);
+                            break;
+                        }
                     }
-                    //设置单灯ID编号
-                    currentElement.eq(i).find(".singleLampId").text(jsonArray[i].singleLampId);
-                    //设置面板上的单灯的状态码
-                    currentElement.eq(i).find(".singleLampState").text(jsonArray[i].singleLampState);
-                    //初始化亮度值
-                    currentElement.eq(i).find(".singleLampBrightnessValue").text(jsonArray[i].singleLampBrightnessValue);
                 }
             }
 
@@ -131,7 +216,7 @@
                 //设置开关按钮默认状态，1：正常照明中，2：存在故障,不亮，3：处于关闭状态
                 if ($(this).find(".singleLampState").text() == "1") {
                     //设置单灯图标颜色
-                    $("#update_image").css("color", "#32CD32");
+                    $("#update_image").css("color", GreenColor);
                     //设置单灯图标右下角数字
                     $("#update_number").text($(this).find(".singleLampNumber").text());
                     //设置单灯ID编号
@@ -146,14 +231,15 @@
                     $("#myModal").modal({moveable: true});
                 } else if ($(this).find(".singleLampState").text() == "2") {
                     //弹出警告信息
-                    new $.zui.Messager("单灯( ID: " + $(this).find(".singleLampId").text() + " )已损坏，无法设置亮度，请及时修复该单灯！", {
-                        type: 'danger',
-                        placement: 'top',
-                        time: 10000
-                    }).show();
+                    sendDangerMessager("单灯( ID: " + $(this).find(".singleLampId").text() + " )已损坏，无法设置亮度，请及时修复该单灯！");
+                    // new $.zui.Messager("单灯( ID: " + $(this).find(".singleLampId").text() + " )已损坏，无法设置亮度，请及时修复该单灯！", {
+                    //     type: 'danger',
+                    //     placement: 'top',
+                    //     time: 10000
+                    // }).show();
                 } else if ($(this).find(".singleLampState").text() == "3") {
                     //设置单灯图标颜色
-                    $("#update_image").css("color", "#000000");
+                    $("#update_image").css("color", BlackColor);
                     //设置单灯图标右下角数字
                     $("#update_number").text($(this).find(".singleLampNumber").text());
                     //单灯ID编号
@@ -177,37 +263,39 @@
                     //初始化亮度值
                     $("#brightness_value").val(100);
                     //设置弹出框中单灯图标颜色
-                    $("#update_image").css("color", "#32CD32");
+                    $("#update_image").css("color", GreenColor);
                     //设置面板上的单灯图标颜色（点亮）
-                    currentElement.find(".icon-lightbulb").css("color", "#32CD32");
+                    currentElement.find(".icon-lightbulb").css("color", GreenColor);
                     //设置面板上的单灯的状态码
                     currentElement.find(".singleLampState").text(1);
                     //设置面板上的单灯的亮度值
                     currentElement.find(".singleLampBrightnessValue").text($("#brightness_value").val());
                     //弹出提示信息
-                    new $.zui.Messager("单灯已打开，亮度为100%，接下来您可以选择去微调或者不去微调亮度值！", {
-                        type: 'success',
-                        placement: 'top'
-                    }).show();
+                    sendSuccessMessager("单灯已打开，亮度为100%，接下来您可以选择去微调或者不去微调亮度值！");
+                    // new $.zui.Messager("单灯已打开，亮度为100%，接下来您可以选择去微调或者不去微调亮度值！", {
+                    //     type: 'success',
+                    //     placement: 'top'
+                    // }).show();
                 }
                 //如果开关为关闭状态
                 else {
                     //开关显示为关闭状态时，微调亮度控件也要关闭
                     $("#brightness").hide();
                     //设置弹出框中单灯图标颜色
-                    $("#update_image").css("color", "#000000");
+                    $("#update_image").css("color", BlackColor);
                     //设置面板上的单灯图标颜色（点亮）
-                    currentElement.find(".icon-lightbulb").css("color", "#000000");
+                    currentElement.find(".icon-lightbulb").css("color", BlackColor);
                     //设置面板上的单灯的状态码
                     currentElement.find(".singleLampState").text(3);
                     //设置面板上的单灯的亮度值
                     currentElement.find(".singleLampBrightnessValue").text(0);
                     //弹出提示信息
-                    new $.zui.Messager("单灯已关闭！", {
-                        type: 'default',
-                        placement: 'top',
-                        time: 3000
-                    }).show();
+                    sendDefaultMessager("单灯已关闭！");
+                    // new $.zui.Messager("单灯已关闭！", {
+                    //     type: 'default',
+                    //     placement: 'top',
+                    //     time: 3000
+                    // }).show();
                 }
             });
             /**
@@ -234,32 +322,35 @@
             $("#brightness_submit").click(function () {
                 //如果亮度为0，此功能暂时关闭
                 if ($("#brightness_value").val() == 0) {
-                    new $.zui.Messager("您设置的亮度值为0，单灯关闭！", {
-                        type: 'warning',
-                        placement: 'top'
-                    }).show();
+                    sendSuccessMessager("您设置的亮度值为0，单灯关闭！");
+                    // new $.zui.Messager("您设置的亮度值为0，单灯关闭！", {
+                    //     type: 'warning',
+                    //     placement: 'top'
+                    // }).show();
                     //开关显示为关闭状态时，微调亮度控件也要关闭
                     $("#brightness").hide();
                     //开关显示为关闭状态
                     $("#update_switch").prop("checked", false);
                     //设置弹出框中单灯图标颜色
-                    $("#update_image").css("color", "#000000");
+                    $("#update_image").css("color", BlackColor);
                     //设置面板上的单灯图标颜色（点亮）
-                    currentElement.find(".icon-lightbulb").css("color", "#000000");
+                    currentElement.find(".icon-lightbulb").css("color", BlackColor);
                     //弹出提示信息
-                    new $.zui.Messager("单灯已关闭！", {
-                        type: 'default',
-                        placement: 'top',
-                        time: 3000
-                    }).show();
+                    sendDefaultMessager("单灯已关闭！");
+                    // new $.zui.Messager("单灯已关闭！", {
+                    //     type: 'default',
+                    //     placement: 'top',
+                    //     time: 3000
+                    // }).show();
                 } else {
                     //设置面板上的单灯的亮度值
                     currentElement.find(".singleLampBrightnessValue").text($("#brightness_value").val());
                     //弹出提示信息
-                    new $.zui.Messager("亮度值（" + $("#brightness_value").val() + "%）设置成功！", {
-                        type: 'success',
-                        placement: 'top'
-                    }).show();
+                    sendSuccessMessager("亮度值（" + $("#brightness_value").val() + "%）设置成功！");
+                    // new $.zui.Messager("亮度值（" + $("#brightness_value").val() + "%）设置成功！", {
+                    //     type: 'success',
+                    //     placement: 'top'
+                    // }).show();
                 }
                 $("#myModal").modal('hide');   //关闭对话框
             });
@@ -294,8 +385,8 @@
         }
 
         /*.btn-link {*/
-            /*float: left;*/
-            /*margin: 20px;*/
+        /*float: left;*/
+        /*margin: 20px;*/
         /*}*/
     </style>
 </head>
@@ -311,7 +402,8 @@
         <span style="float: right"><i class="icon icon-long-arrow-up icon-3x"></i>北</span>
     </div>
     <!--圆的右半边1-6号单灯-->
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative; margin-left: 250px;margin-top: 20px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative; margin-left: 250px;margin-top: 20px;">
         <!--图标-->
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <!--图标右下角数字-->
@@ -323,35 +415,40 @@
         <!--单灯亮度值-->
         <span class="singleLampBrightnessValue" hidden="hidden">100</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative;margin-left: 350px;margin-top: -30px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: 350px;margin-top: -30px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <span class="singleLampNumber">2</span>
         <span class="singleLampId" hidden="hidden">10000002</span>
         <span class="singleLampState" hidden="hidden">1</span>
         <span class="singleLampBrightnessValue" hidden="hidden">90</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button"  style="position: relative;margin-left: 410px;margin-top: 10px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: 410px;margin-top: 10px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
         <span class="singleLampNumber">3</span>
         <span class="singleLampId" hidden="hidden">10000003</span>
         <span class="singleLampState" hidden="hidden">3</span>
         <span class="singleLampBrightnessValue" hidden="hidden">0</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative;margin-left: 440px;margin-top: 30px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: 440px;margin-top: 30px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#FF0000"></i>
         <span class="singleLampNumber">4</span>
         <span class="singleLampId" hidden="hidden">10000004</span>
         <span class="singleLampState" hidden="hidden">2</span>
         <span class="singleLampBrightnessValue" hidden="hidden">0</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button"  style="position: relative;margin-left: 420px;margin-top: 40px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: 420px;margin-top: 40px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <span class="singleLampNumber">5</span>
         <span class="singleLampId" hidden="hidden">10000005</span>
         <span class="singleLampState" hidden="hidden">1</span>
         <span class="singleLampBrightnessValue" hidden="hidden">90</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative;margin-left: 360px;margin-top: 10px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: 360px;margin-top: 10px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <span class="singleLampNumber">6</span>
         <span class="singleLampId" hidden="hidden">10000006</span>
@@ -359,42 +456,48 @@
         <span class="singleLampBrightnessValue" hidden="hidden">90</span>
     </button>
     <!--圆的左半边7-12号单灯-->
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative;margin-left: 270px;margin-top: -25px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: 270px;margin-top: -25px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#FF0000"></i>
         <span class="singleLampNumber">7</span>
         <span class="singleLampId" hidden="hidden">10000007</span>
         <span class="singleLampState" hidden="hidden">2</span>
         <span class="singleLampBrightnessValue" hidden="hidden">0</span>
     </button>
-    <button name="singleLamp" class="btn  btn-link" type="button" style="position: relative;margin-left: -170px;margin-top: -60px;">
+    <button name="singleLamp" class="btn  btn-link" type="button"
+            style="position: relative;margin-left: -170px;margin-top: -60px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <span class="singleLampNumber">8</span>
         <span class="singleLampId" hidden="hidden">10000008</span>
         <span class="singleLampState" hidden="hidden">1</span>
         <span class="singleLampBrightnessValue" hidden="hidden">90</span>
     </button>
-    <button name="singleLamp" class="btn  btn-link " type="button" style="position: relative;margin-left: -130px;margin-top: -200px;">
+    <button name="singleLamp" class="btn  btn-link " type="button"
+            style="position: relative;margin-left: -130px;margin-top: -200px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <span class="singleLampNumber">9</span>
         <span class="singleLampId" hidden="hidden">10000009</span>
         <span class="singleLampState" hidden="hidden">1</span>
         <span class="singleLampBrightnessValue" hidden="hidden">90</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative;margin-left: -100px;margin-top: -370px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: -100px;margin-top: -370px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <span class="singleLampNumber">10</span>
         <span class="singleLampId" hidden="hidden">10000010</span>
         <span class="singleLampState" hidden="hidden">1</span>
         <span class="singleLampBrightnessValue" hidden="hidden">100</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative;margin-left: -50px;margin-top: -540px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: -50px;margin-top: -540px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
         <span class="singleLampNumber">11</span>
         <span class="singleLampId" hidden="hidden">10000011</span>
         <span class="singleLampState" hidden="hidden">3</span>
         <span class="singleLampBrightnessValue" hidden="hidden">90</span>
     </button>
-    <button name="singleLamp" class="btn btn-link" type="button" style="position: relative;margin-left: -10px;margin-top: -680px;">
+    <button name="singleLamp" class="btn btn-link" type="button"
+            style="position: relative;margin-left: -10px;margin-top: -680px;">
         <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
         <span class="singleLampNumber">12</span>
         <span class="singleLampId" hidden="hidden">10000012</span>

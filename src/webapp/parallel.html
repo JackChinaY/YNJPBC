@@ -11,109 +11,76 @@
     <script src="zui/zui.js"></script>
     <script type="text/javascript">
         $(function () {
-            //登录
-            $("#button_login").click(function () {
-                if ($("#username").val() == "" && $("#password").val() == "") {
-                    new $.zui.Messager('Username and Password cannot be empty！', {
-                        type: 'danger',
-                        placement: 'top' // 定义显示位置
-                    }).show();
-                } else if ($("#username").val() == "") {
-                    new $.zui.Messager('Username cannot be empty！', {
-                        type: 'danger',
-                        placement: 'top'
-                    }).show();
-                } else if ($("#password").val() == "") {
-                    new $.zui.Messager('Password cannot be empty！', {
-                        type: 'danger',
-                        placement: 'top'
-                    }).show();
-                }
-                else {
-                    $("#button_login").val("LOGIN...");
-                    $.ajax({
-                        type: "POST",
-                        url: "Action_login.action",
-                        contentType: "application/x-www-form-urlencoded; charset=utf-8",
-                        data: {
-                            "username": $("#username").val(),
-                            "password": $("#password").val()
-                        },
-                        dataType: "json",
-                        cache: false,
-                        success: function (data) {
-                            if (data.jsonObject == "1") {
-                                $.cookie('username', data.username);
-                                $.cookie('userFlag', "comm");
-//                                setTimeout(function() {
-//                                    $("#button_login").val("登录成功");
-//                                },2000);
-                                $("#button_login").val("LOGIN");
-                                location.href = "index.html";
-                            } else {
-                                new $.zui.Messager("Username or Password error !", {
-                                    type: 'danger',
-                                    placement: 'top'
-                                }).show();
-                                $("#button_login").val("LOGIN");
-                            }
-                        },
-                        error: function (jqXHR) {
-                            new $.zui.Messager("Operation failed, possible causes：" + jqXHR.status, {
-                                type: 'danger',
-                                placement: 'top'
-                            }).show();
-                            $("#button_login").val("LOGIN");
-                        }
-                    });
-                }
+            /**--------------------------定义标准颜色--------------------------**/
+            var GreenColor = "#32CD32";
+            var RedColor = "#FF0000";
+            var GrayColor = "#A9A9A9";
+            var BlackColor = "#000000";
+            /**-------------------------发送消息统一接口-----------------------**/
+            var DefaultMessager = new $.zui.Messager({
+                type: 'default',
+                // fade:  false,  // 禁用渐隐效果
+                // scale: false,   // 禁用缩放动画
+                placement: 'top',
+                time: 2000
+            });
+            var SuccessMessager = new $.zui.Messager({
+                type: 'success',
+                // fade:  false,  // 禁用渐隐效果
+                // scale: false,  // 禁用缩放动画
+                placement: 'top'
+            });
+            var DangerMessager = new $.zui.Messager({
+                type: 'danger',
+                // fade:  false,  // 禁用渐隐效果
+                placement: 'top'
             });
 
-            // 将name=login的文本框清空，以便重新输入
-            $("#button_login_clear").click(function () {
-                $("input[name='login']").val("");
-            });
+            /**
+             * 发送默认消息（黑色）
+             */
+            function sendDefaultMessager(message) {
+                if (SuccessMessager.isShow) {
+                    SuccessMessager.hide();
+                }
+                if (DangerMessager.isShow) {
+                    DangerMessager.hide();
+                }
+                DefaultMessager.show(message);
+            }
 
-            // var count = 0;
-            // var $dragLog = $('#dragLog');
-            // $('#draggableBox').draggable({
-            //     container: '#draggableBox',
-            //     selector: '.btn-draggable', // 可拖动元素选择器
-            //     before: function (e) {
-            //         $dragLog.prepend(count++ + ': ' + '[开始] 拖动【按钮#' + e.element.find('.btn-draggable-id').text() + '】...\n');
-            //     },
-            //     drag: function (e) {
-            //         $dragLog.prepend(count++ + ': ' + '拖动【按钮#' + e.element.find('.btn-draggable-id').text() + '】: pos = ' + JSON.stringify(e.pos) + ', offset = ' + JSON.stringify(e.offset) + '\n');
-            //     },
-            //     finish: function (e) {
-            //         $dragLog.prepend(count++ + ': ' + '[完毕]【按钮#' + e.element.find('.btn-draggable-id').text() + '】：pos = ' + JSON.stringify(e.pos) + ', offset = ' + JSON.stringify(e.offset) + '\n');
-            //     }
-            // });
+            /**
+             * 发送成功消息（绿色）
+             */
+            function sendSuccessMessager(message) {
+                if (DefaultMessager.isShow) {
+                    DefaultMessager.hide();
+                }
+                if (DangerMessager.isShow) {
+                    DangerMessager.hide();
+                }
+                SuccessMessager.show(message);
+            }
 
-            // function findAllTax() {
-            //     var html = '<div style="width: 300px">\n' +
-            //         '    <form class="form-horizontal">\n' +
-            //         '        <div class="form-group">\n' +
-            //         '            <label class="col-sm-3">ID</label>\n' +
-            //         '            <label id="number" class="col-sm-3" style="font-size: 16px">12345678</label>\n' +
-            //         '        </div>\n' +
-            //         '        <div class="form-group">\n' +
-            //         '            <label class="col-sm-3">开关</label>\n' +
-            //         '            <div class="col-sm-6">\n' +
-            //         '                <div class="switch">\n' +
-            //         '                    <input id="stock_control" type="checkbox">\n' +
-            //         '                    <label>NO/OFF</label>\n' +
-            //         '                </div>\n' +
-            //         '            </div>\n' +
-            //         '        </div>\n' +
-            //         '    </form>\n' +
-            //         '</div>';
-            //     return html;
-            // }
+            /**
+             * 发送警告消息（红色）
+             */
+            function sendDangerMessager(message) {
+                if (DefaultMessager.isShow) {
+                    DefaultMessager.hide();
+                }
+                if (SuccessMessager.isShow) {
+                    SuccessMessager.hide();
+                }
+                DangerMessager.show(message);
+            }
+
+            /**-------------------------业务逻辑-----------------------**/
             /**
              * 画圆
              */
-            var a = 600, b = 270, r = 200, times = 0;
+            var a = 600, b = 270, r = 180, times = 0;
+
             function flutter() {
                 if (times <= 120) {
                     times += 2;
@@ -138,77 +105,97 @@
                 //数组
                 var arr = [
                     {
+                        "singleLampNumber": 1,
                         "singleLampId": 10000001,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 2,
                         "singleLampId": 10000002,
                         "singleLampState": 2,
                         "singleLampBrightnessValue": 0
                     }, {
+                        "singleLampNumber": 3,
                         "singleLampId": 10000003,
                         "singleLampState": 3,
                         "singleLampBrightnessValue": 0
                     }, {
+                        "singleLampNumber": 4,
                         "singleLampId": 10000004,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 80
                     }, {
+                        "singleLampNumber": 5,
                         "singleLampId": 10000005,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 6,
                         "singleLampId": 10000006,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 7,
                         "singleLampId": 10000007,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 8,
                         "singleLampId": 10000008,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 9,
                         "singleLampId": 10000009,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 10,
                         "singleLampId": 100000010,
                         "singleLampState": 2,
                         "singleLampBrightnessValue": 0
                     }, {
+                        "singleLampNumber": 11,
                         "singleLampId": 100000011,
                         "singleLampState": 1,
                         "singleLampBrightnessValue": 100
                     }, {
+                        "singleLampNumber": 12,
                         "singleLampId": 100000012,
                         "singleLampState": 3,
                         "singleLampBrightnessValue": 0
                     }
                 ];
-                //JSON数组
+                //JSON数组字符串
                 var jsonarray = JSON.stringify(arr);
                 // console.log(jsonarray.toString());
+                //将JSON格式的字符串转换成JSON对象
                 var jsonArray = $.parseJSON(jsonarray);
-                var currentElement = $(".main_box button");//设置全局变量，为当前操作的单灯
-                console.log(currentElement.length);
+                //获取当前所有操作的单灯
+                var currentElement = $(".main_box button");
+                // console.log(currentElement.length);
                 // console.log(jsonArray.toString());
+                //给单灯赋值，可以不考虑后台传过来数据顺序
                 for (var i = 0; i < currentElement.length; i++) {
-                    //设置面板上的单灯图标颜色（点亮）
-                    if (jsonArray[i].singleLampState == 1) {
-                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#32CD32");
-                    } else if (jsonArray[i].singleLampState == 2) {
-                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#FF0000");
-                    } else if (jsonArray[i].singleLampState == 3) {
-                        currentElement.eq(i).find(".icon-lightbulb").css("color", "#000000");
+                    for (var j = 0; j < jsonArray.length; j++) {
+                        if (jsonArray[j].singleLampNumber == (i + 1)) {
+                            //设置面板上的单灯图标颜色（点亮）
+                            if (jsonArray[j].singleLampState == 1) {
+                                currentElement.eq(i).find(".icon-lightbulb").css("color", GreenColor);
+                            } else if (jsonArray[j].singleLampState == 2) {
+                                currentElement.eq(i).find(".icon-lightbulb").css("color", RedColor);
+                            } else if (jsonArray[j].singleLampState == 3) {
+                                currentElement.eq(i).find(".icon-lightbulb").css("color", BlackColor);
+                            }
+                            //设置单灯ID编号
+                            currentElement.eq(i).find(".singleLampId").text(jsonArray[j].singleLampId);
+                            //设置面板上的单灯的状态码
+                            currentElement.eq(i).find(".singleLampState").text(jsonArray[j].singleLampState);
+                            //初始化亮度值
+                            currentElement.eq(i).find(".singleLampBrightnessValue").text(jsonArray[j].singleLampBrightnessValue);
+                            break;
+                        }
                     }
-                    //设置单灯ID编号
-                    currentElement.eq(i).find(".singleLampId").text(jsonArray[i].singleLampId);
-                    //设置面板上的单灯的状态码
-                    currentElement.eq(i).find(".singleLampState").text(jsonArray[i].singleLampState);
-                    //初始化亮度值
-                    currentElement.eq(i).find(".singleLampBrightnessValue").text(jsonArray[i].singleLampBrightnessValue);
                 }
             }
 
@@ -230,7 +217,7 @@
                 //设置开关按钮默认状态，1：正常照明中，2：存在故障,不亮，3：处于关闭状态
                 if ($(this).find(".singleLampState").text() == "1") {
                     //设置单灯图标颜色
-                    $("#update_image").css("color", "#32CD32");
+                    $("#update_image").css("color", GreenColor);
                     //设置单灯图标右下角数字
                     $("#update_number").text($(this).find(".singleLampNumber").text());
                     //设置单灯ID编号
@@ -245,14 +232,15 @@
                     $("#myModal").modal({moveable: true});
                 } else if ($(this).find(".singleLampState").text() == "2") {
                     //弹出警告信息
-                    new $.zui.Messager("单灯( ID: " + $(this).find(".singleLampId").text() + " )已损坏，无法设置亮度，请及时修复该单灯！", {
-                        type: 'danger',
-                        placement: 'top',
-                        time: 10000
-                    }).show();
+                    sendDangerMessager("单灯( ID: " + $(this).find(".singleLampId").text() + " )已损坏，无法设置亮度，请及时修复该单灯！");
+                    // new $.zui.Messager("单灯( ID: " + $(this).find(".singleLampId").text() + " )已损坏，无法设置亮度，请及时修复该单灯！", {
+                    //     type: 'danger',
+                    //     placement: 'top',
+                    //     time: 10000
+                    // }).show();
                 } else if ($(this).find(".singleLampState").text() == "3") {
                     //设置单灯图标颜色
-                    $("#update_image").css("color", "#000000");
+                    $("#update_image").css("color", BlackColor);
                     //设置单灯图标右下角数字
                     $("#update_number").text($(this).find(".singleLampNumber").text());
                     //单灯ID编号
@@ -276,37 +264,39 @@
                     //初始化亮度值
                     $("#brightness_value").val(100);
                     //设置弹出框中单灯图标颜色
-                    $("#update_image").css("color", "#32CD32");
+                    $("#update_image").css("color", GreenColor);
                     //设置面板上的单灯图标颜色（点亮）
-                    currentElement.find(".icon-lightbulb").css("color", "#32CD32");
+                    currentElement.find(".icon-lightbulb").css("color", GreenColor);
                     //设置面板上的单灯的状态码
                     currentElement.find(".singleLampState").text(1);
                     //设置面板上的单灯的亮度值
                     currentElement.find(".singleLampBrightnessValue").text($("#brightness_value").val());
                     //弹出提示信息
-                    new $.zui.Messager("单灯已打开，亮度为100%，接下来您可以选择去微调或者不去微调亮度值！", {
-                        type: 'success',
-                        placement: 'top'
-                    }).show();
+                    sendSuccessMessager("单灯已打开，亮度为100%，接下来您可以选择去微调或者不去微调亮度值！");
+                    // new $.zui.Messager("单灯已打开，亮度为100%，接下来您可以选择去微调或者不去微调亮度值！", {
+                    //     type: 'success',
+                    //     placement: 'top'
+                    // }).show();
                 }
                 //如果开关为关闭状态
                 else {
                     //开关显示为关闭状态时，微调亮度控件也要关闭
                     $("#brightness").hide();
                     //设置弹出框中单灯图标颜色
-                    $("#update_image").css("color", "#000000");
+                    $("#update_image").css("color", BlackColor);
                     //设置面板上的单灯图标颜色（点亮）
-                    currentElement.find(".icon-lightbulb").css("color", "#000000");
+                    currentElement.find(".icon-lightbulb").css("color", BlackColor);
                     //设置面板上的单灯的状态码
                     currentElement.find(".singleLampState").text(3);
                     //设置面板上的单灯的亮度值
                     currentElement.find(".singleLampBrightnessValue").text(0);
                     //弹出提示信息
-                    new $.zui.Messager("单灯已关闭！", {
-                        type: 'default',
-                        placement: 'top',
-                        time: 3000
-                    }).show();
+                    sendDefaultMessager("单灯已关闭！");
+                    // new $.zui.Messager("单灯已关闭！", {
+                    //     type: 'default',
+                    //     placement: 'top',
+                    //     time: 3000
+                    // }).show();
                 }
             });
             /**
@@ -333,32 +323,35 @@
             $("#brightness_submit").click(function () {
                 //如果亮度为0，此功能暂时关闭
                 if ($("#brightness_value").val() == 0) {
-                    new $.zui.Messager("您设置的亮度值为0，单灯关闭！", {
-                        type: 'warning',
-                        placement: 'top'
-                    }).show();
+                    sendSuccessMessager("您设置的亮度值为0，单灯关闭！");
+                    // new $.zui.Messager("您设置的亮度值为0，单灯关闭！", {
+                    //     type: 'warning',
+                    //     placement: 'top'
+                    // }).show();
                     //开关显示为关闭状态时，微调亮度控件也要关闭
                     $("#brightness").hide();
                     //开关显示为关闭状态
                     $("#update_switch").prop("checked", false);
                     //设置弹出框中单灯图标颜色
-                    $("#update_image").css("color", "#000000");
+                    $("#update_image").css("color", BlackColor);
                     //设置面板上的单灯图标颜色（点亮）
-                    currentElement.find(".icon-lightbulb").css("color", "#000000");
+                    currentElement.find(".icon-lightbulb").css("color", BlackColor);
                     //弹出提示信息
-                    new $.zui.Messager("单灯已关闭！", {
-                        type: 'default',
-                        placement: 'top',
-                        time: 3000
-                    }).show();
+                    sendDefaultMessager("单灯已关闭！");
+                    // new $.zui.Messager("单灯已关闭！", {
+                    //     type: 'default',
+                    //     placement: 'top',
+                    //     time: 3000
+                    // }).show();
                 } else {
                     //设置面板上的单灯的亮度值
                     currentElement.find(".singleLampBrightnessValue").text($("#brightness_value").val());
                     //弹出提示信息
-                    new $.zui.Messager("亮度值（" + $("#brightness_value").val() + "%）设置成功！", {
-                        type: 'success',
-                        placement: 'top'
-                    }).show();
+                    sendSuccessMessager("亮度值（" + $("#brightness_value").val() + "%）设置成功！");
+                    // new $.zui.Messager("亮度值（" + $("#brightness_value").val() + "%）设置成功！", {
+                    //     type: 'success',
+                    //     placement: 'top'
+                    // }).show();
                 }
                 $("#myModal").modal('hide');   //关闭对话框
             });
