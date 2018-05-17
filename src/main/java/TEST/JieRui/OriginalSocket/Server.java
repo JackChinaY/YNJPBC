@@ -52,7 +52,7 @@ public class Server {
                 Socket socket = serverSocket.accept();
 //                socket.setKeepAlive(true);//开启保持活动状态的套接字
 //                socket.setSoTimeout(5000);//设置超时时间
-                ClientSocketMap.add(socket);
+//                ClientSocketMap.add(socket);
                 //创建一个新的线程，使用线程池
                 ServerHandler serverHandler = new ServerHandler(socket, executor);
                 executor.execute(serverHandler);

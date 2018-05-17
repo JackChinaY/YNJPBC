@@ -21,10 +21,17 @@ public class ClientSocketMap implements Runnable {
     }
 
     /**
-     * 添加一个新的客户端，如果已存在则将旧的覆盖掉
+     * 添加一个新的客户端，如果已存在则将旧的覆盖掉,key-value,key:IP-Port,value:socket
      */
     public static void add(Socket socket) {
         clientSocketMap.put(socket.getRemoteSocketAddress().toString(), socket);
+    }
+
+    /**
+     * 添加一个新的客户端，如果已存在则将旧的覆盖掉,key-value,key:ARM_ID,value:socket
+     */
+    public static void add(String ARM_ID, Socket socket) {
+        clientSocketMap.put(ARM_ID, socket);
     }
 
     /**

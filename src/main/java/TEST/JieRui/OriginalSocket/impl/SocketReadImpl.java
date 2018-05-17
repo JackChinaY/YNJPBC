@@ -1,12 +1,13 @@
 package TEST.JieRui.OriginalSocket.impl;
 
+import TEST.JieRui.OriginalSocket.ClientSocketMap;
 import TEST.JieRui.OriginalSocket.ServerUtils;
 import TEST.JieRui.OriginalSocket.SocketRead;
 
 import java.net.Socket;
 
 public class SocketReadImpl implements SocketRead {
-    private static int cacheLenth = 1024 * 2;//缓存数组的长度
+    private static int cacheLenth = 1024 * 10;//缓存数组的长度
     private byte[] tempBytesArray;// 每当端口有数据时就加入到此数组中
     private int count;// 数据长度
     private int position;// 当前处理的数据在数组中的位置
@@ -53,8 +54,8 @@ public class SocketReadImpl implements SocketRead {
 //                    ServerUtils.write(socket, message);
                 } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x13) {
 //                    System.out.println("ARM上传了信息，指令是03");
-                    //0x12 是ARM被动上报每个单灯的能耗数据
-                    readErrorStateOfARMSingleLamp(socket);
+                    //0x13 是ARM被动上报每个单灯的能耗数据
+                    readEnergyConsumptionOfARMSingleLamp(socket);
 //                    byte[] message = {0x02};
 //                    ServerUtils.write(socket, message);
                 } else if (tempBytesArray[position] == (byte) 0xfe && tempBytesArray[position + 1] == 0x21) {
@@ -73,11 +74,19 @@ public class SocketReadImpl implements SocketRead {
                     }
                 } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x23) {
                     //0x23 是ARM主动上报每个单灯的能耗数据
+                    if (readEnergyConsumptionOfARMSingleLamp(socket)) {
+                        ServerUtils.writeToARMSuccess(socket);
+                    } else {
+                        ServerUtils.writeToARMFailAndRepeat(socket);
+                    }
+                } else if (tempBytesArray[position] == 0xfe && tempBytesArray[position + 1] == 0x24) {
+                    //0x24 ARM首次连接服务器成功后，ARM需要发送身份信息以便服务器知道该ARM的ID，然后将ID保存到连接池中
                     if (readErrorStateOfARMSingleLamp(socket)) {
                         ServerUtils.writeToARMSuccess(socket);
                     } else {
                         ServerUtils.writeToARMFailAndRepeat(socket);
                     }
+
                 }
             }
 //            System.out.println("count:" + count + " ，position:" + position);
@@ -94,9 +103,9 @@ public class SocketReadImpl implements SocketRead {
         //如果本条命令完整上传完毕
         if (count - position == 4 + len) {
 //            System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 4, 8));
-            int lenth = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
-//            System.out.println("  ARM管理的单灯数量： " + lenth);
-            for (int j = 0; j < lenth; j++) {
+            int length = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
+//            System.out.println("  ARM管理的单灯数量： " + length);
+            for (int j = 0; j < length; j++) {
 //                System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
 //                System.out.println("  单灯亮度： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
@@ -114,15 +123,15 @@ public class SocketReadImpl implements SocketRead {
      */
     @Override
     public boolean readErrorStateOfARMSingleLamp(Socket socket) {
-        //判断前三位是Fint("ARM上传了信息，指令是02");
+        //判断DATA长度
         int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
         System.out.println("  DATA长度 " + len);
         //如果本条命令完整上传完毕
         if (count - position == 4 + len) {
             System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 4, 8));
-            int lenth = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
-            System.out.println("  ARM管理的单灯数量： " + lenth);
-            for (int j = 0; j < lenth; j++) {
+            int length = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
+            System.out.println("  ARM管理的单灯数量： " + length);
+            for (int j = 0; j < length; j++) {
                 System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
                 System.out.println("  单灯故障： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
@@ -138,18 +147,38 @@ public class SocketReadImpl implements SocketRead {
      */
     @Override
     public boolean readEnergyConsumptionOfARMSingleLamp(Socket socket) {
-        //判断前三位是Fint("ARM上传了信息，指令是02");
+        //判断DATA长度
         int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
         System.out.println("  DATA长度 " + len);
         //如果本条命令完整上传完毕
         if (count - position == 4 + len) {
             System.out.print("ARM编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 4, 8));
-            int lenth = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
-            System.out.println("  ARM管理的单灯数量： " + lenth);
-            for (int j = 0; j < lenth; j++) {
+            int length = ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8]);
+            System.out.println("  ARM管理的单灯数量： " + length);
+            for (int j = 0; j < length; j++) {
                 System.out.print("单灯编号 " + ServerUtils.byteArrayToString(tempBytesArray, position + 2 + 2 + 8 + 1 + 9 * j, 8));
                 System.out.println("  单灯能耗： " + ServerUtils.byteToInt(tempBytesArray[position + 2 + 2 + 8 + 1 + 9 * (j + 1) - 1]));
             }
+            count = 0;
+            position = 0;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 读取ARM发送过来的数据，数据为该ARM的ID
+     */
+    @Override
+    public boolean ARMConnectServerAndreadIDOfARM(Socket socket) {
+        //判断DATA长度
+        int len = ServerUtils.byteArrayToIntS(tempBytesArray, position + 2, 2);
+        System.out.println("  DATA长度 " + len);
+        //如果本条命令完整上传完毕
+        if (count - position == 4 + len) {
+            String ARM_ID = ServerUtils.byteArrayToString(tempBytesArray, position + 4, 8);
+            System.out.print("ARM编号 " + ARM_ID);
+            ClientSocketMap.add(ARM_ID, socket);
             count = 0;
             position = 0;
             return true;

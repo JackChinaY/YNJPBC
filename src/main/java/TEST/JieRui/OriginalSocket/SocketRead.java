@@ -16,4 +16,6 @@ public interface SocketRead {
      * 读取ARM发送过来的数据，数据为该ARM管理的一个或多个单灯的能耗
      */
     boolean readEnergyConsumptionOfARMSingleLamp(Socket socket);
+
+    boolean ARMConnectServerAndreadIDOfARM(Socket socket);
 }
