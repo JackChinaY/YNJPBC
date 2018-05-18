@@ -60,9 +60,23 @@ public class ServerUtils {
     /**
      * 服务器发送给ARM的指令：ARM需要上报每个单灯的亮度或故障状态
      */
-    public static void writeToARMGetSingleLampBrightnessAndErrorState(Socket socket) {
+    public static void writeToARMGetSingleLampBrightnessAndErrorState(String ARM_ID, Socket socket) {
         try {
-            byte[] message = {(byte) 0xfe, 0x01};
+//            byte[] message = {(byte) 0xfe, 0x01};
+            byte[] message = new byte[2 + 2 + ARM_ID.length()];
+            //添加开始标志和命令标志 2字节
+            message[0] = (byte) 0xfe;
+            message[1] = (byte) 0x04;
+            //添加DATA的长度，四位保留后两个位  2字节
+            byte[] len = ServerUtils.intToByteArray(ARM_ID.length());
+//        System.out.println(Arrays.toString(len));
+            message[2] = len[2];
+            message[3] = len[3];
+            //添加ARM的ID  8字节
+            byte[] arm = ARM_ID.getBytes();
+            for (int i = 0; i < ARM_ID.length(); i++) {
+                message[i + 4] = arm[i];
+            }
             //将字节输出流包装为带缓冲的字节输出流
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
             bufferedOutputStream.write(message);
@@ -76,9 +90,23 @@ public class ServerUtils {
     /**
      * 服务器发送给ARM的指令：ARM需要上报每个单灯的能耗
      */
-    public static void writeToARMGetSingleLampEnergyConsumption(Socket socket) {
+    public static void writeToARMGetSingleLampEnergyConsumption(String ARM_ID, Socket socket) {
         try {
-            byte[] message = {(byte) 0xfe, 0x03};
+//            byte[] message = {(byte) 0xfe, 0x03};
+            byte[] message = new byte[2 + 2 + ARM_ID.length()];
+            //添加开始标志和命令标志 2字节
+            message[0] = (byte) 0xfe;
+            message[1] = (byte) 0x04;
+            //添加DATA的长度，四位保留后两个位  2字节
+            byte[] len = ServerUtils.intToByteArray(ARM_ID.length());
+//        System.out.println(Arrays.toString(len));
+            message[2] = len[2];
+            message[3] = len[3];
+            //添加ARM的ID  8字节
+            byte[] arm = ARM_ID.getBytes();
+            for (int i = 0; i < ARM_ID.length(); i++) {
+                message[i + 4] = arm[i];
+            }
             //将字节输出流包装为带缓冲的字节输出流
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
             bufferedOutputStream.write(message);
@@ -87,6 +115,88 @@ public class ServerUtils {
             System.err.println("数据发送失败，连接已断开");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 向单个ARM发送控制指令，能控制住该ARM下所有的单灯亮度，可以精确设置每个灯拥有不同的亮度值
+     *
+     * @param ARM_ID         ARM编号
+     * @param singleLampList ARM下所有单灯的编号和亮度值
+     * @param socket         通信用的连接
+     */
+    public boolean setARMSingleLampEachBrightness(String ARM_ID, ArrayList<SingleLamp> singleLampList, Socket socket) {
+        byte[] message = new byte[2 + 2 + 8 + 1 + singleLampList.size() * 9];
+        //添加开始标志和命令标志 2字节
+        message[0] = (byte) 0xfe;
+        message[1] = (byte) 0x02;
+        //添加DATA的长度，四位保留后两个位  2字节
+        byte[] len = ServerUtils.intToByteArray(8 + 1 + singleLampList.size() * 9);
+//        System.out.println(Arrays.toString(len));
+        message[2] = len[2];
+        message[3] = len[3];
+        //添加ARM的ID  8字节
+        byte[] arm = ARM_ID.getBytes();
+        for (int i = 0; i < 8; i++) {
+            message[i + 4] = arm[i];
+        }
+        //添加ARM的管理的单灯数量  1字节
+        message[12] = ServerUtils.intToByte(singleLampList.size());
+        //添加单灯
+        for (int i = 0; i < singleLampList.size(); i++) {
+            byte[] singleLamp = singleLampList.get(i).getId().getBytes();
+            for (int j = 0; j < 8; j++) {
+                message[13 + j + 9 * i] = singleLamp[j];
+            }
+            message[13 + 9 * (i + 1) - 1] = ServerUtils.intToByte(singleLampList.get(i).getValue());
+        }
+        //开始发送数据
+        try {
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 向单个ARM发送控制指令，控制单个ARM上所有单灯的统一亮度（可以理解为打开或关闭ARM，ARM下所有单灯亮度值一样）
+     *
+     * @param ARM_ID          ARM编号
+     * @param brightnessValue 所有单灯的统一亮度值
+     * @param socket          通信用的连接
+     */
+    public boolean setARMSingleLampAllBrightness(String ARM_ID, int brightnessValue, Socket socket) {
+        byte[] message = new byte[2 + 2 + 8 + 1];
+        //添加开始标志和命令标志 2字节
+        message[0] = (byte) 0xfe;
+        message[1] = (byte) 0x04;
+        //添加DATA的长度，四位保留后两个位  2字节
+        byte[] len = ServerUtils.intToByteArray(8 + 1);
+//        System.out.println(Arrays.toString(len));
+        message[2] = len[2];
+        message[3] = len[3];
+        //添加ARM的ID  8字节
+        byte[] arm = ARM_ID.getBytes();
+        for (int i = 0; i < 8; i++) {
+            message[i + 4] = arm[i];
+        }
+        //添加所有单灯的统一亮度值  1字节
+        message[12] = ServerUtils.intToByte(brightnessValue);
+        //开始发送数据
+        try {
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     /**

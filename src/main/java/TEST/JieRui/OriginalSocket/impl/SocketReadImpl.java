@@ -166,7 +166,7 @@ public class SocketReadImpl implements SocketRead {
     }
 
     /**
-     * 读取ARM发送过来的数据，数据为该ARM的ID
+     * ARM请求连接，同时，将ARM的ID发送过来，然后将该ARM保存到连接池中
      */
     @Override
     public boolean ARMConnectServerAndreadIDOfARM(Socket socket) {
