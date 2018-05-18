@@ -44,9 +44,25 @@ public class ServerUtils {
     /**
      * 服务器发送给ARM的指令：ARM需要上报每个单灯的状态（故障等信息）
      */
-    public static void writeToARMGetSingleLampState(Socket socket) {
+    public static void writeToARMGetSingleLampErrorState(Socket socket) {
         try {
             byte[] message = {(byte) 0xfe, 0x02};
+            //将字节输出流包装为带缓冲的字节输出流
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
+            bufferedOutputStream.write(message);
+            bufferedOutputStream.flush();
+        } catch (IOException e) {
+            System.err.println("数据发送失败，连接已断开");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 服务器发送给ARM的指令：ARM需要上报每个单灯的亮度或故障状态
+     */
+    public static void writeToARMGetSingleLampBrightnessAndErrorState(Socket socket) {
+        try {
+            byte[] message = {(byte) 0xfe, 0x01};
             //将字节输出流包装为带缓冲的字节输出流
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
             bufferedOutputStream.write(message);

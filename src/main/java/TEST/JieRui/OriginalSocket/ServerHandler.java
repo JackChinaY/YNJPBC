@@ -40,9 +40,8 @@ public class ServerHandler implements Runnable {
         while (!socket.isClosed()) {
             try {
                 //读取数据
-                byte[] readBuffer = new byte[128];//临时缓存数组
-                int length = 0;// 数据长度
-                length = socket.getInputStream().read(readBuffer);
+                byte[] readBuffer = new byte[1024];//临时缓存数组
+                int length = socket.getInputStream().read(readBuffer);// 数据长度
                 //如果ARM主动断开连接，则length为-1，此时服务器端要断开与此ARM的连接，并释放掉对应资源
                 if (length == -1) {
                     ClientSocketMap.remove(socket.getRemoteSocketAddress().toString());
