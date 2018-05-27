@@ -1,21 +1,19 @@
 <!DOCTYPE html>
-<html lang="ch">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>单灯管理（圆形）</title>
-    <meta name="descrition" content="12个单灯成圆形分布">
-    <link rel="shortcut icon" type="image/x-icon" href="image/favicon.ico"/>
+    <title>手动控制</title>
     <link rel="stylesheet" href="zui/zui.css">
     <script src="javascript/jquery-1.11.3.min.js"></script>
     <script src="zui/zui.js"></script>
+    <!-- 	<script src="../../js/login/login.js"></script> -->
     <script type="text/javascript">
         $(function () {
             /**--------------------------定义标准颜色--------------------------**/
             var GreenColor = "#32CD32";
-            var BlackColor = "#000000";
             var RedColor = "#FF0000";
-            var OrangeColor = "#FFA500";
             var GrayColor = "#A9A9A9";
+            var BlackColor = "#000000";
             /**-------------------------发送消息统一接口-----------------------**/
             var DefaultMessager = new $.zui.Messager({
                 type: 'default',
@@ -79,7 +77,7 @@
             /**
              * 画圆
              */
-            var a = 600, b = 240, r = 170, times = 0;
+            var a = 600, b = 270, r = 180, times = 0;
 
             function flutter() {
                 if (times <= 120) {
@@ -101,7 +99,7 @@
              */
             function init() {
                 //画圆
-                setInterval(flutter, 10);
+                // setInterval(flutter, 10);
                 //数组
                 var arr = [
                     {
@@ -375,14 +373,12 @@
         }
 
         .main_box {
-            margin-left: auto;
-            margin-right: auto;
-            height: 470px;
-            width: 600px;
+            height: 300px;
+            width: 400px;
             /*background-color: #fafafa;*/
             /*background-color: #DEDEDE;*/
             background-color: #D3D3D3;
-            padding: 0px 20px 0px 20px;
+            padding: 20px 50px 10px 50px;
         }
 
         /*.btn-link {*/
@@ -394,179 +390,36 @@
 <body>
 <div class="main_box">
     <!--提示说明区-->
-    <div style="background-color: #00000000;">
-        <strong>说明： </strong>
-        <span><i class="icon icon-lightbulb icon-2x" style="color:#32CD32"></i>：正常照明中 &nbsp;&nbsp;</span>
-        <!--<span><i class="icon icon-lightbulb icon-2x" style="color:#FFD700"></i>：单灯部分故障</span>-->
-        <span><i class="icon icon-lightbulb icon-2x" style="color:#FF0000"></i>：存在故障,不亮 &nbsp;&nbsp;</span>
-        <span><i class="icon icon-lightbulb icon-2x" style="color:#000000"></i>：处于关闭状态</span>
-        <span style="float: right"><i class="icon icon-long-arrow-up icon-3x"></i>北</span>
+    <div hidden="hidden">
+        <input id="updateId">
     </div>
-    <!--圆的右半边1-6号单灯-->
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative; margin-left: 210px;margin-top: 10px;">
-        <!--图标-->
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <!--图标右下角数字-->
-        <span class="singleLampNumber">1</span>
-        <!--单灯实际编号，用于ARM发送指令用-->
-        <span class="singleLampId" hidden="hidden">10000001</span>
-        <!--单灯状态，1：正常照明中，2：存在故障,不亮，3：处于关闭状态-->
-        <span class="singleLampState" hidden="hidden">1</span>
-        <!--单灯亮度值-->
-        <span class="singleLampBrightnessValue" hidden="hidden">100</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: 300px;margin-top: -30px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <span class="singleLampNumber">2</span>
-        <span class="singleLampId" hidden="hidden">10000002</span>
-        <span class="singleLampState" hidden="hidden">1</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">90</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: 370px;margin-top: 10px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
-        <span class="singleLampNumber">3</span>
-        <span class="singleLampId" hidden="hidden">10000003</span>
-        <span class="singleLampState" hidden="hidden">3</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">0</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: 390px;margin-top: 30px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#FF0000"></i>
-        <span class="singleLampNumber">4</span>
-        <span class="singleLampId" hidden="hidden">10000004</span>
-        <span class="singleLampState" hidden="hidden">2</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">0</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: 360px;margin-top: 40px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <span class="singleLampNumber">5</span>
-        <span class="singleLampId" hidden="hidden">10000005</span>
-        <span class="singleLampState" hidden="hidden">1</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">90</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: 300px;margin-top: 0px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <span class="singleLampNumber">6</span>
-        <span class="singleLampId" hidden="hidden">10000006</span>
-        <span class="singleLampState" hidden="hidden">1</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">90</span>
-    </button>
-    <!--圆的左半边7-12号单灯-->
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: 210px;margin-top: -50px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#FF0000"></i>
-        <span class="singleLampNumber">7</span>
-        <span class="singleLampId" hidden="hidden">10000007</span>
-        <span class="singleLampState" hidden="hidden">2</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">0</span>
-    </button>
-    <button name="singleLamp" class="btn  btn-link" type="button"
-            style="position: relative;margin-left: -150px;margin-top: -80px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <span class="singleLampNumber">8</span>
-        <span class="singleLampId" hidden="hidden">10000008</span>
-        <span class="singleLampState" hidden="hidden">1</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">90</span>
-    </button>
-    <button name="singleLamp" class="btn  btn-link " type="button"
-            style="position: relative;margin-left: -120px;margin-top: -220px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <span class="singleLampNumber">9</span>
-        <span class="singleLampId" hidden="hidden">10000009</span>
-        <span class="singleLampState" hidden="hidden">1</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">90</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: -80px;margin-top: -370px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <span class="singleLampNumber">10</span>
-        <span class="singleLampId" hidden="hidden">10000010</span>
-        <span class="singleLampState" hidden="hidden">1</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">100</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: -50px;margin-top: -540px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#000000"></i>
-        <span class="singleLampNumber">11</span>
-        <span class="singleLampId" hidden="hidden">10000011</span>
-        <span class="singleLampState" hidden="hidden">3</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">90</span>
-    </button>
-    <button name="singleLamp" class="btn btn-link" type="button"
-            style="position: relative;margin-left: -20px;margin-top: -660px;">
-        <i class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-        <span class="singleLampNumber">12</span>
-        <span class="singleLampId" hidden="hidden">10000012</span>
-        <span class="singleLampState" hidden="hidden">1</span>
-        <span class="singleLampBrightnessValue" hidden="hidden">90</span>
-    </button>
-</div>
-<!--对话框 修改单灯信息 -->
-<div class="modal fade" id="myModal">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span
-                        class="sr-only">Close</span></button>
-                <h4 class="modal-title">单灯控制面板</h4>
-            </div>
-            <div class="modal-body">
-                <div hidden="hidden">
-                    <input id="updateId">
-                </div>
-                <form class="form-horizontal">
-                    <div class="form-group">
-                        <label class="col-sm-4"></label>
-                        <div class="col-sm-6">
-                            <i id="update_image" class="icon icon-lightbulb icon-3x" style="color:#32CD32"></i>
-                            <span id="update_number" class="singleLampState">1</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-3">ID</label>
-                        <label id="update_Id" class="col-sm-3" style="font-size: 16px"></label>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-3">开关</label>
-                        <div class="col-sm-8">
-                            <div class="switch">
-                                <input id="update_switch" type="checkbox">
-                                <label>OFF/NO</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="brightness" class="form-group" hidden="hidden">
-                        <label class="col-sm-3">亮度</label>
-                        <div class="col-sm-8">
-                            <button id="brightness_decrease" class="btn" type="button" style="float: left"><i
-                                    class="icon icon-minus"></i></button>
-                            <input id="brightness_value" type="tel" class="form-control" maxlength="3"
-                                   disabled="disabled"
-                                   style="width:40px;ime-mode: disabled;float: left;"
-                                   onkeyup="this.value=this.value.replace(/[^\d]/g,'')">
-                            <button id="brightness_add" class="btn" type="button"><i class="icon icon-plus"></i>
-                            </button>&nbsp;
-                            <button id="brightness_submit" class="btn" type="button"><i class="icon icon-check"></i>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <div class="form-group">
-                    <div class="col-sm-offset-2 col-sm-10">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <!--<button id="submit3" type="button" class="btn btn-primary">Submit</button>-->
-                    </div>
-                </div>
+    <form class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-4"></label>
+            <div class="col-sm-6">
+                <i id="update_image" class="icon icon-lightbulb icon-3x" style="color: #32CD32"></i> <span id="update_number" class="singleLampState">1</span>
             </div>
         </div>
-    </div>
+        <div class="form-group">
+            <label class="col-sm-3">ID</label> <label id="update_Id" class="col-sm-3" style="font-size: 16px"></label>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3">开关</label>
+            <div class="col-sm-8">
+                <div class="switch"><input id="update_switch" type="checkbox"> <label>OFF/NO</label></div>
+            </div>
+        </div>
+        <div id="brightness" class="form-group" hidden="hidden">
+            <label class="col-sm-3">亮度</label>
+            <div class="col-sm-8">
+                <button id="brightness_decrease" class="btn" type="button" style="float: left"><i class="icon icon-minus"></i></button>
+                <input id="brightness_value" type="tel" class="form-control" maxlength="3" disabled="disabled" style="width: 40px; ime-mode: disabled; float: left;"
+                       onkeyup="this.value=this.value.replace(/[^\d]/g,'')">
+                <button id="brightness_add" class="btn" type="button"><i class="icon icon-plus"></i></button>&nbsp;
+                <button id="brightness_submit" class="btn" type="button"><i class="icon icon-check"></i></button>
+            </div>
+        </div>
+    </form>
 </div>
 </body>
 </html>
