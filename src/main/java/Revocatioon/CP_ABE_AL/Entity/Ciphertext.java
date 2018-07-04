@@ -23,5 +23,5 @@ public class Ciphertext {
     public Map<Integer, Element> C1 = new HashMap<>();
     public Map<Integer, Element> C2 = new HashMap<>();
     public Map<Integer, Element> C3 = new HashMap<>();
-
+    public Element s; // s
 }

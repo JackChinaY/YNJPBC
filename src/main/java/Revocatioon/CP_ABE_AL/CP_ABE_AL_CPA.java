@@ -21,6 +21,8 @@ public class CP_ABE_AL_CPA implements Ident {
     //用户的属性
 //    private String attributes_A = "1 2 3 4 5 6 7 8";
     private String attributes_A = "a1 a2 a3 a4 b1 b2 b3 c1 c2";
+    //用户撤销的的属性集合
+    private String attributes_RL = "";
     //    private String attributes_A = "1 2 3";
 
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
@@ -41,8 +43,10 @@ public class CP_ABE_AL_CPA implements Ident {
     private PK pk = new PK();
     private SK sk = new SK();
     private Ciphertext ciphertext = new Ciphertext();
+    private RCT rct = new RCT();
+    private TCT tct = new TCT();
     public ArrayList<AAK> AAKList = new ArrayList<>();//AAK类型，所有属性中心
-    //矩阵M
+    //矩阵M,l*n的矩阵,l表示用户属性的个数
     private int[][] matrix = {
             {1, 1, 1, 1, 0},
             {1, 1, 0, 1, 0},
@@ -73,9 +77,7 @@ public class CP_ABE_AL_CPA implements Ident {
     }
 
     /**
-     * Encrypt 加密算法从pubfile中读取公共参数，在访问策略policy下将inputfile指定的文件加密为路径为encfile的文件。
-     * 其中访问策略是用后序遍历门限编码的字符串。比如访问策略“foo bar fim 2of3 baf 1of2”指定了含有两个门限四个
-     * 叶子节点的访问策略，并且拥有属性“baf”或者“foo”、“bar”、“fim”中的至少两个的属性集合满足该访问策略。
+     * 加密
      */
     @Override
     public void encrypt() {
@@ -87,6 +89,31 @@ public class CP_ABE_AL_CPA implements Ident {
         }
     }
 
+    /**
+     * 重加密
+     */
+    @Override
+    public void re_encrypt() {
+        System.out.println("-------------------re_encrypt加密阶段----------------------");
+        try {
+            rct = LangPolicy.re_encrypt(pk, ciphertext, sk, attributes_RL, matrix, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 部分解密阶段
+     */
+    @Override
+    public void part_decrypt() {
+        System.out.println("-------------------part_decrypt解密阶段----------------------");
+        try {
+            tct = LangPolicy.part_decrypt(pk, mk, sk, rct, attributes_A, attributes_C, AAKList, thresholds, attributes_Us, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Decrypt 解密算法从 pub_key 指定的文件中读入公共参数，从 private_key 中读入用户私钥，将加密文件 encfile 解密为 decfile。
@@ -95,7 +122,7 @@ public class CP_ABE_AL_CPA implements Ident {
     public void decrypt() {
         System.out.println("-------------------decrypt解密阶段----------------------");
         try {
-            LangPolicy.decrypt(pk, sk, ciphertext, attributes_A, attributes_C, AAKList, thresholds, attributes_Us, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+            LangPolicy.decrypt(pk, sk, tct, attributes_A, attributes_C, AAKList, thresholds, attributes_Us, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -111,6 +138,8 @@ public class CP_ABE_AL_CPA implements Ident {
         identProxy.setup();
         identProxy.keygen();
         identProxy.encrypt();
-//        identProxy.decrypt();
+        identProxy.re_encrypt();
+        identProxy.part_decrypt();
+        identProxy.decrypt();
     }
 }

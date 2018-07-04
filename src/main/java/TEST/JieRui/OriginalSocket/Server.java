@@ -21,6 +21,7 @@ public class Server {
             serverSocket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
+            return;
         }
         System.out.println("***服务器即将启动，等待客户端的连接***");
         /**

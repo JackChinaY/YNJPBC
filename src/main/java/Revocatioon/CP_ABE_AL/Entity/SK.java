@@ -10,11 +10,12 @@ import java.util.Map;
  */
 public class SK {
     public Map<String, SKComp> comps;//SKComp
-    public Element Dca; //G_1 Dca=g2^(x-求和(K个xi))
+    public Element z; //随机参数
     ///////////////////////////////////////
     public Element K0; //G_1
     public Element K1; //G_1
     public Map<String, Element> K2 = new HashMap<>();
     public Map<String, Element> K3 = new HashMap<>();
     public Element SK2; //G_1 SK2=g^(a2)
+    public Element r; //r'/z
 }
