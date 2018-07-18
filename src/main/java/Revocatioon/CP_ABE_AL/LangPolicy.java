@@ -287,7 +287,9 @@ public class LangPolicy {
      * @param MPathName  明文
      * @param CTPathName 密文
      */
-    public static Ciphertext encrypt(PK pk, ArrayList<AAK> AAKList, String[][] attributes_S, String[][] attributes_Us, int[][] matrix, String MPathName, String CTPathName) throws Exception {
+    public static Ciphertext encrypt(PK pk, ArrayList<AAK> AAKList, String attributes_A, String[][] attributes_Us, int[][] matrix, String MPathName, String CTPathName) throws Exception {
+        //将用户属性解析成字符数组
+        ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
         Pairing pairing = pk.pairing;
         //表示GT的随机值，AES种子
         Element M = pairing.getGT().newRandomElement();
@@ -340,7 +342,7 @@ public class LangPolicy {
             G1_temp1 = pk.w.duplicate().powZn(Zr_temp2);
             //v^ti
             G1_temp2 = pk.v.duplicate().powZn(ti);
-            ciphertext.C1.put(i, G1_temp1.mul(G1_temp2).duplicate());
+            ciphertext.C1.put(arrayList_A.get(i), G1_temp1.mul(G1_temp2).duplicate());
             /**---------------------求Ci,2----------------------**/
             //构造一个多项式
 //            Polynomial polynomial = createRandomPolynomial(AAKList.get(i).number - 1, p0);
@@ -348,10 +350,10 @@ public class LangPolicy {
             Zr_temp1.setToZero();
             Zr_temp1.sub(ti);
             G1_temp1.powZn(Zr_temp1);
-            ciphertext.C2.put(i, G1_temp1.duplicate());
+            ciphertext.C2.put(arrayList_A.get(i), G1_temp1.duplicate());
             /**---------------------求Ci,3----------------------**/
             G1_temp1 = pk.g.duplicate().powZn(ti);
-            ciphertext.C3.put(i, G1_temp1.duplicate());
+            ciphertext.C3.put(arrayList_A.get(i), G1_temp1.duplicate());
         }
         /**-----------------------------------接下来开始对明文加密-------------------------------**/
         //加密成功
@@ -404,7 +406,7 @@ public class LangPolicy {
 //            System.out.println(rct.C11);
             /**---------------------求Ci,1'、Ci,2'、Ci,3'----------------------**/
             //Ci,1'=Ci,1 * (v^k)
-            for (Map.Entry<Integer, Element> entry : old_ciphertext.C1.entrySet()) {
+            for (Map.Entry<String, Element> entry : old_ciphertext.C1.entrySet()) {
                 rct.C1.put(entry.getKey(), entry.getValue().duplicate().mul(pk.v.duplicate().powZn(k)));
             }
             /**---------------------求Ci,2'----------------------**/
@@ -413,7 +415,7 @@ public class LangPolicy {
             //0-k=-k
             Zr_temp.sub(k);
             //Ci,2'=Ci,2 * (v^k)
-            for (Map.Entry<Integer, Element> entry : old_ciphertext.C2.entrySet()) {
+            for (Map.Entry<String, Element> entry : old_ciphertext.C2.entrySet()) {
                 //u * h
                 Element G1_temp1 = pk.u.duplicate().mul(pk.h);
                 //(u * h)^(-k)
@@ -423,7 +425,7 @@ public class LangPolicy {
             }
             /**---------------------求Ci,3'----------------------**/
             //Ci,3'=Ci,3 * (g^k)
-            for (Map.Entry<Integer, Element> entry : old_ciphertext.C3.entrySet()) {
+            for (Map.Entry<String, Element> entry : old_ciphertext.C3.entrySet()) {
                 rct.C3.put(entry.getKey(), entry.getValue().duplicate().mul(pk.g.duplicate().powZn(k)));
             }
             /**---------------------更新相应的授权密钥为SK2'----------------------**/
@@ -438,6 +440,8 @@ public class LangPolicy {
             System.out.println("被撤销的属性个数：" + arrayList_RL.size() + " ,分别是： " + attributes_RL);
             //v
             Element v = pairing.getZr().newRandomElement();
+            //1/v
+            Element v_invert = v.invert();
             //k
             Element k = pairing.getZr().newRandomElement();
             /**---------------------求C'----------------------**/
@@ -454,7 +458,7 @@ public class LangPolicy {
 //            System.out.println(rct.C11);
             /**---------------------求Ci,1'----------------------**/
             //Ci,1'=Ci,1 * (v^k)
-            for (Map.Entry<Integer, Element> entry : old_ciphertext.C1.entrySet()) {
+            for (Map.Entry<String, Element> entry : old_ciphertext.C1.entrySet()) {
                 rct.C1.put(entry.getKey(), entry.getValue().duplicate().mul(pk.v.duplicate().powZn(k)));
             }
             /**---------------------求Ci,2'----------------------**/
@@ -462,8 +466,8 @@ public class LangPolicy {
             Element Zr_temp = pairing.getZr().newElement().setToZero();
             //0-k=-k
             Zr_temp.sub(k);
-            //                                        Ci,2'=Ci,2 * (v^k)
-            for (Map.Entry<Integer, Element> entry : old_ciphertext.C2.entrySet()) {
+            //Ci,2'=Ci,2 * (v^k)
+            for (Map.Entry<String, Element> entry : old_ciphertext.C2.entrySet()) {
                 //u * h
                 Element G1_temp1 = pk.u.duplicate().mul(pk.h);
                 //(u * h)^(-k)
@@ -472,12 +476,22 @@ public class LangPolicy {
                 rct.C2.put(entry.getKey(), entry.getValue().duplicate().mul(G1_temp1));
             }
             /**---------------------求Ci,3'----------------------**/
-            //Ci,3'=Ci,3 * (g^k)
-            for (Map.Entry<Integer, Element> entry : old_ciphertext.C3.entrySet()) {
-                if (){
-
+            boolean flag = false;
+            //Ci,3'=Ci,3 * (g^k) TODO
+            for (Map.Entry<String, Element> entry : old_ciphertext.C3.entrySet()) {
+                for (int i = 0; i < arrayList_RL.size(); i++) {
+                    if ((entry.getKey()).equals(arrayList_RL.get(i))) {
+                        flag = true;
+                    }
                 }
-                rct.C3.put(entry.getKey(), entry.getValue().duplicate().mul(pk.g.duplicate().powZn(k)));
+                //(g^ti) * (g^k)
+                Element C3 = entry.getValue().duplicate().mul(pk.g.duplicate().powZn(k));
+                //如果p(i)==x
+                if (flag) {
+                    //((g^ti) * (g^k))^(1/v)
+                    C3.powZn(v_invert);
+                }
+                rct.C3.put(entry.getKey(), C3);
             }
             /**---------------------更新相应的授权密钥为SK2'----------------------**/
             //SK2'=SK2^k
@@ -512,17 +526,19 @@ public class LangPolicy {
     /**
      * 部分解密
      *
-     * @param pk           SK
-     * @param attributes_A 用户属性
-     * @param attributes_S 属性中心
-     * @param thresholds   门限
-     * @param CTPathName   密文
-     * @param DPathName    解密后的明文
+     * @param pk            SK
+     * @param attributes_A  用户属性
+     * @param attributes_RL 用户撤销的属性
+     * @param thresholds    门限
+     * @param CTPathName    密文
+     * @param DPathName     解密后的明文
      */
-    public static TCT part_decrypt(PK pk, MK mk, SK sk, RCT rct, String attributes_A, String[][] attributes_S, ArrayList<AAK> AAKList, String thresholds, String[][] attributes_Us, String CTPathName, String DPathName) throws Exception {
+    public static TCT part_decrypt(PK pk, MK mk, SK sk, RCT rct, String attributes_A, String attributes_RL, ArrayList<AAK> AAKList, String thresholds, String[][] attributes_Us, String CTPathName, String DPathName) throws Exception {
         Pairing pairing = pk.pairing;
         //将字符串解析成字符数组
         ArrayList<String> attrList_A = parseString2ArrayList(attributes_A);
+        //将用户撤销的属性解析成字符数组
+        ArrayList<String> arrayList_RL = parseString2ArrayList(attributes_RL);
         //将各个AA中的门限值解析成字符数组
         ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
         TCT tct = new TCT();
@@ -533,13 +549,18 @@ public class LangPolicy {
         //B=e(g,w)^rs
         B.powZn(sk.r.duplicate().mul(rct.s));
         tct.B = B;
+        //重新计算B
+
+
         /**---------------------求D----------------------**/
 //        System.out.println(sk.K0);
+        //D=e(C0',K0)
         Element D = pairing.pairing(rct.C0, sk.K0);
         tct.D = D;
         /**---------------------求E----------------------**/
 //        System.out.println(sk.SK2);
 //        System.out.println(rct.C11);
+        //E=e(SK2',C1')
         Element E = pairing.pairing(sk.SK2, rct.C11);
         tct.E = E;
 
@@ -548,9 +569,10 @@ public class LangPolicy {
 //        Element b =mk.a2.mul(rct.s);
 //        a.powZn(b);
 //        System.out.println(a);System.out.println(pk.g);
-/**---------------------求F----------------------**/
+        /**---------------------求F----------------------**/
         //-B
         Element _B = B.duplicate().invert();
+        //F=D/B
         tct.F = D.duplicate().mul(_B);
 
 //        System.out.println(tct.F);

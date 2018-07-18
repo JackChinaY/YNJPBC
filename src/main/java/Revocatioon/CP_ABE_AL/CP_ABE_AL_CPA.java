@@ -22,7 +22,7 @@ public class CP_ABE_AL_CPA implements Ident {
 //    private String attributes_A = "1 2 3 4 5 6 7 8";
     private String attributes_A = "a1 a2 a3 a4 b1 b2 b3 c1 c2";
     //用户撤销的的属性集合
-    private String attributes_RL = "";
+    private String attributes_RL = "a4";
     //    private String attributes_A = "1 2 3";
 
     //访问树中的解密策略 C，集合的大小就是属性中心AA的个数
@@ -83,7 +83,7 @@ public class CP_ABE_AL_CPA implements Ident {
     public void encrypt() {
         System.out.println("-------------------encrypt加密阶段----------------------");
         try {
-            ciphertext = LangPolicy.encrypt(pk, AAKList, attributes_C, attributes_Us, matrix, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
+            ciphertext = LangPolicy.encrypt(pk, AAKList, attributes_A, attributes_Us, matrix, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -94,7 +94,7 @@ public class CP_ABE_AL_CPA implements Ident {
      */
     @Override
     public void re_encrypt() {
-        System.out.println("-------------------re_encrypt加密阶段----------------------");
+        System.out.println("-------------------re_encrypt重加密阶段----------------------");
         try {
             rct = LangPolicy.re_encrypt(pk, ciphertext, sk, attributes_RL, matrix, fileBasePath + Message_Original_File, fileBasePath + Message_Ciphertext_File);
         } catch (Exception e) {
@@ -107,9 +107,9 @@ public class CP_ABE_AL_CPA implements Ident {
      */
     @Override
     public void part_decrypt() {
-        System.out.println("-------------------part_decrypt解密阶段----------------------");
+        System.out.println("-------------------part_decrypt部分解密阶段----------------------");
         try {
-            tct = LangPolicy.part_decrypt(pk, mk, sk, rct, attributes_A, attributes_C, AAKList, thresholds, attributes_Us, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
+            tct = LangPolicy.part_decrypt(pk, mk, sk, rct, attributes_A, attributes_RL, AAKList, thresholds, attributes_Us, fileBasePath + Message_Ciphertext_File, fileBasePath + Message_Decrypt_File);
         } catch (Exception e) {
             e.printStackTrace();
         }

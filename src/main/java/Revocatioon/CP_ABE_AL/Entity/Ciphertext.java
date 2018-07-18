@@ -20,8 +20,8 @@ public class Ciphertext {
 
     public Element C; // G_T,C0=M*Z^s
     public Element C0; // G_T,C1=g^s
-    public Map<Integer, Element> C1 = new HashMap<>();
-    public Map<Integer, Element> C2 = new HashMap<>();
-    public Map<Integer, Element> C3 = new HashMap<>();
+    public Map<String, Element> C1 = new HashMap<>();
+    public Map<String, Element> C2 = new HashMap<>();
+    public Map<String, Element> C3 = new HashMap<>();
     public Element s; // s
 }
