@@ -15,7 +15,6 @@ import java.util.StringTokenizer;
  * 主函数调用的全部方法，各个过程具体执行的方法
  */
 public class LangPolicy {
-    //r/egion //--setup初始化阶段用到的函数--//
     /**---------------------------setup初始化阶段用到的函数---------------------------**/
     /**
      * setup初始化 输出PK、MK
@@ -140,9 +139,7 @@ public class LangPolicy {
         }
         return arrayList;
     }
-    //endregion
 
-    //re/gion //--keygen生成私钥阶段用到的函数--//
     /**---------------------------keygen生成私钥阶段用到的函数---------------------------**/
     /**
      * 生成私钥 文件的读取和保存工作 输入PK、MK、ATTR(用户属性)，输出SK
@@ -388,6 +385,7 @@ public class LangPolicy {
         ArrayList<String> arrayList_RL = parseString2ArrayList(attributes_RL);
         //密文实体
         RCT rct = new RCT();
+        /**--------------------------------如果无属性撤销---------------------------------**/
         if (arrayList_RL.size() == 0) {
             System.out.println("无属性被撤销");
             //k
@@ -435,11 +433,12 @@ public class LangPolicy {
             /**---------------------更新s----------------------**/
             rct.s = old_ciphertext.s.duplicate();
         }
-        //如果存在被撤销的属性
+        /**--------------------------------如果存在被撤销的属性---------------------------------**/
         else {
             System.out.println("被撤销的属性个数：" + arrayList_RL.size() + " ,分别是： " + attributes_RL);
             //v
             Element v = pairing.getZr().newRandomElement();
+            rct.Vx = v.duplicate();
             //1/v
             Element v_invert = v.invert();
             //k
@@ -482,6 +481,7 @@ public class LangPolicy {
                 for (int i = 0; i < arrayList_RL.size(); i++) {
                     if ((entry.getKey()).equals(arrayList_RL.get(i))) {
                         flag = true;
+                        break;
                     }
                 }
                 //(g^ti) * (g^k)
@@ -492,6 +492,7 @@ public class LangPolicy {
                     C3.powZn(v_invert);
                 }
                 rct.C3.put(entry.getKey(), C3);
+                flag = false;
             }
             /**---------------------更新相应的授权密钥为SK2'----------------------**/
             //SK2'=SK2^k
@@ -526,7 +527,6 @@ public class LangPolicy {
     /**
      * 部分解密
      *
-     * @param pk            SK
      * @param attributes_A  用户属性
      * @param attributes_RL 用户撤销的属性
      * @param thresholds    门限
@@ -542,38 +542,109 @@ public class LangPolicy {
         //将各个AA中的门限值解析成字符数组
         ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
         TCT tct = new TCT();
-        /**---------------------求C'----------------------**/
-        tct.C = rct.C;
-        /**---------------------求B----------------------**/
-        Element B = pairing.pairing(pk.g, pk.w);
-        //B=e(g,w)^rs
-        B.powZn(sk.r.duplicate().mul(rct.s));
-        tct.B = B;
-        //重新计算B
-
-
-        /**---------------------求D----------------------**/
+        /**--------------------------------如果无属性撤销---------------------------------**/
+        if (arrayList_RL.size() == 0) {
+            /**---------------------求C'----------------------**/
+            tct.C = rct.C.duplicate();
+            /**---------------------求B----------------------**/
+            Element B = pairing.pairing(pk.g, pk.w);
+            //B=e(g,w)^rs
+            B.powZn(sk.r.duplicate().mul(rct.s));
+            tct.B = B;
+            //重新计算B
+            /**---------------------求D----------------------**/
 //        System.out.println(sk.K0);
-        //D=e(C0',K0)
-        Element D = pairing.pairing(rct.C0, sk.K0);
-        tct.D = D;
-        /**---------------------求E----------------------**/
+            //D=e(C0',K0)
+            Element D = pairing.pairing(rct.C0, sk.K0);
+            tct.D = D;
+            /**---------------------求E----------------------**/
 //        System.out.println(sk.SK2);
 //        System.out.println(rct.C11);
-        //E=e(SK2',C1')
-        Element E = pairing.pairing(sk.SK2, rct.C11);
-        tct.E = E;
+            //E=e(SK2',C1')
+            Element E = pairing.pairing(sk.SK2, rct.C11);
+            tct.E = E;
 
 //        System.out.println(E);
 //        Element a = pairing.pairing(pk.g, pk.g);
 //        Element b =mk.a2.mul(rct.s);
 //        a.powZn(b);
 //        System.out.println(a);System.out.println(pk.g);
-        /**---------------------求F----------------------**/
-        //-B
-        Element _B = B.duplicate().invert();
-        //F=D/B
-        tct.F = D.duplicate().mul(_B);
+            /**---------------------求F----------------------**/
+            //-B
+            Element _B = B.duplicate().invert();
+            //F=D/B
+            tct.F = D.duplicate().mul(_B);
+
+//        System.out.println(tct.F);
+//        Element z_invert = sk.z.duplicate().invert();
+//        Element a = pairing.pairing(pk.g, pk.g);
+//        Element b =mk.a1.mul(rct.s);
+//        b.mul(z_invert);
+//        a.powZn(b);
+//        System.out.println(a);
+        }
+        /**--------------------------------如果有属性被撤销---------------------------------**/
+        else {
+            /**---------------------求C'----------------------**/
+            tct.C = rct.C.duplicate();
+            /**---------------------求B----------------------**/
+            Element B = pairing.pairing(pk.g, pk.w);
+            //B=e(g,w)^rs
+            B.powZn(sk.r.duplicate().mul(rct.s));
+            tct.B = B;
+            /**---------------------求Bi----------------------**/
+            boolean flag = false;
+            for (int i = 0; i < attrList_A.size(); i++) {
+
+                for (int j = 0; j < arrayList_RL.size(); j++) {
+                    if (attrList_A.get(i).equals(arrayList_RL.get(j))) {
+                        flag = true;
+                        break;
+                    }
+                }
+                //如果p(i)==x
+                if (flag) {
+
+                }
+                //如果p(i)不等于x
+                else {
+                    //B1=e(Ci,1',Ki,1)
+                    Element B1 = pairing.pairing(rct.C1.get(attrList_A.get(i)), sk.K1);
+                    //B2=e(Ci,2',Ki,2)
+                    Element B2 = pairing.pairing(rct.C2.get(attrList_A.get(i)), sk.K2.get(attrList_A.get(i)));
+                    //B3=e(Ci,3',Ki,3)
+                    Element B3 = pairing.pairing(rct.C3.get(attrList_A.get(i)), sk.K3.get(attrList_A.get(i)));
+                    //B1=e(Ci,1',Ki,1)*e(Ci,2',Ki,2)
+                    B1.mul(B2);
+                    //B1=e(Ci,1',Ki,1)*e(Ci,2',Ki,2)*e(Ci,3',Ki,3)
+                    B1.mul(B3);
+                    tct.Bi.put(attrList_A.get(i), B1.duplicate());
+                }
+                flag = false;
+            }
+            //重新计算B
+            /**---------------------求D----------------------**/
+//        System.out.println(sk.K0);
+            //D=e(C0',K0)
+            Element D = pairing.pairing(rct.C0, sk.K0);
+            tct.D = D;
+            /**---------------------求E----------------------**/
+//        System.out.println(sk.SK2);
+//        System.out.println(rct.C11);
+            //E=e(SK2',C1')
+            Element E = pairing.pairing(sk.SK2, rct.C11);
+            tct.E = E;
+
+//        System.out.println(E);
+//        Element a = pairing.pairing(pk.g, pk.g);
+//        Element b =mk.a2.mul(rct.s);
+//        a.powZn(b);
+//        System.out.println(a);System.out.println(pk.g);
+            /**---------------------求F----------------------**/
+            //-B
+            Element _B = B.duplicate().invert();
+            //F=D/B
+            tct.F = D.duplicate().mul(_B);
 
 //        System.out.println(tct.F);
 //        Element z_invert = sk.z.duplicate().invert();
@@ -583,242 +654,89 @@ public class LangPolicy {
 //        a.powZn(b);
 //        System.out.println(a);
 
+        }
         return tct;
     }
     /**---------------------------decrypt解密阶段用到的函数---------------------------**/
     /**
      * 解密
      *
-     * @param pk           SK
-     * @param attributes_A 用户属性
-     * @param attributes_S 属性中心
-     * @param thresholds   门限
-     * @param CTPathName   密文
-     * @param DPathName    解密后的明文
+     * @param pk            SK
+     * @param attributes_A  用户属性
+     * @param attributes_RL 用户撤销的属性
+     * @param thresholds    门限
+     * @param CTPathName    密文
+     * @param DPathName     解密后的明文
      */
-    public static void decrypt(PK pk, SK sk, TCT tct, String attributes_A, String[][] attributes_S, ArrayList<AAK> AAKList, String thresholds, String[][] attributes_Us, String CTPathName, String DPathName) throws Exception {
+    public static void decrypt(PK pk, SK sk, TCT tct, RCT rct, String attributes_A, String attributes_RL, ArrayList<AAK> AAKList, String thresholds, String[][] attributes_Us, String CTPathName, String DPathName) throws Exception {
         Pairing pairing = pk.pairing;
         //将字符串解析成字符数组
         ArrayList<String> attrList_A = parseString2ArrayList(attributes_A);
+        //将用户撤销的属性解析成字符数组
+        ArrayList<String> arrayList_RL = parseString2ArrayList(attributes_RL);
         //将各个AA中的门限值解析成字符数组
         ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
-        /**---------------------求E*F^z----------------------**/
-        //E*F^z
-        Element EFz = tct.E.duplicate().mul(tct.F.duplicate().powZn(sk.z));
-        //1/(E*F^z)
-        EFz.invert();
-        /**---------------------求明文M----------------------**/
-        Element M = tct.C.duplicate().mul(EFz);
+        //明文
+        Element M;
+        /**--------------------------------如果无属性撤销---------------------------------**/
+        if (arrayList_RL.size() == 0) {
+            /**---------------------求E*F^z----------------------**/
+            //E*F^z
+            Element EFz = tct.E.duplicate().mul(tct.F.duplicate().powZn(sk.z));
+            //1/(E*F^z)
+            EFz.invert();
+            /**---------------------求明文M----------------------**/
+            M = tct.C.duplicate().mul(EFz);
+        }
+        /**--------------------------------如果有属性被撤销---------------------------------**/
+        else {
+            /**---------------------求剩余的Bi----------------------**/
+            boolean flag = false;
+            for (int i = 0; i < attrList_A.size(); i++) {
+
+                for (int j = 0; j < arrayList_RL.size(); j++) {
+                    if (attrList_A.get(i).equals(arrayList_RL.get(j))) {
+                        flag = true;
+                        break;
+                    }
+                }
+                //如果p(i)==x
+                if (flag) {
+                    //B1=e(Ci,1',Ki,1)
+                    Element B1 = pairing.pairing(rct.C1.get(attrList_A.get(i)), sk.K1);
+                    //B2=e(Ci,2',Ki,2)
+                    Element B2 = pairing.pairing(rct.C2.get(attrList_A.get(i)), sk.K2.get(attrList_A.get(i)));
+                    //Ki,3=(Ki,3)^Vx
+                    sk.K3.get(attrList_A.get(i)).powZn(rct.Vx);
+                    //B3=e(Ci,3',(Ki,3)^Vx)
+                    Element B3 = pairing.pairing(rct.C3.get(attrList_A.get(i)), sk.K3.get(attrList_A.get(i)));
+                    //B1=e(Ci,1',Ki,1)*e(Ci,2',Ki,2)
+                    B1.mul(B2);
+                    //B1=e(Ci,1',Ki,1)*e(Ci,2',Ki,2)*e(Ci,3',(Ki,3)^Vx)
+                    B1.mul(B3);
+                    tct.Bi.put(attrList_A.get(i), B1.duplicate());
+                }
+                //如果p(i)不等于x
+                else {
+                }
+                flag = false;
+            }
+            /**---------------------求E*F^z----------------------**/
+            //E*F^z
+            Element EFz = tct.E.duplicate().mul(tct.F.duplicate().powZn(sk.z));
+            //1/(E*F^z)
+            EFz.invert();
+            /**---------------------求明文M----------------------**/
+            M = tct.C.duplicate().mul(EFz);
+
+        }
         System.out.println("解密后计算出AES种子：" + M);
-//        /**-----------------------------------接下来验证用户属性-------------------------------**/
-//        //标志位，用户的属性是否满足门限值
-//        int count = 0;
-//        boolean isSatisfy = true;
-//        for (int i = 0; i < attributes_S.length; i++) {
-//            //第i个AA管理的属性
-//            ArrayList<String> arrayList_AAi = parseStringArray2ArrayList(attributes_S, i);
-//            count += 2 * arrayList_AAi.size() - 1;
-//            //求A和AAi的并集
-//            ArrayList<String> arrayList_AAndAAi = intersectionArrayList(attrList_A, arrayList_AAi);
-////            System.out.println("用户和AAi的交集的大小:" + arrayList_AAndAAi.size() + "个，即：" + arrayList_AAndAAi);
-//            //判断交集中元素个数和该AA的门限值的大小关系
-//            if (arrayList_AAndAAi.size() < Integer.parseInt(arrayList_thresholds.get(i))) {
-//                isSatisfy = false;
-//                System.err.println("解密失败，用户的属性不满足第" + (i + 1) + "个属性中心的门限要求！");
-//                break;
-//            }
-//        }
-//        System.out.println("AA们的总属性个数：" + count);
-//        /**------------------------------接下来验证两个参数，第一个参数e(g,C2)--------------------------**/
-//        //循环乘hj
-//        for (int k = 0; k < attributes_S.length; k++) {
-//            //第i个AA管理的属性
-//            ArrayList<String> arrayList_AAi = parseStringArray2ArrayList(attributes_S, k);
-//            //求A和AAi的并集
-//            ArrayList<String> arrayList_AAndAAi = intersectionArrayList(attrList_A, arrayList_AAi);
-//            ArrayList<String> arrayList_As = new ArrayList<>();
-//            //求集合A`，共threshold个
-//            for (int i = 0; i < Integer.parseInt(arrayList_thresholds.get(k)); i++) {
-//                arrayList_As.add(arrayList_AAndAAi.get(i));
-//            }
-////            System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
-////            System.out.println("， 集合AAi的大小:" + arrayList_AAi.size() + "个，即：" + arrayList_AAi);
-//            //第i个OMG管理的属性
-//            ArrayList<String> arrayList_Us = parseStringArray2ArrayList(attributes_Us, k);
-//            ArrayList<String> arrayList_OMG = new ArrayList<>();
-//            //求集合A`，共threshold个
-//            for (int i = 0; i < attributes_S[k].length - Integer.parseInt(arrayList_thresholds.get(k)); i++) {
-//                arrayList_OMG.add(arrayList_Us.get(i));
-//            }
-////            System.out.print("，集合OMG:" + arrayList_OMG.size() + "个，即：" + arrayList_OMG);
-//            //求A`和OMG的交集
-//            ArrayList<String> arrayList_AsAndOMG = unionArrayList(arrayList_As, arrayList_OMG);
-//            //求AAi和OMG的交集
-//            ArrayList<String> arrayList_AAiAndOMG = unionArrayList(arrayList_AAi, arrayList_OMG);
-////            System.out.print("，A`和OMG交集:" + arrayList_AsAndOMG.size() + "个，即：" + arrayList_AsAndOMG);
-////            System.out.println("，AAi和OMG交集:" + arrayList_AAiAndOMG.size() + "个，即：" + arrayList_AAiAndOMG);
-//            /**-----------------------------------开始验证第二个参数e(g,C3)-------------------------------**/
-//            Element G1_temp3 = pairing.getG1().newElement();
-//            G1_temp3.setToOne();
-//            //G1_temp1=循环乘hj
-//            for (Map.Entry<String, Element> entry : AAKList.get(k).apk.Hi.entrySet()) {
-//                for (String str : arrayList_AAiAndOMG) {
-//                    if (entry.getKey().equals(str)) {
-//                        G1_temp3.mul(entry.getValue());
-//                        break;
-//                    }
-//                }
-//            }
-//            //G1_temp1=h0*(循环乘hj)
-//            G1_temp3.mul(pk.h0);
-//            Element e_g_C2_1 = pairing.pairing(pk.g, ciphertext.Ci.get(k));
-//            Element e_g_C2_2 = pairing.pairing(ciphertext.C1, G1_temp3);
-//            if (e_g_C2_1.isEqual(e_g_C2_2)) {
-////                System.out.println("第一个条件满足，关于第" + (k + 1) + "个属性中心！");
-//            } else {
-//                System.err.println("第一个条件不满足，程序退出！");
-//                System.exit(0);
-//            }
-//        }
-//        /**-----------------------------------接下来验证第二个参数e(g,C3)-------------------------------**/
-//        Element G1_temp4 = pairing.getG1().newElement();
-//        G1_temp4.setToOne();
-//        //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
-//        //将C0C1C2转换成字节数组，TODO 如果属性中心个数增加了，此处需要收到增加参数
-//        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1));
-////        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
-//        //求哈希值
-//        Element c = Hash4Zr(pk, byteArray);
-//        //G1D1=d1^c
-//        Element G1D1 = pk.d1.duplicate().powZn(c);
-//        //G1_temp4=1*d1^c
-//        G1_temp4.mul(G1D1);
-//        //G1D2=d2^r
-//        Element G1D2 = pk.d2.duplicate().powZn(ciphertext.r);//G1D2=d2^r
-//        //G1_temp4=1 * d1^c * d2^r
-//        G1_temp4.mul(G1D2);
-//        //G1_temp4=1 * d1^c * d2^r * d3
-//        G1_temp4.mul(pk.d3.duplicate());
-//        //G1_temp1=( 1 * d1^c * d2^r * d3 )^s
-//        Element e_g_C3_1 = pairing.pairing(pk.g, ciphertext.C3).duplicate();
-//        Element e_g_C3_2 = pairing.pairing(ciphertext.C1, G1_temp4).duplicate();
-//        if (e_g_C3_1.isEqual(e_g_C3_2)) {
-////            System.out.println("第二个条件满足！");
-//        } else {
-//            System.err.println("第二个条件不满足，程序退出！");
-//            System.exit(0);
-//        }
-//        /**------------------------如果SK满足密文中的访问策略，则开始解密-----------------------**/
-//        if (isSatisfy) {
-////            System.out.println("用户属性满足，开始解密...");
-//            //解密用的D1和D2
-//            Element D1;
-//            Element D2 = pairing.getGT().newElement();
-//            D2.setToOne();
-//            //接下来求D1
-//            Element G1_temp1 = pairing.getG1().newElement();
-//            Element G1_temp2 = pairing.getG1().newElement();
-//            Element GT_temp = pairing.getGT().newElement();
-//            //临时变量，便于求拉格朗日系数
-//            Element Zr_temp1 = pairing.getZr().newElement();
-//            G1_temp1.setToOne();
-//            G1_temp2.setToOne();
-//            GT_temp.setToOne();
-//            for (int k = 0; k < attributes_S.length; k++) {
-//                long begin = System.currentTimeMillis();
-//                //第i个AA管理的属性
-//                ArrayList<String> arrayList_AAi = parseStringArray2ArrayList(attributes_S, k);
-//                //求A和AAi的并集
-//                ArrayList<String> arrayList_AAndAAi = intersectionArrayList(attrList_A, arrayList_AAi);
-//                ArrayList<String> arrayList_As = new ArrayList<>();
-//                //求集合A`，共threshold个
-//                for (int i = 0; i < Integer.parseInt(arrayList_thresholds.get(k)); i++) {
-//                    arrayList_As.add(arrayList_AAndAAi.get(i));
-//                }
-////                System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
-////                System.out.print("， 集合AAi的大小:" + arrayList_AAi.size() + "个，即：" + arrayList_AAi);
-//                //第i个OMG管理的属性
-//                ArrayList<String> arrayList_Us = parseStringArray2ArrayList(attributes_Us, k);
-//                ArrayList<String> arrayList_OMG = new ArrayList<>();
-//                //求集合A`，共threshold个
-//                for (int i = 0; i < attributes_S[k].length - Integer.parseInt(arrayList_thresholds.get(k)); i++) {
-//                    arrayList_OMG.add(arrayList_Us.get(i));
-//                }
-////                System.out.print("，集合OMG:" + arrayList_OMG.size() + "个，即：" + arrayList_OMG);
-//                //求A`和OMG的交集
-//                ArrayList<String> arrayList_AsAndOMG = unionArrayList(arrayList_As, arrayList_OMG);
-//                //求AAi和OMG的交集
-//                ArrayList<String> arrayList_AAiAndOMG = unionArrayList(arrayList_AAi, arrayList_OMG);
-////                System.out.print("，A`和OMG交集:" + arrayList_AsAndOMG.size() + "个，即：" + arrayList_AsAndOMG);
-////                System.out.println("，AAi和OMG交集:" + arrayList_AAiAndOMG.size() + "个，即：" + arrayList_AAiAndOMG);
-//                /**-----------------------------------接下来求D1-------------------------------**/
-//                //最外层连乘，处理i
-//                for (int i = 0; i < arrayList_AsAndOMG.size(); i++) {
-//                    //最内层连乘，处理j，G1_temp1=循环乘Ci,j
-//                    for (int j = 0; j < arrayList_AAiAndOMG.size(); j++) {
-//                        //i不等于j时
-//                        if (!arrayList_AAiAndOMG.get(j).equals(arrayList_AsAndOMG.get(i))) {
-//                            G1_temp1.mul(sk.comps.get(arrayList_AsAndOMG.get(i)).hList.get(arrayList_AAiAndOMG.get(j)));
-//                        }
-//                    }
-//                    //G1_temp1=ai*(循环乘Ci,j)
-//                    G1_temp1.mul(sk.comps.get(arrayList_AsAndOMG.get(i)).a);
-//                    //求拉格朗日系数 Zr_temp1=deta(0) (x-j)/(i-j)
-//                    Zr_temp1 = lagrangeCoefficient(pk, arrayList_AsAndOMG, arrayList_AsAndOMG.get(i));
-//                    //G1_temp1=ai*(循环乘Ci,j)^deta(0)
-//                    G1_temp1.powZn(Zr_temp1);
-//                    G1_temp2.mul(G1_temp1);
-//                    G1_temp1.setToOne();
-//                }
-//                D1 = G1_temp2.duplicate();
-//                /**-----------------------------------接下来求D2-------------------------------**/
-//                //接下来求D2
-//                G1_temp1.setToOne();
-//                G1_temp2.setToOne();
-//                Zr_temp1.setToOne();
-//                //最外层连乘，处理i
-//                for (int i = 0; i < arrayList_AsAndOMG.size(); i++) {
-//                    //G1_temp1=bi
-//                    G1_temp1.mul(sk.comps.get(arrayList_AsAndOMG.get(i)).b);
-//                    //求拉格朗日系数 Zr_temp1=deta(0) (x-j)/(i-j)
-//                    Zr_temp1 = lagrangeCoefficient(pk, arrayList_AsAndOMG, arrayList_AsAndOMG.get(i));
-//                    //G1_temp1=bi^deta(0)
-//                    G1_temp1.powZn(Zr_temp1);
-//                    G1_temp2.mul(G1_temp1);
-//                    G1_temp1.setToOne();
-//                }
-//                D2 = G1_temp2.duplicate();
-//                /**-----------------------------------接下来求Zk^s-------------------------------**/
-//                //计算M
-//                Element e_C2_D2 = pairing.pairing(ciphertext.Ci.get(k), D2).duplicate();
-//                Element e_C1_D1 = pairing.pairing(ciphertext.C1, D1).duplicate();
-//                //e_C2_D2=1/e_C2_D2
-//                e_C2_D2.invert();
-//                //e_C1_D1=e_C1_D1/e_C2_D2=e(g,g2^s)^xi
-//                e_C1_D1.mul(e_C2_D2);
-//                //GT_temp=e(g,g2^s)^(x1+x2+x3)
-//                GT_temp.mul(e_C1_D1);
-//                //累加置1
-//                G1_temp2.setToOne();
-//                long end = System.currentTimeMillis();
-//                System.out.println("单个AA耗时:" + (end - begin) + "ms");
-//            }
-//            //GT_temp2=e(g,g2^s)^x-(x1+x2+x3)
-//            Element GT_temp2 = pairing.pairing(ciphertext.C1, sk.Dca);
-//            //GT_temp=e(g^x,g2^s)=Z^s
-//            GT_temp.mul(GT_temp2);
-//            //GT_temp=1/Z^s
-//            GT_temp.invert();
-//            //AES种子
-//            Element M = ciphertext.C0.duplicate().mul(GT_temp);
-////            System.out.println("解密后计算出AES种子：" + M);
         //读取本地的CT密文文件
         byte[] ciphertextFileBuf = FileOperation.file2byte(CTPathName);//AES文件，密文文件
         byte[] pltBuf = AESCoder.decrypt(M.toBytes(), ciphertextFileBuf);
         //明文
         FileOperation.byte2File(pltBuf, DPathName);
         System.out.println("文件解密成功，解密后的文件已保存到本地！");
-//        }
     }
 
     /**
@@ -854,7 +772,6 @@ public class LangPolicy {
         }
         return Zr_result;
     }
-    //endregion
 
     /**
      * 测试用的主函数
@@ -913,85 +830,6 @@ public class LangPolicy {
         Element M2 = C0.mul(Zs);
         System.out.println("Zs:" + Zs);
         System.out.println("M2:" + M2);
-
-//        Element Z = pairing.pairing(g, v).duplicate();
-//        Element s = pairing.getZr().newRandomElement();
-//        Element Zs = Z.duplicate().powZn(s).duplicate();
-//        Element M = pairing.getGT().newRandomElement();
-//        System.out.println("M:" + M);
-//        Element C0 = M.duplicate().mul(Zs).duplicate();
-//        Element Zs1 = Zs.duplicate().invert();
-//        Element M1 = C0.duplicate().mul(Zs1.duplicate()).duplicate();
-//        System.out.println("M1:" + M1);
-
-
-//        Element g = pairing.getG1().newRandomElement();
-//        Element v = pairing.getG1().newRandomElement();
-//        Element Z = pairing.pairing(g, v).duplicate();
-//        Element s = pairing.getZr().newRandomElement();
-//        Element Zs = Z.duplicate().powZn(s).duplicate();
-//        Element M = pairing.getGT().newRandomElement();
-//        System.out.println("M:" + M);
-//        Element C0 = M.duplicate().mul(Zs).duplicate();
-//        Element Zs1 = Zs.duplicate().invert();
-//        Element M1 = C0.duplicate().mul(Zs1.duplicate()).duplicate();
-//        System.out.println("M1:" + M1);
-
-//        Element M;
-//        Element M1;
-//        Element M2;
-//
-//        Element a = pairing.getZr().newRandomElement();
-//        Element b = pairing.getZr().newRandomElement();
-//        System.out.println("a:" + a);
-//        System.out.println("b:" + b);
-//
-//        Element g = pairing.getG1().newRandomElement();
-//        System.out.println("g:" + g);
-//        Element v = pairing.getG1().newRandomElement();
-//        System.out.println("v:" + v);
-//        Element ga = g.getImmutable().powZn(a).getImmutable();
-//        System.out.println("g:" + g);
-////        Element gb = g.powZn(b).getImmutable();
-////        M1 = pairing.pairing(ga, gb).getImmutable();
-////        System.out.println("M1:e(g^a,g^b):" + M1);
-////
-////        M = pairing.pairing(g, g).getImmutable();
-////        System.out.println("M:e(g,g):" + M);
-//        Element ab = a.getImmutable().mul(b).getImmutable();
-//        System.out.println("ab:" + ab);
-////        M2 = M.powZn(ab).getImmutable();
-////        System.out.println("M2:e(g,g)^ab:" + M2);
-//
-//        Element vb = v.getImmutable().powZn(b).getImmutable();
-//        Element M3 = pairing.pairing(ga, vb).getImmutable();
-//        System.out.println("e(g^a,v^b):" + M3);
-//
-//        Element M4 = pairing.pairing(g, v).getImmutable();
-////        System.out.println("e(g,v):" + M4);
-////        System.out.println("ab:" + ab);
-//
-//        Element M5 = M4.powZn(ab).getImmutable();
-//        System.out.println("e(g,v)^ab:" + M5);
-
-
     }
-//
-//    /**
-//     * 将字节数组byte[]转成16进制字符串
-//     */
-//    public static String bytesToHexString(byte[] src) {
-//        StringBuilder stringBuilder = new StringBuilder("");
-//        if (src == null || src.length <= 0) {
-//            return null;
-//        }
-//        for (int i = 0; i < src.length; i++) {
-//            String hex = Integer.toHexString(src[i] & 0xFF).toUpperCase();
-//            if (hex.length() == 1) {
-//                hex = '0' + hex;
-//            }
-//            stringBuilder.append(hex + " ");
-//        }
-//        return stringBuilder.toString();
-//    }
+
 }

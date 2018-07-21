@@ -1,4 +1,4 @@
-package Revocatioon.CP_ABE_AL;
+package Revocatioon.CSC_CPABE;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

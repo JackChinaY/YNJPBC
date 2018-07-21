@@ -1,6 +1,6 @@
-package MA_ABE.MA_CPABE_CSC_CCA;
+package Revocatioon.CSC_CPABE;
 
-import MA_ABE.MA_CPABE_CSC_CCA.Entity.*;
+import Revocatioon.CSC_CPABE.Entity.*;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
@@ -8,7 +8,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * 主函数调用的全部方法，各个过程具体执行的方法
@@ -18,9 +21,9 @@ public class LangPolicy {
     /**
      * setup初始化 输出PK、MK
      *
-     * @param attributes_C 属性中心
+     * @param attributes_AA 属性中心管理的属性
      */
-    public static void setup(MK mk, PK pk, String thresholds, String[][] attributes_C, ArrayList<AAK> AAKList) {
+    public static void setup(MK mk, PK pk, int threshold, String attributes_AA, AAK AA) {
         //仅对于双线性映射，要使用PBC包装并获得性能，必须设置配对工厂的使用PBC（可能）属性
         PairingFactory.getInstance().setUsePBCWhenPossible(true);
         //椭圆类型是Type A，生成 对称-质数阶-双线性群,即G1==G2，返回代数结构,代数结构包含：群、环、场（groups, rings and fields）
@@ -44,25 +47,18 @@ public class LangPolicy {
         pk.d3 = pairing.getG1().newRandomElement();
         System.out.println("系统主密钥 " + mk.toString());
         System.out.println("系统公钥 " + pk.toString());
-        //将各个AA中的门限值解析成字符数组
-        ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
-        /**---------------------------为各个属性中心AA生成属性中心私钥ASK和属性中心公钥APK---------------------------**/
-        for (int i = 0; i < attributes_C.length; i++) {
-            AAK aak = new AAK();
-            //各当前的属性中心的门限值赋值
-            aak.threshold = Integer.parseInt(arrayList_thresholds.get(i));
-            aak.s = DigestUtils.md5Hex(String.valueOf(i));
-            //生成属性中心公钥APK
-            aak.apk = new APK();
-            aak.apk.Hi = new HashMap<>();
-            //为属性中心的每个属性生成G1随机值
-            for (int j = 0; j < attributes_C[i].length; j++) {
-                aak.apk.Hi.put(attributes_C[i][j], pairing.getG1().newRandomElement());
-            }
-            AAKList.add(aak);
-//            System.out.println("第" + (i + 1) + "个属性中心的APK生成成功！");
+        //将属性中心管理的属性转成字符数组
+        ArrayList<String> attributesList_AA = parseString2ArrayList(attributes_AA);
+        /**---------------------------为属性中心AA生成属性中心公钥APK---------------------------**/
+        //各当前的属性中心的门限值赋值
+        AA.threshold = threshold;
+        //属性中心的种子
+        AA.s = DigestUtils.md5Hex("1234567");
+        //为属性中心的每个属性生成G1随机值
+        for (int i = 0; i < attributesList_AA.size(); i++) {
+            AA.Hi.put(attributesList_AA.get(i), pairing.getG1().newRandomElement());
         }
-        System.out.println("各属性中心私钥： " + AAKList);
+        System.out.println("属性中心公钥生成成功");
     }
 
     /**
@@ -159,18 +155,18 @@ public class LangPolicy {
      *
      * @param mk           PK
      * @param pk           SK
-     * @param AAKList      属性全集
-     * @param attributes_A 用户的属性
+     * @param AA           属性中心
+     * @param attributes_A 获取解密密钥的用户的属性
      * @param AID          用户的GUID
      */
-    public static SK keygen(MK mk, PK pk, ArrayList<AAK> AAKList, String attributes_A, String AID) throws NoSuchAlgorithmException {
+    public static SK keygen(MK mk, PK pk, AAK AA, String attributes_A, String AID) throws NoSuchAlgorithmException {
         Pairing pairing = pk.pairing;
         //将用户属性解析成字符数组
         ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
         System.out.println("集合A大小：" + arrayList_A.size() + "个，即：" + arrayList_A);
         Element Zr_temp = pairing.getZr().newElement();
         Element nodeID = pairing.getZr().newElement();
-        Element Zr_r = pairing.getZr().newElement();
+        Element r = pairing.getZr().newElement();
         Element G1_temp1;
         Element G1_temp2;
         //产生私钥
@@ -179,72 +175,56 @@ public class LangPolicy {
         sk.comps = new HashMap<>();
         System.out.println("私钥中共有" + arrayList_A.size() + "个小钥匙！");
         //每个AA产生的私钥，循环的次数是AA的个数
-        for (int i = 0; i < AAKList.size(); i++) {
-            //根据AA的种子产生一个Zr的值
-//            Element p0 = Hash4Zr(pk, AAKList.get(i).s);
-            Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + AID));
-//            String a = UUID.randomUUID().toString();
-//            Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + a));
-//            System.out.println("AAID: " + AAKList.get(i).s);
-//            System.out.println("AID: " + a);
-//            System.out.println("MD5: " + DigestUtils.md5Hex(AAKList.get(i).s + AID));
-            //构造一个多项式
-            Polynomial polynomial = createRandomPolynomial(AAKList.get(i).threshold - 1, p0);
-            //对单个属性中心遍历
-            for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
-                //对用户属性遍历
-                for (String str : arrayList_A) {
-                    //如果属性中心的属性和用于属性相同，就新建一个SKi
-                    if (entry.getKey().equals(str)) {
-                        SKComp comp = new SKComp();
-                        comp.attr = str;
-                        //计算ai=(g2^q(i))*((h0*hi)^ri)
-                        nodeID = Hash4Zr(pk, str);//将当前属性哈希到Zr上
-                        //Zr_temp=q(i)
-                        Zr_temp = computePolynomial(Zr_temp, polynomial, nodeID);
-                        //G1_temp1=g2^q(i)
-                        G1_temp1 = pk.g2.duplicate().powZn(Zr_temp);
-                        //G1_temp2=h0*hi
-                        G1_temp2 = pk.h0.duplicate().mul(entry.getValue());
-                        Zr_r.setToRandom();//ri
-                        //G1_temp2=(h0*hi)^ri
-                        G1_temp2.powZn(Zr_r);
-                        //ai=(g2^q(i))*((h0*hi)^ri)
-                        comp.a = G1_temp1.mul(G1_temp2);
-                        //计算b=g^ri
-                        comp.b = pk.g.duplicate().powZn(Zr_r);
-                        //将pk中的h0---h2L-1复制到comp.hList
-                        comp.hList = new HashMap<>();//2L-1个
-                        //h的个数是该个用户属性所在的AA的掌管的所有的属性的个数, TODO 此处是创新点1,减少h的个数
-                        for (Map.Entry<String, Element> entry2 : AAKList.get(i).apk.Hi.entrySet()) {
-//                            for (String str2 : arrayList_A) {
-//                                if (entry2.getKey().equals(str2)) {
-                            comp.hList.put(entry2.getKey(), entry2.getValue().duplicate());
-//                                    break;
-//                                }
-//                            }
-                        }
-                        //计算Ci,1-----Ci,2L-1
-                        for (Map.Entry<String, Element> entry3 : comp.hList.entrySet()) {
-                            entry3.getValue().powZn(Zr_r);
-                        }
-                        sk.comps.put(str, comp);
-                        System.out.print(str + ", ");
-                        break;
-                    }
-                }
+        //根据AA的种子产生一个Zr的值
+        Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AA.s + AID));
+        //构造一个多项式
+        Polynomial polynomial = createRandomPolynomial(AA.threshold - 1, p0);
+        //对用户属性遍历
+        for (String str : arrayList_A) {
+            //如果属性中心的属性和用于属性相同，就新建一个SKi
+            SKComp comp = new SKComp();
+            comp.attr = str;
+            //计算ai=(g2^q(i))*((h0*hi)^ri)
+            nodeID = Hash4Zr(pk, str);//将当前属性哈希到Zr上
+            //Zr_temp=q(i)
+            Zr_temp = computePolynomial(Zr_temp, polynomial, nodeID);
+            //G1_temp1=g2^q(i)
+            G1_temp1 = pk.g2.duplicate().powZn(Zr_temp);
+            //G1_temp2=h0*hi
+            G1_temp2 = pk.h0.duplicate().mul(AA.Hi.get(str));
+            r.setToRandom();//ri
+            //G1_temp2=(h0*hi)^ri
+            G1_temp2.powZn(r);
+            //ai=(g2^q(i))*((h0*hi)^ri)
+            comp.a = G1_temp1.mul(G1_temp2);
+            //计算b=g^ri
+            comp.b = pk.g.duplicate().powZn(r);
+            //将pk中的h0---h2L-1复制到comp.hList
+            comp.hList = new HashMap<>();//L个
+            //h的个数是该个用户属性所在的AA的掌管的所有的属性的个数, TODO 此处是创新点1,减少h的个数
+            for (Map.Entry<String, Element> entry2 : AA.Hi.entrySet()) {
+//                for (String str2 : arrayList_A) {
+//                    if (entry2.getKey().equals(str2)) {
+                        comp.hList.put(entry2.getKey(), entry2.getValue().duplicate());
+//                        break;
+//                    }
+//                }
             }
+            //计算Ci,1-----Ci,2L-1
+            for (Map.Entry<String, Element> entry3 : comp.hList.entrySet()) {
+                entry3.getValue().powZn(r);
+            }
+            sk.comps.put(str, comp);
+            System.out.print(str + ", ");
         }
         System.out.println();
         System.out.println("私钥中各个AA的小钥匙到此生成完毕！");
         //CA产生的私钥
         Element Zr_temp3 = pairing.getZr().newElement();
         Zr_temp3.setToZero();
-        for (int i = 0; i < AAKList.size(); i++) {
-            //Zr_temp3=对K个s求和 ;
+        //Zr_temp3=对K个s求和 ;
 //            Zr_temp3.add(Hash4Zr(pk, AAKList.get(i).s).duplicate());
-            Zr_temp3.add(Hash4Zr(pk, DigestUtils.md5Hex(AAKList.get(i).s + AID)));
-        }
+        Zr_temp3.add(Hash4Zr(pk, DigestUtils.md5Hex(AA.s + AID)));
         //Zr_temp4 = x-求和(K个xi)
         Element Zr_temp4 = mk.x.duplicate().sub(Zr_temp3);
 //        System.out.println("4  " + Zr_temp4);
@@ -254,16 +234,11 @@ public class LangPolicy {
     }
 
     /**
-     * 对于根节点，deg=k-1,k为门限值（如3of4，k=3），coef系数是k个，比deg多一个，如q(x)=A*x`3+B*x`2+C*x`1+D,polynomial.coef[deg + 1]集合中分别存放着A、B、C、D。
-     * 对于叶子节点，deg=0,，coef系数是1个，polynomial.coef[1]集合中存放着Qx(0)=QR(x)=A*x`3+B*x`2+C*x`1+D的值，如Q1(0)=QR(1)=A + B*1`1 + C*1`2 + D*1`3=A+B+C+D；
-     * 对于每个节点产生随机多项式，系数的个数比阶数多1，如q(x)=A*x`3+B*x`2+C*x`1+D,ABCD均为系数，阶数为3，系数的个数为4
-     * 对于根节点，QR(x)=A + B*x`1 + C*x`2 + D*x`3,QR(0)=A + B*0`1 + C*0`2 + D*0`3=A=s,根节点的Polynomial实体类中，阶数为3，系数的个数为4，系数分别为A、B、C、D，其中A、B、C、D均为随机值，其中D也即s
-     * 对于叶子节点，Qx(0)=QR(x)=A + B*x`1 + C*x`2 + D*x`3,x表示对于同一根节点的所有孩子节点的顺序值，从1开始，比如孩子有5个，那么顺序值就是1、2、3、4、5，
-     * 对于第1个叶子节点，其Polynomial实体类中，阶数为1，系数的个数为1，系数为Q1(0)=QR(1)=A + B*1`1 + C*1`2 + D*1`3=A+B+C+D；
-     * 对于第2个叶子节点，其Polynomial实体类中，阶数为1，系数的个数为1，系数为Q2(0)=QR(2)=A + B*2`1 + C*2`2 + D*2`3=A+2B+4C+8D；
+     * 多项式q(x)=A + B*x`1 + C*x`2 + D*x`3,阶为3，系数为4个（coef=k=deg-1）
+     * 门限值k=4时，阶就为3，此时需要4个点才能计算出拉格朗日插值多项式f(0)的值
      *
-     * @param deg         多项式的阶 deg=k-1,k为门限值; coef系数是k个，比deg多一个，coef系数中，第一个是都是相同的，都是根节点的随机值qR(0)=s,其他系数都是随机值
-     * @param randomValue Zr的随机值 s qR(0)=s
+     * @param deg         多项式的阶，门限值k减1,即deg=k-1
+     * @param randomValue Zr的随机值 s q(0)的值，即A的值
      */
     private static Polynomial createRandomPolynomial(int deg, Element randomValue) {
         Polynomial polynomial = new Polynomial();
@@ -317,18 +292,18 @@ public class LangPolicy {
      * 加密 文件的读取和保存工作
      *
      * @param pk         SK
-     * @param AAKList    属性中心们
+     * @param AA         属性中心们
      * @param MPathName  明文
      * @param CTPathName 密文
      */
-    public static Ciphertext encrypt(PK pk, ArrayList<AAK> AAKList, String MPathName, String CTPathName) throws Exception {
+    public static Ciphertext encrypt(PK pk, AAK AA, String MPathName, String CTPathName) throws Exception {
         Pairing pairing = pk.pairing;
         //表示GT的随机值，AES种子
         Element M = pairing.getGT().newRandomElement();
-        //Zr_s=s
-        Element Zr_s = pairing.getZr().newRandomElement();
+        //s
+        Element s = pairing.getZr().newRandomElement();
         //GT_temp=Z^s
-        Element GT_temp = pk.Z.duplicate().powZn(Zr_s);
+        Element GT_temp = pk.Z.duplicate().powZn(s);
         //密文实体
         Ciphertext ciphertext = new Ciphertext();
         /**-----------------------------------接下来求C0-------------------------------**/
@@ -336,43 +311,43 @@ public class LangPolicy {
         ciphertext.C0 = M.duplicate().mul(GT_temp);
         /**-----------------------------------接下来求C1-------------------------------**/
         //计算C1=g^s
-        ciphertext.C1 = pk.g.duplicate().powZn(Zr_s);
+        ciphertext.C1 = pk.g.duplicate().powZn(s);
 //        //计算C2
+        Element G1_temp1 = pairing.getG1().newElement();
+        G1_temp1.setToOne();
+        //循环乘hj
+//        for (int i = 0; i < AAKList.size(); i++) {
+        for (Map.Entry<String, Element> entry : AA.Hi.entrySet()) {
+            G1_temp1.mul(entry.getValue());
+//            }
+        }
+        //G1_temp1=h0*(循环乘hj)
+        G1_temp1.mul(pk.h0);
+        //计算C2=(h0*(循环乘hj))^s
+        ciphertext.C2 = G1_temp1.powZn(s).duplicate();
+//        /**-----------------------------------接下来求Ci-------------------------------**/
+//        ciphertext.Ci = new ArrayList<>();
 //        Element G1_temp1 = pairing.getG1().newElement();
 //        G1_temp1.setToOne();
-//        //循环乘hj
+//        //循环次数是AA的个数
 //        for (int i = 0; i < AAKList.size(); i++) {
+//            //G1_temp1=循环乘hj
 //            for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
 //                G1_temp1.mul(entry.getValue());
 //            }
+//            //G1_temp1=h0*(循环乘hj)
+//            G1_temp1.mul(pk.h0);
+//            //Ci=(h0*(循环乘hj))^s
+//            ciphertext.Ci.add(G1_temp1.powZn(Zr_s).duplicate());
+//            G1_temp1.setToOne();
+////            Element e_C2_D2 = pairing.pairing(pk.g.duplicate().powZn(Hash4Zr(pk, AAKList.get(i).s).duplicate()), pk.g2.duplicate().powZn(Zr_s)).duplicate();
+////            System.out.println("e_C2_D2 " + e_C2_D2);
 //        }
-//        //G1_temp1=h0*(循环乘hj)
-//        G1_temp1.mul(pk.h0);
-//        //计算C2=(h0*(循环乘hj))^s
-//        ciphertext.C2 = G1_temp1.powZn(Zr_s).duplicate();
-        /**-----------------------------------接下来求Ci-------------------------------**/
-        ciphertext.Ci = new ArrayList<>();
-        Element G1_temp1 = pairing.getG1().newElement();
-        G1_temp1.setToOne();
-        //循环次数是AA的个数
-        for (int i = 0; i < AAKList.size(); i++) {
-            //G1_temp1=循环乘hj
-            for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
-                G1_temp1.mul(entry.getValue());
-            }
-            //G1_temp1=h0*(循环乘hj)
-            G1_temp1.mul(pk.h0);
-            //Ci=(h0*(循环乘hj))^s
-            ciphertext.Ci.add(G1_temp1.powZn(Zr_s).duplicate());
-            G1_temp1.setToOne();
-//            Element e_C2_D2 = pairing.pairing(pk.g.duplicate().powZn(Hash4Zr(pk, AAKList.get(i).s).duplicate()), pk.g2.duplicate().powZn(Zr_s)).duplicate();
-//            System.out.println("e_C2_D2 " + e_C2_D2);
-        }
         /**-----------------------------------接下来求C3-------------------------------**/
         //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
         G1_temp1.setToOne();
         //将C0C1C2转换成字节数组 TODO 如果属性中心个数增加了，此处需要收到增加参数
-        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
+        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1);
         //求哈希值
         Element c = Hash4Zr(pk, byteArray);
         //G1D1=d1^c
@@ -390,7 +365,7 @@ public class LangPolicy {
         //G1_temp1=1 * d1^c * d2^r * d3
         G1_temp1.mul(pk.d3.duplicate());
         //G1_temp1=( 1 * d1^c * d2^r * d3 )^s
-        G1_temp1.powZn(Zr_s);
+        G1_temp1.powZn(s);
         //C3=( 1 * d1^c * d2^r * d3 )^s
         ciphertext.C3 = G1_temp1.duplicate();
         /**-----------------------------------接下来开始对明文加密-------------------------------**/
@@ -431,61 +406,54 @@ public class LangPolicy {
     /**
      * 解密 文件的读取和保存工作
      *
-     * @param pk           SK
-     * @param attributes_A 用户属性
-     * @param attributes_S 属性中心
-     * @param thresholds   门限
-     * @param CTPathName   密文
-     * @param DPathName    解密后的明文
+     * @param pk            SK
+     * @param attributes_A  解密用户的属性
+     * @param attributes_AA 属性中心管理的属性
+     * @param threshold     门限
+     * @param CTPathName    密文
+     * @param DPathName     解密后的明文
      */
-    public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String[][] attributes_S, ArrayList<AAK> AAKList, String thresholds, String CTPathName, String DPathName) throws Exception {
+    public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String attributes_AA, AAK AA, int threshold, String CTPathName, String DPathName) throws Exception {
         Pairing pairing = pk.pairing;
         //将字符串解析成字符数组
         ArrayList<String> attrList_A = parseString2ArrayList(attributes_A);
-        //将各个AA中的门限值解析成字符数组
-        ArrayList<String> arrayList_thresholds = parseString2ArrayList(thresholds);
+        //将属性中心管理的属性转成字符数组
+        ArrayList<String> attrList_AA = parseString2ArrayList(attributes_AA);
         /**-----------------------------------接下来验证用户属性-------------------------------**/
         //标志位，用户的属性是否满足门限值
         boolean isSatisfy = true;
-        for (int i = 0; i < attributes_S.length; i++) {
-            //第i个AA管理的属性
-            ArrayList<String> arrayList_AAi = parseStringArray2ArrayList(attributes_S, i);
-            //求A和AAi的并集
-            ArrayList<String> arrayList_AAndAAi = intersectionArrayList(attrList_A, arrayList_AAi);
+        //求A和AA的并集
+        ArrayList<String> arrayList_AAndAA = intersectionArrayList(attrList_A, attrList_AA);
 //            System.out.println("用户和AAi的交集的大小:" + arrayList_AAndAAi.size() + "个，即：" + arrayList_AAndAAi);
-            //判断交集中元素个数和该AA的门限值的大小关系
-            if (arrayList_AAndAAi.size() < Integer.parseInt(arrayList_thresholds.get(i))) {
-                isSatisfy = false;
-                System.err.println("解密失败，用户的属性不满足第" + (i + 1) + "个属性中心的门限要求！");
-                break;
-            }
+        //判断交集中元素个数和该AA的门限值的大小关系
+        if (arrayList_AAndAA.size() < threshold) {
+            isSatisfy = false;
+            System.err.println("解密失败，用户的属性不满足属性中心的门限要求！");
         }
         /**------------------------------接下来验证两个参数，第一个参数e(g,C2)--------------------------**/
         //循环乘hj
-        for (int i = 0; i < AAKList.size(); i++) {
-            Element G1_temp3 = pairing.getG1().newElement();
-            G1_temp3.setToOne();
-            //G1_temp1=循环乘hj
-            for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
-                G1_temp3.mul(entry.getValue());
-            }
-            //G1_temp1=h0*(循环乘hj)
-            G1_temp3.mul(pk.h0);
-            Element e_g_C2_1 = pairing.pairing(pk.g, ciphertext.Ci.get(i));
-            Element e_g_C2_2 = pairing.pairing(ciphertext.C1, G1_temp3);
-            if (e_g_C2_1.isEqual(e_g_C2_2)) {
-                System.out.println("第一个条件满足，关于第" + (i + 1) + "个属性中心！");
-            } else {
-                System.err.println("第一个条件不满足，程序退出！");
-                System.exit(0);
-            }
+        Element G1_temp3 = pairing.getG1().newElement();
+        G1_temp3.setToOne();
+        //G1_temp1=循环乘hj
+        for (Map.Entry<String, Element> entry : AA.Hi.entrySet()) {
+            G1_temp3.mul(entry.getValue());
+        }
+        //G1_temp1=h0*(循环乘hj)
+        G1_temp3.mul(pk.h0);
+        Element e_g_C2_1 = pairing.pairing(pk.g, ciphertext.C2);
+        Element e_g_C2_2 = pairing.pairing(ciphertext.C1, G1_temp3);
+        if (e_g_C2_1.isEqual(e_g_C2_2)) {
+            System.out.println("第一个条件满足！");
+        } else {
+            System.err.println("第一个条件不满足，程序退出！");
+            System.exit(0);
         }
         /**-----------------------------------接下来验证第二个参数e(g,C3)-------------------------------**/
         Element G1_temp4 = pairing.getG1().newElement();
         G1_temp4.setToOne();
         //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
         //将C0C1C2转换成字节数组，TODO 如果属性中心个数增加了，此处需要收到增加参数
-        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1, ciphertext.Ci.get(0), ciphertext.Ci.get(1), ciphertext.Ci.get(2));
+        byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1);
         //求哈希值
         Element c = Hash4Zr(pk, byteArray);
         //G1D1=d1^c
@@ -497,10 +465,10 @@ public class LangPolicy {
         //G1_temp4=1 * d1^c * d2^r
         G1_temp4.mul(G1D2);
         //G1_temp4=1 * d1^c * d2^r * d3
-        G1_temp4.mul(pk.d3.duplicate());
+        G1_temp4.mul(pk.d3);
         //G1_temp1=( 1 * d1^c * d2^r * d3 )^s
-        Element e_g_C3_1 = pairing.pairing(pk.g, ciphertext.C3).duplicate();
-        Element e_g_C3_2 = pairing.pairing(ciphertext.C1, G1_temp4).duplicate();
+        Element e_g_C3_1 = pairing.pairing(pk.g, ciphertext.C3);
+        Element e_g_C3_2 = pairing.pairing(ciphertext.C1, G1_temp4);
         if (e_g_C3_1.isEqual(e_g_C3_2)) {
             System.out.println("第二个条件满足！");
         } else {
@@ -523,68 +491,64 @@ public class LangPolicy {
             G1_temp1.setToOne();
             G1_temp2.setToOne();
             GT_temp.setToOne();
-            for (int k = 0; k < attributes_S.length; k++) {
-                //第i个AA管理的属性
-                ArrayList<String> arrayList_AAi = parseStringArray2ArrayList(attributes_S, k);
-                //求A和AAi的并集
-                ArrayList<String> arrayList_AAndAAi = intersectionArrayList(attrList_A, arrayList_AAi);
-                ArrayList<String> arrayList_As = new ArrayList<>();
-                //求集合A`，共threshold个
-                for (int i = 0; i < Integer.parseInt(arrayList_thresholds.get(k)); i++) {
-                    arrayList_As.add(arrayList_AAndAAi.get(i));
-                }
-                System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
-                System.out.println("， 集合AAi的大小:" + arrayList_AAi.size() + "个，即：" + arrayList_AAi);
-                /**-----------------------------------接下来求D1-------------------------------**/
-                //最外层连乘，处理i
-                for (int i = 0; i < arrayList_As.size(); i++) {
-                    //最内层连乘，处理j，G1_temp1=循环乘Ci,j
-                    for (int j = 0; j < arrayList_AAi.size(); j++) {
-                        //i不等于j时
-                        if (!arrayList_AAi.get(j).equals(arrayList_As.get(i))) {
-                            G1_temp1.mul(sk.comps.get(arrayList_As.get(i)).hList.get(arrayList_AAi.get(j)));
-                        }
-                    }
-                    //G1_temp1=ai*(循环乘Ci,j)
-                    G1_temp1.mul(sk.comps.get(arrayList_As.get(i)).a);
-                    //求拉格朗日系数 Zr_temp1=deta(0) (x-j)/(i-j)
-                    Zr_temp1 = lagrangeCoefficient(pk, arrayList_As, arrayList_As.get(i));
-                    //G1_temp1=ai*(循环乘Ci,j)^deta(0)
-                    G1_temp1.powZn(Zr_temp1);
-                    G1_temp2.mul(G1_temp1);
-                    G1_temp1.setToOne();
-                }
-                D1 = G1_temp2.duplicate();
-                /**-----------------------------------接下来求D2-------------------------------**/
-                //接下来求D2
-                G1_temp1.setToOne();
-                G1_temp2.setToOne();
-                Zr_temp1.setToOne();
-                //最外层连乘，处理i
-                for (int i = 0; i < arrayList_As.size(); i++) {
-                    //G1_temp1=bi
-                    G1_temp1.mul(sk.comps.get(arrayList_As.get(i)).b);
-                    //求拉格朗日系数 Zr_temp1=deta(0) (x-j)/(i-j)
-                    Zr_temp1 = lagrangeCoefficient(pk, arrayList_As, arrayList_As.get(i));
-                    //G1_temp1=bi^deta(0)
-                    G1_temp1.powZn(Zr_temp1);
-                    G1_temp2.mul(G1_temp1);
-                    G1_temp1.setToOne();
-                }
-                D2 = G1_temp2.duplicate();
-                /**-----------------------------------接下来求Zk^s-------------------------------**/
-                //计算M
-                Element e_C2_D2 = pairing.pairing(ciphertext.Ci.get(k), D2).duplicate();
-                Element e_C1_D1 = pairing.pairing(ciphertext.C1, D1).duplicate();
-                //e_C2_D2=1/e_C2_D2
-                e_C2_D2.invert();
-                //e_C1_D1=e_C1_D1/e_C2_D2=e(g,g2^s)^xi
-                e_C1_D1.mul(e_C2_D2);
-                //GT_temp=e(g,g2^s)^(x1+x2+x3)
-                GT_temp.mul(e_C1_D1);
-                //累加置1
-                G1_temp2.setToOne();
+            //求A和AA的并集
+            ArrayList<String> arrayList_AndAA = intersectionArrayList(attrList_A, attrList_AA);
+            ArrayList<String> arrayList_As = new ArrayList<>();
+            //求集合A`，共threshold个
+            for (int i = 0; i < threshold; i++) {
+                arrayList_As.add(arrayList_AndAA.get(i));
             }
+            System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
+            System.out.println("， 集合AA的大小:" + attrList_AA.size() + "个，即：" + attrList_AA);
+            /**-----------------------------------接下来求D1-------------------------------**/
+            //最外层连乘，处理i
+            for (int i = 0; i < arrayList_As.size(); i++) {
+                //最内层连乘，处理j，G1_temp1=循环乘Ci,j
+                for (int j = 0; j < attrList_AA.size(); j++) {
+                    //i不等于j时
+                    if (!attrList_AA.get(j).equals(arrayList_As.get(i))) {
+                        G1_temp1.mul(sk.comps.get(arrayList_As.get(i)).hList.get(attrList_AA.get(j)));
+                    }
+                }
+                //G1_temp1=ai*(循环乘Ci,j)
+                G1_temp1.mul(sk.comps.get(arrayList_As.get(i)).a);
+                //求拉格朗日系数 Zr_temp1=deta(0) (x-j)/(i-j)
+                Zr_temp1 = lagrangeCoefficient(pk, arrayList_As, arrayList_As.get(i));
+                //G1_temp1=ai*(循环乘Ci,j)^deta(0)
+                G1_temp1.powZn(Zr_temp1);
+                G1_temp2.mul(G1_temp1);
+                G1_temp1.setToOne();
+            }
+            D1 = G1_temp2.duplicate();
+            /**-----------------------------------接下来求D2-------------------------------**/
+            //接下来求D2
+            G1_temp1.setToOne();
+            G1_temp2.setToOne();
+            Zr_temp1.setToOne();
+            //最外层连乘，处理i
+            for (int i = 0; i < arrayList_As.size(); i++) {
+                //G1_temp1=bi
+                G1_temp1.mul(sk.comps.get(arrayList_As.get(i)).b);
+                //求拉格朗日系数 Zr_temp1=deta(0) (x-j)/(i-j)
+                Zr_temp1 = lagrangeCoefficient(pk, arrayList_As, arrayList_As.get(i));
+                //G1_temp1=bi^deta(0)
+                G1_temp1.powZn(Zr_temp1);
+                G1_temp2.mul(G1_temp1);
+                G1_temp1.setToOne();
+            }
+            D2 = G1_temp2.duplicate();
+            /**-----------------------------------接下来求Zk^s-------------------------------**/
+            //计算M
+            Element e_C2_D2 = pairing.pairing(ciphertext.C2, D2).duplicate();
+            Element e_C1_D1 = pairing.pairing(ciphertext.C1, D1).duplicate();
+            //e_C2_D2=1/e_C2_D2
+            e_C2_D2.invert();
+            //e_C1_D1=e_C1_D1/e_C2_D2=e(g,g2^s)^xi
+            e_C1_D1.mul(e_C2_D2);
+            //GT_temp=e(g,g2^s)^(x1+x2+x3)
+            GT_temp.mul(e_C1_D1);
+            //累加置1
+            G1_temp2.setToOne();
             //GT_temp2=e(g,g2^s)^x-(x1+x2+x3)
             Element GT_temp2 = pairing.pairing(ciphertext.C1, sk.Dca);
             //GT_temp=e(g^x,g2^s)=Z^s
@@ -605,7 +569,7 @@ public class LangPolicy {
 
     /**
      * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)，即x=0，j=currentAttr，i=attrsList.get(i)
-     * 求p(0),对于n-1阶多项式来说，必须知道至少n个点才能求出，比如求p(0),对于4阶多项式来说，必须知道至少4个点才能求出p(0)的值
+     * 求p(0),对于n-1阶多项式来说，必须知道至少n个点才能求出，比如求p(0),对于3阶多项式来说，必须知道至少4个点才能求出p(0)的值
      * 处理属性时，需要先将属性哈希到Zr群上，得到一个大质数
      *
      * @param attrsList   属性集合
@@ -695,84 +659,5 @@ public class LangPolicy {
         System.out.println("Zs:" + Zs);
         System.out.println("M2:" + M2);
 
-//        Element Z = pairing.pairing(g, v).duplicate();
-//        Element s = pairing.getZr().newRandomElement();
-//        Element Zs = Z.duplicate().powZn(s).duplicate();
-//        Element M = pairing.getGT().newRandomElement();
-//        System.out.println("M:" + M);
-//        Element C0 = M.duplicate().mul(Zs).duplicate();
-//        Element Zs1 = Zs.duplicate().invert();
-//        Element M1 = C0.duplicate().mul(Zs1.duplicate()).duplicate();
-//        System.out.println("M1:" + M1);
-
-
-//        Element g = pairing.getG1().newRandomElement();
-//        Element v = pairing.getG1().newRandomElement();
-//        Element Z = pairing.pairing(g, v).duplicate();
-//        Element s = pairing.getZr().newRandomElement();
-//        Element Zs = Z.duplicate().powZn(s).duplicate();
-//        Element M = pairing.getGT().newRandomElement();
-//        System.out.println("M:" + M);
-//        Element C0 = M.duplicate().mul(Zs).duplicate();
-//        Element Zs1 = Zs.duplicate().invert();
-//        Element M1 = C0.duplicate().mul(Zs1.duplicate()).duplicate();
-//        System.out.println("M1:" + M1);
-
-//        Element M;
-//        Element M1;
-//        Element M2;
-//
-//        Element a = pairing.getZr().newRandomElement();
-//        Element b = pairing.getZr().newRandomElement();
-//        System.out.println("a:" + a);
-//        System.out.println("b:" + b);
-//
-//        Element g = pairing.getG1().newRandomElement();
-//        System.out.println("g:" + g);
-//        Element v = pairing.getG1().newRandomElement();
-//        System.out.println("v:" + v);
-//        Element ga = g.getImmutable().powZn(a).getImmutable();
-//        System.out.println("g:" + g);
-////        Element gb = g.powZn(b).getImmutable();
-////        M1 = pairing.pairing(ga, gb).getImmutable();
-////        System.out.println("M1:e(g^a,g^b):" + M1);
-////
-////        M = pairing.pairing(g, g).getImmutable();
-////        System.out.println("M:e(g,g):" + M);
-//        Element ab = a.getImmutable().mul(b).getImmutable();
-//        System.out.println("ab:" + ab);
-////        M2 = M.powZn(ab).getImmutable();
-////        System.out.println("M2:e(g,g)^ab:" + M2);
-//
-//        Element vb = v.getImmutable().powZn(b).getImmutable();
-//        Element M3 = pairing.pairing(ga, vb).getImmutable();
-//        System.out.println("e(g^a,v^b):" + M3);
-//
-//        Element M4 = pairing.pairing(g, v).getImmutable();
-////        System.out.println("e(g,v):" + M4);
-////        System.out.println("ab:" + ab);
-//
-//        Element M5 = M4.powZn(ab).getImmutable();
-//        System.out.println("e(g,v)^ab:" + M5);
-
-
     }
-//
-//    /**
-//     * 将字节数组byte[]转成16进制字符串
-//     */
-//    public static String bytesToHexString(byte[] src) {
-//        StringBuilder stringBuilder = new StringBuilder("");
-//        if (src == null || src.length <= 0) {
-//            return null;
-//        }
-//        for (int i = 0; i < src.length; i++) {
-//            String hex = Integer.toHexString(src[i] & 0xFF).toUpperCase();
-//            if (hex.length() == 1) {
-//                hex = '0' + hex;
-//            }
-//            stringBuilder.append(hex + " ");
-//        }
-//        return stringBuilder.toString();
-//    }
 }

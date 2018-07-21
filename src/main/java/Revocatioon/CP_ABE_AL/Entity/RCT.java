@@ -18,4 +18,5 @@ public class RCT {
     public Map<String, Element> C2 = new HashMap<>();//Ci,2'
     public Map<String, Element> C3 = new HashMap<>();//Ci,3'
     public Element s; // s
+    public Element Vx; // Vx
 }
