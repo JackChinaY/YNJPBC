@@ -10,5 +10,7 @@ public interface Ident {
 
     void encrypt();
 
+    void re_encrypt();
+
     void decrypt();
 }

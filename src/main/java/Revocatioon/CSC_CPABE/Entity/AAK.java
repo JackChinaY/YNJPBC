@@ -12,7 +12,6 @@ import java.util.Map;
 public class AAK {
     public int threshold;//属性中心的门限值
     public String s;//属性中心的种子
-    public APK apk;//属性中心的公钥
     public Map<String, Element> Hi = new HashMap<>();//G1类型，i=1,2,...,n
 
     @Override
@@ -20,7 +19,6 @@ public class AAK {
         return "AAK {" +
                 " threshold=" + threshold +
                 "， s=" + s +
-                "， apk=" + apk +
                 '}';
     }
 }

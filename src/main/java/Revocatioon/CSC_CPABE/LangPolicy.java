@@ -95,7 +95,7 @@ public class LangPolicy {
     private static ArrayList<String> intersectionArrayList(ArrayList<String> attrList1, ArrayList<String> attrList2) {
         ArrayList<String> list1 = (ArrayList<String>) attrList1.clone();
         ArrayList<String> list2 = (ArrayList<String>) attrList2.clone();
-        list1.retainAll(list2);//并集
+        list1.retainAll(list2);//交集
         return list1;
     }
 
@@ -142,7 +142,7 @@ public class LangPolicy {
      * @param index 指定行，从0开始
      */
     private static ArrayList<String> parseStringArray2ArrayList(String[][] array, int index) {
-        ArrayList<String> arrayList = new ArrayList<String>();
+        ArrayList<String> arrayList = new ArrayList<>();
         for (int i = 0; i < array[index].length; i++) {
             arrayList.add(array[index][i]);
         }
@@ -153,19 +153,20 @@ public class LangPolicy {
     /**
      * 生成私钥 文件的读取和保存工作 输入PK、MK、ATTR(用户属性)，输出SK
      *
-     * @param mk           PK
-     * @param pk           SK
-     * @param AA           属性中心
-     * @param attributes_A 获取解密密钥的用户的属性
-     * @param AID          用户的GUID
+     * @param mk            PK
+     * @param pk            SK
+     * @param AA            属性中心
+     * @param attributes_A  获取解密密钥的用户的属性
+     * @param attributes_RA 获取解密密钥的用户的被撤销的属性
+     * @param AID           用户的GUID
      */
-    public static SK keygen(MK mk, PK pk, AAK AA, String attributes_A, String AID) throws NoSuchAlgorithmException {
+    public static SK keygen(MK mk, PK pk, AAK AA, String attributes_A, String attributes_RA, String AID) throws NoSuchAlgorithmException {
         Pairing pairing = pk.pairing;
         //将用户属性解析成字符数组
         ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
         System.out.println("集合A大小：" + arrayList_A.size() + "个，即：" + arrayList_A);
         Element Zr_temp = pairing.getZr().newElement();
-        Element nodeID = pairing.getZr().newElement();
+        Element nodeID;
         Element r = pairing.getZr().newElement();
         Element G1_temp1;
         Element G1_temp2;
@@ -179,6 +180,7 @@ public class LangPolicy {
         Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AA.s + AID));
         //构造一个多项式
         Polynomial polynomial = createRandomPolynomial(AA.threshold - 1, p0);
+        sk.polynomial = polynomial;
         //对用户属性遍历
         for (String str : arrayList_A) {
             //如果属性中心的属性和用于属性相同，就新建一个SKi
@@ -187,7 +189,7 @@ public class LangPolicy {
             //计算ai=(g2^q(i))*((h0*hi)^ri)
             nodeID = Hash4Zr(pk, str);//将当前属性哈希到Zr上
             //Zr_temp=q(i)
-            Zr_temp = computePolynomial(Zr_temp, polynomial, nodeID);
+            Zr_temp = computePolynomial(pairing.getZr().newElement(), polynomial, nodeID);
             //G1_temp1=g2^q(i)
             G1_temp1 = pk.g2.duplicate().powZn(Zr_temp);
             //G1_temp2=h0*hi
@@ -205,13 +207,14 @@ public class LangPolicy {
             for (Map.Entry<String, Element> entry2 : AA.Hi.entrySet()) {
 //                for (String str2 : arrayList_A) {
 //                    if (entry2.getKey().equals(str2)) {
-                        comp.hList.put(entry2.getKey(), entry2.getValue().duplicate());
+                comp.hList.put(entry2.getKey(), entry2.getValue().duplicate());
 //                        break;
 //                    }
 //                }
             }
-            //计算Ci,1-----Ci,2L-1
+            //计算Ci,1-----Ci,L
             for (Map.Entry<String, Element> entry3 : comp.hList.entrySet()) {
+//                new Thread(new DelegateKey(entry3.getValue(), r)).start();
                 entry3.getValue().powZn(r);
             }
             sk.comps.put(str, comp);
@@ -230,6 +233,11 @@ public class LangPolicy {
 //        System.out.println("4  " + Zr_temp4);
         sk.Dca = pk.g2.duplicate().powZn(Zr_temp4);
         System.out.println("私钥中CA的小钥匙生成成功！");
+//        try {
+//            Thread.sleep(1000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         return sk;
     }
 
@@ -287,6 +295,7 @@ public class LangPolicy {
         return Zr_temp;
     }
 
+
     /**---------------------------encrypt加密阶段用到的函数---------------------------**/
     /**
      * 加密 文件的读取和保存工作
@@ -325,24 +334,6 @@ public class LangPolicy {
         G1_temp1.mul(pk.h0);
         //计算C2=(h0*(循环乘hj))^s
         ciphertext.C2 = G1_temp1.powZn(s).duplicate();
-//        /**-----------------------------------接下来求Ci-------------------------------**/
-//        ciphertext.Ci = new ArrayList<>();
-//        Element G1_temp1 = pairing.getG1().newElement();
-//        G1_temp1.setToOne();
-//        //循环次数是AA的个数
-//        for (int i = 0; i < AAKList.size(); i++) {
-//            //G1_temp1=循环乘hj
-//            for (Map.Entry<String, Element> entry : AAKList.get(i).apk.Hi.entrySet()) {
-//                G1_temp1.mul(entry.getValue());
-//            }
-//            //G1_temp1=h0*(循环乘hj)
-//            G1_temp1.mul(pk.h0);
-//            //Ci=(h0*(循环乘hj))^s
-//            ciphertext.Ci.add(G1_temp1.powZn(Zr_s).duplicate());
-//            G1_temp1.setToOne();
-////            Element e_C2_D2 = pairing.pairing(pk.g.duplicate().powZn(Hash4Zr(pk, AAKList.get(i).s).duplicate()), pk.g2.duplicate().powZn(Zr_s)).duplicate();
-////            System.out.println("e_C2_D2 " + e_C2_D2);
-//        }
         /**-----------------------------------接下来求C3-------------------------------**/
         //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
         G1_temp1.setToOne();
@@ -382,6 +373,51 @@ public class LangPolicy {
         return ciphertext;
     }
 
+    /**---------------------------re_encrypt重加密阶段用到的函数---------------------------**/
+    /**
+     * 重加密
+     *
+     * @param pk            SK
+     * @param AA            属性中心们
+     * @param attributes_RA 获取解密密钥的用户的被撤销的属性
+     * @param MPathName     明文
+     * @param CTPathName    密文
+     */
+    public static void re_encrypt(PK pk, AAK AA, SK sk, String attributes_RA, Ciphertext old_ciphertext, String MPathName, String CTPathName) throws Exception {
+        Pairing pairing = pk.pairing;
+        //将用户撤销的属性解析成字符数组
+        ArrayList<String> arrayList_RA = parseString2ArrayList(attributes_RA);
+        //如果有被撤销的属性
+        if (arrayList_RA.size() > 0) {
+            //v
+            Element v = pairing.getZr().newRandomElement();
+            Element temp1 = pairing.getZr().newElement().setToOne();
+            Element _v = temp1.duplicate().sub(v);
+            //更新用户私钥
+            for (int i = 0; i < arrayList_RA.size(); i++) {
+                sk.comps.get(arrayList_RA.get(i)).a.powZn(v);
+                sk.comps.get(arrayList_RA.get(i)).b.powZn(v);
+                for (Map.Entry<String, Element> entry : sk.comps.get(arrayList_RA.get(i)).hList.entrySet()) {
+                    entry.getValue().powZn(v);
+                }
+            }
+            Element result = pairing.getG1().newElement();
+            //更新密文
+//            for (int i = 0; i < arrayList_RA.size(); i++) {
+            //q(i)
+//                Element qi = computePolynomial(pairing.getZr().newElement(), sk.polynomial, Hash4Zr(pk, arrayList_RA.get(i)));
+            //g2^q(i)
+//                result = pk.g2.duplicate().powZn(qi);
+            //g2^q(i)(1/v)
+//                result.mul(v_invert);
+            //g2^(1/v)
+            result = pk.g2.duplicate().powZn(_v);
+//            }
+            old_ciphertext.Cra = result;
+        }
+        System.out.println("重加密成功！");
+    }
+
     /**
      * 将多个Element元素整合到一个byte数组中
      */
@@ -409,16 +445,19 @@ public class LangPolicy {
      * @param pk            SK
      * @param attributes_A  解密用户的属性
      * @param attributes_AA 属性中心管理的属性
+     * @param attributes_RA 用户撤销的属性
      * @param threshold     门限
      * @param CTPathName    密文
      * @param DPathName     解密后的明文
      */
-    public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String attributes_AA, AAK AA, int threshold, String CTPathName, String DPathName) throws Exception {
+    public static void decrypt(PK pk, SK sk, Ciphertext ciphertext, String attributes_A, String attributes_AA, String attributes_RA, AAK AA, int threshold, String CTPathName, String DPathName) throws Exception {
         Pairing pairing = pk.pairing;
         //将字符串解析成字符数组
         ArrayList<String> attrList_A = parseString2ArrayList(attributes_A);
         //将属性中心管理的属性转成字符数组
         ArrayList<String> attrList_AA = parseString2ArrayList(attributes_AA);
+        //将用户撤销的属性解析成字符数组
+        ArrayList<String> attrList_RA = parseString2ArrayList(attributes_RA);
         /**-----------------------------------接下来验证用户属性-------------------------------**/
         //标志位，用户的属性是否满足门限值
         boolean isSatisfy = true;
@@ -491,14 +530,12 @@ public class LangPolicy {
             G1_temp1.setToOne();
             G1_temp2.setToOne();
             GT_temp.setToOne();
-            //求A和AA的并集
-            ArrayList<String> arrayList_AndAA = intersectionArrayList(attrList_A, attrList_AA);
             ArrayList<String> arrayList_As = new ArrayList<>();
             //求集合A`，共threshold个
             for (int i = 0; i < threshold; i++) {
-                arrayList_As.add(arrayList_AndAA.get(i));
+                arrayList_As.add(arrayList_AAndAA.get(i));
             }
-            System.out.print("集合A`的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
+            System.out.print("集合A'的大小:" + arrayList_As.size() + "个，即：" + arrayList_As);
             System.out.println("， 集合AA的大小:" + attrList_AA.size() + "个，即：" + attrList_AA);
             /**-----------------------------------接下来求D1-------------------------------**/
             //最外层连乘，处理i
@@ -520,6 +557,37 @@ public class LangPolicy {
                 G1_temp1.setToOne();
             }
             D1 = G1_temp2.duplicate();
+            /**-----------------------------------接下来求D1*CRA-------------------------------**/
+            //求A'和RA的交集
+            ArrayList<String> arrayList_ARA = intersectionArrayList(arrayList_As, attrList_RA);
+            System.out.println("集合ARA的大小:" + arrayList_ARA.size() + "个，即：" + arrayList_ARA);
+            //如果有属性被撤销
+            if (arrayList_ARA.size() > 0) {
+                System.out.println("有属性被撤销，参与计算被撤销属性集合大小:" + arrayList_ARA.size() + "个，即：" + arrayList_ARA);
+                //一开始，Cra=g2^(1-v)
+                Element Cra = ciphertext.Cra.duplicate();
+//                for (int i = 1; i < arrayList_ARA.size(); i++) {
+//                    ciphertext.Cra.mul(Cra);
+//                    System.out.println("g2(1-v)一次");
+//                }
+                //将ciphertext.Cra=1，便于接下来连乘
+                ciphertext.Cra.setToOne();
+                Element g2_1_v;
+                //遍历被撤销的且参与最终计算的属性
+                for (int i = 0; i < arrayList_ARA.size(); i++) {
+                    //g2_1_v=g2^(1-v)
+                    g2_1_v = Cra.duplicate();
+                    //g2^((1-v)*q(i))
+                    g2_1_v.powZn(computePolynomial(pairing.getZr().newElement(), sk.polynomial, Hash4Zr(pk, arrayList_ARA.get(i))));
+                    //g2^((1-v)*q(i)*data(i))
+                    g2_1_v.powZn(lagrangeCoefficient(pk, arrayList_As, arrayList_ARA.get(i)));
+                    //连乘
+                    ciphertext.Cra.mul(g2_1_v);
+                }
+                D1.mul(ciphertext.Cra);
+            }else {
+                System.out.println("无属性被撤销且参与计算");
+            }
             /**-----------------------------------接下来求D2-------------------------------**/
             //接下来求D2
             G1_temp1.setToOne();
@@ -568,7 +636,7 @@ public class LangPolicy {
     }
 
     /**
-     * 求解拉格朗日插系数 求deta(0) (x-j)/(i-j)，即x=0，j=currentAttr，i=attrsList.get(i)
+     * 求解拉格朗日插系数 求deta(0) (x-i)/(j-i)=(0-i)/(currentAttr-i)，即x=0，j=currentAttr，i=attrsList.get(i)
      * 求p(0),对于n-1阶多项式来说，必须知道至少n个点才能求出，比如求p(0),对于3阶多项式来说，必须知道至少4个点才能求出p(0)的值
      * 处理属性时，需要先将属性哈希到Zr群上，得到一个大质数
      *

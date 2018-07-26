@@ -10,4 +10,5 @@ import java.util.Map;
 public class SK {
     public Map<String, SKComp> comps;//SKComp
     public Element Dca; //G_1 Dca=g2^(x-求和(K个xi))
+    public Polynomial polynomial;
 }
