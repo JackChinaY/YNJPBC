@@ -13,10 +13,10 @@ import java.util.Iterator;
  */
 public class NioClient {
     public static void main(String[] args) throws IOException {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 2; i++) {
             try {
                 Thread.sleep(0);
-                ClientHandler clientHandler = new ClientHandler("127.0.0.1", 9981);
+                ClientHandler clientHandler = new ClientHandler("127.0.0.1", 9981, i);
                 new Thread(clientHandler).start();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -31,8 +31,10 @@ public class NioClient {
 class ClientHandler implements Runnable {
     //管道管理器
     private Selector selector;
+    private int num;
 
-    ClientHandler(String serverIp, int port) throws IOException {
+    ClientHandler(String serverIp, int port, int num) throws IOException {
+        this.num = num;
         //获取socket通道
         SocketChannel channel = SocketChannel.open();
         channel.configureBlocking(false);
@@ -52,7 +54,7 @@ class ClientHandler implements Runnable {
             try {//选择注册过的io操作的事件(第一次为SelectionKey.OP_CONNECT)
                 selector.select();
                 Iterator<SelectionKey> ite = selector.selectedKeys().iterator();
-                System.out.println(selector.selectedKeys().size());
+//                System.out.println(selector.selectedKeys().size());
                 while (ite.hasNext()) {
                     SelectionKey key = ite.next();
                     //删除已选的key，防止重复处理
@@ -65,7 +67,7 @@ class ClientHandler implements Runnable {
                         }
                         channel.configureBlocking(false);
                         //向服务器发送消息
-                        channel.write(ByteBuffer.wrap("xyzw5678".getBytes()));
+                        channel.write(ByteBuffer.wrap(String.valueOf(num).getBytes()));
 
                         //连接成功后，注册接收服务器消息的事件
                         channel.register(selector, SelectionKey.OP_READ);

@@ -491,7 +491,7 @@ public class LangPolicy {
         Element G1_temp4 = pairing.getG1().newElement();
         G1_temp4.setToOne();
         //计算C3=C3=(d1^c * d2^r * d3)^s，其中c=Hash(T,C0,C1,C2)
-        //将C0C1C2转换成字节数组，TODO 如果属性中心个数增加了，此处需要收到增加参数
+        //将C0C1C2转换成字节数组
         byte[] byteArray = Element2ByteArray(ciphertext.C0, ciphertext.C1);
         //求哈希值
         Element c = Hash4Zr(pk, byteArray);

@@ -46,7 +46,7 @@ public class NioServer {
             }
             //获取selector中的迭代器，选中项为注册的事件
             Iterator<SelectionKey> ite = selector.selectedKeys().iterator();
-            System.out.println(selector.selectedKeys().size());
+//            System.out.println(selector.selectedKeys().size());
             while (ite.hasNext()) {
                 try {
                     SelectionKey key = ite.next();
@@ -69,7 +69,18 @@ public class NioServer {
                         SocketChannel channel = (SocketChannel) key.channel();
                         //创建读取数据缓冲器
                         ByteBuffer buffer = ByteBuffer.allocate(10);
-                        int read = channel.read(buffer);
+                        int count;
+                        try {
+                            count = channel.read(buffer);
+                            System.out.println("长度" + count);
+                        } catch (IOException e) {
+//                            e.printStackTrace();
+                            System.out.println("断开连接");
+                            key.cancel();
+                            channel.socket().close();
+                            channel.close();
+                            break;
+                        }
                         byte[] data = buffer.array();
                         String message = new String(data);
 
@@ -78,6 +89,7 @@ public class NioServer {
 //                    channel.write(outbuffer);
                     }
                 } catch (IOException e) {
+
                     e.printStackTrace();
                     break;
                 }
