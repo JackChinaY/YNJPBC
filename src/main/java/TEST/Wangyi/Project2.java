@@ -2,7 +2,7 @@ package TEST.Wangyi;
 
 import java.util.Scanner;
 
-public class Progect2 {
+public class Project2 {
     public class Work {
         int Di;
         int Pi;

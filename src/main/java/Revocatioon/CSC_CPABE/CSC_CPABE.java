@@ -3,7 +3,6 @@ package Revocatioon.CSC_CPABE;
 import Revocatioon.CSC_CPABE.Entity.*;
 
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.UUID;
 
 /**
@@ -40,7 +39,7 @@ public class CSC_CPABE implements Ident {
     private PK pk = new PK();
     private SK sk = new SK();
     private Ciphertext ciphertext = new Ciphertext();
-    public AAK AA = new AAK();//AAK类型，所有属性中心
+    private AAK AA = new AAK();//AAK类型，所有属性中心
 
     /**
      * Setup 初始化接口， 生成公共参数 PK 和主密钥 MK，并分别存储到 pub_key 和 master_key 对应的文件路径中去。

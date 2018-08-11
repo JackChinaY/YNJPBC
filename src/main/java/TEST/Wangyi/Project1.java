@@ -2,7 +2,7 @@ package TEST.Wangyi;
 
 import java.util.*;
 
-public class Progect1 {
+public class Project1 {
 
     public class Rectangle {
         int x1;
