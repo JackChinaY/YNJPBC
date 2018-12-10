@@ -15,6 +15,11 @@ import java.util.StringTokenizer;
 
 /**
  * 主函数调用的全部方法，各个过程具体执行的方法
+ * Zr元素是123,
+ * G1元素是123,2345,0
+ * GT元素是{x=123,y=2345}
+ * g^z结果是G1元素
+ * e(g,v)结果是GT元素
  */
 public class LangPolicy {
     /**---------------------------setup初始化阶段用到的函数---------------------------**/
@@ -165,7 +170,7 @@ public class LangPolicy {
         //将用户属性解析成字符数组
         ArrayList<String> arrayList_A = parseString2ArrayList(attributes_A);
         System.out.println("集合A大小：" + arrayList_A.size() + "个，即：" + arrayList_A);
-        Element Zr_temp = pairing.getZr().newElement();
+        Element Zr_temp ;
         Element nodeID;
         Element r = pairing.getZr().newElement();
         Element G1_temp1;
@@ -175,7 +180,7 @@ public class LangPolicy {
         //给小钥匙赋值属性
         sk.comps = new HashMap<>();
         System.out.println("私钥中共有" + arrayList_A.size() + "个小钥匙！");
-        //每个AA产生的私钥，循环的次数是AA的个数
+        //AA产生的私钥
         //根据AA的种子产生一个Zr的值
         Element p0 = Hash4Zr(pk, DigestUtils.md5Hex(AA.s + AID));
         //构造一个多项式
@@ -225,19 +230,13 @@ public class LangPolicy {
         //CA产生的私钥
         Element Zr_temp3 = pairing.getZr().newElement();
         Zr_temp3.setToZero();
-        //Zr_temp3=对K个s求和 ;
-//            Zr_temp3.add(Hash4Zr(pk, AAKList.get(i).s).duplicate());
+        //Zr_temp3=0+F(s,GID)
         Zr_temp3.add(Hash4Zr(pk, DigestUtils.md5Hex(AA.s + AID)));
-        //Zr_temp4 = x-求和(K个xi)
+        //Zr_temp4 = x-F(s,GID)
         Element Zr_temp4 = mk.x.duplicate().sub(Zr_temp3);
-//        System.out.println("4  " + Zr_temp4);
+        //sk.Dca=g2^(x-F(s,GID))
         sk.Dca = pk.g2.duplicate().powZn(Zr_temp4);
         System.out.println("私钥中CA的小钥匙生成成功！");
-//        try {
-//            Thread.sleep(1000);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
         return sk;
     }
 
@@ -679,27 +678,27 @@ public class LangPolicy {
         Pairing pairing = PairingFactory.getPairing("a.properties");
         Element g = pairing.getG1().newRandomElement();
         System.out.println("g:" + g);
-        Element q;
-        q = g.duplicate();
-        System.out.println("q:" + q);
+//        Element q;
+//        q = g.duplicate();
+//        System.out.println("q:" + q);
         Element v = pairing.getG1().newRandomElement();
-        System.out.println("v:" + v);
+//        System.out.println("v:" + v);
 //        Element s = pairing.getZr().newRandomElement();
 //        System.out.println("s:" + s);
-        Element c = g.mul(v).duplicate();
+//        Element c = g.mul(v).duplicate();
 ////        Element g2 = g.duplicate().mul(v);
 ////        Element g2 = g.duplicate().powZn(s);
 //        Element Z = pairing.pairing(g, v);
 ////        g = g.mul(v);
-        System.out.println("c:" + c);
-        System.out.println("g:" + g);
-        System.out.println("v:" + v);
-        System.out.println("q:" + q);
-        Element d = g.mul(v);
-        System.out.println("d:" + d);
-        System.out.println("c:" + c);
-        System.out.println("g:" + g);
-        System.out.println("v:" + v);
+//        System.out.println("c:" + c);
+//        System.out.println("g:" + g);
+//        System.out.println("v:" + v);
+//        System.out.println("q:" + q);
+//        Element d = g.mul(v);
+//        System.out.println("d:" + d);
+//        System.out.println("c:" + c);
+//        System.out.println("g:" + g);
+//        System.out.println("v:" + v);
 //        if (g.isImmutable()) {
 //            System.out.println("g不可变");
 //        }
@@ -713,19 +712,21 @@ public class LangPolicy {
 //        System.out.println("g1:" + g1);
 //        Element v1 = v.getImmutable();
 //        System.out.println("v1:" + v1);
-        Element Z = pairing.pairing(g, v);
-        Element s = pairing.getZr().newRandomElement();
-        Element Zs = Z.powZn(s);
-        Element M1 = pairing.getGT().newRandomElement();
-        System.out.println("M1:" + M1);
-        System.out.println("Zs:" + Zs);
-        Element C0 = M1.mul(Zs);
+//        Element Z = pairing.pairing(g, v);
+        Element z = pairing.getZr().newRandomElement();
+//        Element Zs = Z.powZn(s);
+        Element GT = pairing.getGT().newRandomElement();
+        System.out.println("z:" + z);
+        System.out.println("GT:" + GT);
+        System.out.println("GT:" + g.duplicate().powZn(z));
+        System.out.println("GT:" + pairing.pairing(g, v));
+//        Element C0 = M1.mul(Zs);
 //        Element Zs1 = Zs.invert();
-        Zs.invert();
-        System.out.println("Zs:" + Zs);
-        Element M2 = C0.mul(Zs);
-        System.out.println("Zs:" + Zs);
-        System.out.println("M2:" + M2);
+//        Zs.invert();
+//        System.out.println("Zs:" + Zs);
+//        Element M2 = C0.mul(Zs);
+//        System.out.println("Zs:" + Zs);
+//        System.out.println("M2:" + M2);
 
     }
 }
